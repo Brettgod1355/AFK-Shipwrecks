@@ -565,10 +565,6 @@ public class CargoFullPlugin extends Plugin
 
 	private void holdReportedFull()
 	{
-		if (!config.alertOnGameMessage())
-		{
-			return;
-		}
 		monitor.markFullByGame();
 		saveUsed();
 		evaluate();
@@ -577,7 +573,7 @@ public class CargoFullPlugin extends Plugin
 	/** Applies cargo seen going in (positive) or out (negative) while the hold is closed. */
 	private void cargoEstimated(int delta)
 	{
-		if (!config.liveEstimate() || !monitor.adjust(delta))
+		if (!monitor.adjust(delta))
 		{
 			return;
 		}

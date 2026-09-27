@@ -77,19 +77,6 @@ public interface CargoFullConfig extends Config
 		return 0;
 	}
 
-	@ConfigItem(
-		keyName = "alertOnGameMessage",
-		name = "Alert on crew message",
-		description = "Also alert when a crewmate or the game says the cargo hold is full, "
-			+ "even if the plugin could not count the hold itself.",
-		section = CARGO_FULL,
-		position = 2
-	)
-	default boolean alertOnGameMessage()
-	{
-		return true;
-	}
-
 	// ---- Early warning ----
 
 	@ConfigItem(
@@ -211,19 +198,5 @@ public interface CargoFullConfig extends Config
 	default int counterScale()
 	{
 		return 100;
-	}
-
-	@ConfigItem(
-		keyName = "liveEstimate",
-		name = "Track between hold openings",
-		description = "The game only sends the hold's contents while it is open. Keep counting in between from "
-			+ "crewmate salvage messages and your own deposits and withdrawals. The real contents take over "
-			+ "whenever you open the hold.",
-		section = COUNTER,
-		position = 2
-	)
-	default boolean liveEstimate()
-	{
-		return true;
 	}
 }
