@@ -7,6 +7,7 @@ package com.cargofull;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import javax.inject.Inject;
 import net.runelite.client.ui.FontManager;
@@ -23,7 +24,10 @@ import net.runelite.client.util.ColorUtil;
  */
 public class CargoFullOverlay extends OverlayPanel
 {
-	private static final int WIDTH = 200;
+	/** Panel width at 100% banner size. */
+	private static final int BASE_WIDTH = 200;
+	/** Breathing room either side of banner text that is wider than the panel. */
+	private static final int TEXT_PADDING = 8;
 	private static final long FLASH_PERIOD_MS = 500;
 	private static final Color COUNTER_EMPTY = new Color(70, 200, 70);
 	private static final Color COUNTER_FULL = new Color(230, 60, 60);
@@ -40,7 +44,7 @@ public class CargoFullOverlay extends OverlayPanel
 		setPosition(OverlayPosition.TOP_CENTER);
 		setLayer(OverlayLayer.ABOVE_WIDGETS);
 		setPriority(PRIORITY_HIGH);
-		panelComponent.setPreferredSize(new Dimension(WIDTH, 0));
+		panelComponent.setPreferredSize(new Dimension(BASE_WIDTH, 0));
 	}
 
 	@Override
@@ -55,6 +59,7 @@ public class CargoFullOverlay extends OverlayPanel
 		}
 
 		Color background = ComponentConstants.STANDARD_BACKGROUND_COLOR;
+		int width = BASE_WIDTH;
 		if (banner != CargoHoldMonitor.Level.OK)
 		{
 			background = config.bannerColor();
@@ -63,13 +68,28 @@ public class CargoFullOverlay extends OverlayPanel
 				background = new Color(background.getRed(), background.getGreen(), background.getBlue(),
 					background.getAlpha() / 3);
 			}
-			graphics.setFont(FontManager.getRunescapeBoldFont());
+
+			// The title takes its font from the graphics, so scaling the font scales the banner.
+			String text = banner == CargoHoldMonitor.Level.FULL ? "CARGO HOLD FULL" : "CARGO HOLD NEARLY FULL";
+			float scale = config.bannerScale() / 100f;
+			Font bold = FontManager.getRunescapeBoldFont();
+			Font bannerFont = bold.deriveFont(bold.getSize2D() * scale);
+			graphics.setFont(bannerFont);
+			int textWidth = graphics.getFontMetrics(bannerFont).stringWidth(text);
+			width = Math.max(Math.round(BASE_WIDTH * scale),
+				textWidth + 2 * ComponentConstants.STANDARD_BORDER + TEXT_PADDING);
+
 			panelComponent.getChildren().add(TitleComponent.builder()
-				.text(banner == CargoHoldMonitor.Level.FULL ? "CARGO HOLD FULL" : "CARGO HOLD NEARLY FULL")
+				.text(text)
 				.color(Color.WHITE)
 				.build());
 		}
 		panelComponent.setBackgroundColor(background);
+		if (getPreferredSize() == null)
+		{
+			// Follow the banner size unless the player has resized the overlay themselves.
+			panelComponent.setPreferredSize(new Dimension(width, 0));
+		}
 
 		if (showCounter)
 		{
@@ -79,10 +99,14 @@ public class CargoFullOverlay extends OverlayPanel
 			Color color = banner != CargoHoldMonitor.Level.OK
 				? Color.WHITE
 				: ColorUtil.colorLerp(COUNTER_EMPTY, COUNTER_FULL, fill);
+			// The counter keeps the normal font whatever size the banner is.
+			Font counterFont = FontManager.getRunescapeFont();
 			panelComponent.getChildren().add(LineComponent.builder()
 				.left("Cargo hold")
 				.right(used + "/" + capacity)
 				.rightColor(color)
+				.leftFont(counterFont)
+				.rightFont(counterFont)
 				.build());
 		}
 

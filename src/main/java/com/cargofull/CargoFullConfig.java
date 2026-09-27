@@ -112,11 +112,25 @@ public interface CargoFullConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "bannerScale",
+		name = "Banner size",
+		description = "Size of the banner text and box. 100% is the normal RuneLite overlay size.",
+		section = ON_SCREEN,
+		position = 2
+	)
+	@Range(min = 50, max = 300)
+	@Units(Units.PERCENT)
+	default int bannerScale()
+	{
+		return 100;
+	}
+
+	@ConfigItem(
 		keyName = "bannerSeconds",
 		name = "Hide banner after",
 		description = "Hide the banner this long after the alert. 0 keeps it up until the hold has space again.",
 		section = ON_SCREEN,
-		position = 2
+		position = 3
 	)
 	@Range(min = 0, max = 600)
 	@Units(Units.SECONDS)
@@ -131,7 +145,7 @@ public interface CargoFullConfig extends Config
 		name = "Banner colour",
 		description = "Background colour of the banner.",
 		section = ON_SCREEN,
-		position = 3
+		position = 4
 	)
 	default Color bannerColor()
 	{
@@ -143,7 +157,7 @@ public interface CargoFullConfig extends Config
 		name = "Show cargo counter",
 		description = "Show used and total cargo slots while you are on your boat.",
 		section = ON_SCREEN,
-		position = 4
+		position = 5
 	)
 	default boolean showCounter()
 	{

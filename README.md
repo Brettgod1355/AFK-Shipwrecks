@@ -16,7 +16,7 @@ it fills up: a RuneLite notification (sound, tray popup, screen flash), a big
 - **Repeat.** Optionally send the alert again every so often while the hold stays
   full, for the times you missed the first one.
 - **Banner.** A flashing banner at the top of the game. It stays until you make
-  room, or hides after a timer of your choosing. Colour and flashing are yours to
+  room, or hides after a timer of your choosing. Size, colour and flashing are yours to
   change.
 - **Counter.** `Cargo hold 37/40` while you are aboard, coloured from green to red
   as it fills.
