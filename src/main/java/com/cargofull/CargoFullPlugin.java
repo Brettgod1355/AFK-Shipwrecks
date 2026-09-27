@@ -64,7 +64,7 @@ import org.slf4j.LoggerFactory;
  * the cargo hold object built on the boat, refined by the numbers in the hold interface.
  */
 @PluginDescriptor(
-	name = "Cargo Full",
+	name = "Cargo Hold Alert",
 	description = "Sound and on-screen alerts when your boat's cargo hold fills up while sailing",
 	tags = {"sailing", "cargo", "hold", "salvage", "boat", "notification", "alert"}
 )

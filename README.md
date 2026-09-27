@@ -1,10 +1,10 @@
-# Cargo Full
+# Cargo Hold Alert
 
 **Never sail on with a full hold again.**
 
-Cargo Full watches your boat's cargo hold while you sail and tells you the moment
-it fills up: a RuneLite notification (sound, tray popup, screen flash), a big
-**CARGO HOLD FULL** banner over the game, and a live counter of used slots.
+Cargo Hold Alert watches your boat's cargo hold while you sail and tells you the
+moment it fills up: a RuneLite notification (sound, tray popup, screen flash), a
+big **CARGO HOLD FULL** banner over the game, and a live counter of used slots.
 
 ## What you get
 
@@ -66,7 +66,7 @@ makes no network requests and never acts on your behalf.
 ## Feedback
 
 Problems or ideas? Open an issue at
-[github.com/Brettgod1355/Cargo-Full/issues](https://github.com/Brettgod1355/Cargo-Full/issues).
+[github.com/Brettgod1355/Cargo-Hold-Alert/issues](https://github.com/Brettgod1355/Cargo-Hold-Alert/issues).
 
 ## License
 

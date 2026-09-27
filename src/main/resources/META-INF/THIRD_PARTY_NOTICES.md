@@ -1,6 +1,6 @@
 # Third-party notices
 
-Cargo Full is an independent project. It is not an official RuneLite product and is
+Cargo Hold Alert is an independent project. It is not an official RuneLite product and is
 not affiliated with Jagex.
 
 ## RuneLite
