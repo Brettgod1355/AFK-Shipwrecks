@@ -19,12 +19,16 @@ it fills up: a RuneLite notification (sound, tray popup, screen flash), a big
   room, or hides after a timer of your choosing. Size, colour and flashing are yours to
   change.
 - **Counter.** `Cargo hold 37/40` while you are aboard, coloured from green to red
-  as it fills.
+  as it fills. It has its own size setting and can be switched off.
 
 ## How it works
 
-- The used count comes straight from the hold's item container, which the game
-  updates whenever cargo moves in or out.
+- The used count comes from the hold's item container. The game only sends that
+  while the cargo hold is open, so in between the plugin keeps counting on its own:
+  one for every crewmate *"Managed to hook some salvage"* line (Cabin Boy Jenkins
+  is caught through the Sailing XP he earns you), plus your own deposits and
+  withdrawals. Estimated counts show a `~`, and opening the hold snaps the count
+  back to the real contents. The count is remembered per boat between sessions.
 - The capacity comes from the cargo hold built on your boat: each tier holds a
   different amount on a raft, skiff, or sloop. Opening the cargo hold once lets the
   plugin read the game's own numbers, which then take priority.
@@ -41,6 +45,8 @@ makes no network requests and never acts on your behalf.
   covered yet.
 - The counter only shows while you are aboard a boat. Alerts fire wherever you are
   when the hold fills.
+- The counter needs one real look at the hold to start from. If it is missing after
+  you first enable the plugin, open the cargo hold once and it will follow from there.
 - Stackable items take one slot for the whole stack, exactly as in the game.
 
 ## Development

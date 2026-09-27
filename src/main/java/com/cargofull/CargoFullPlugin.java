@@ -20,6 +20,7 @@ import net.runelite.api.NPC;
 import net.runelite.api.ObjectComposition;
 import net.runelite.api.Player;
 import net.runelite.api.Scene;
+import net.runelite.api.Skill;
 import net.runelite.api.Tile;
 import net.runelite.api.WorldView;
 import net.runelite.api.events.ChatMessage;
@@ -28,17 +29,21 @@ import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.OverheadTextChanged;
+import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.events.WorldEntityDespawned;
 import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.RuneScapeProfileChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -49,10 +54,11 @@ import org.slf4j.LoggerFactory;
 /**
  * Alerts when the cargo hold of the boat you are sailing fills up.
  * <p>
- * The used count comes from the hold's item container, which the server updates as cargo
- * moves. The capacity comes from the cargo hold object built on the boat, refined by the
- * numbers in the cargo hold interface whenever it is opened. A crewmate saying the hold is
- * full, or the matching game message, also triggers the alert.
+ * The exact count comes from the hold's item container, which the game only transmits while
+ * the cargo hold interface is open. Between openings the count is kept current from crewmate
+ * salvage speech, the ghost crewmate's XP drops, and the player's own deposits and withdrawals,
+ * then snaps back to the real contents on the next container update. The capacity comes from
+ * the cargo hold object built on the boat, refined by the numbers in the hold interface.
  */
 @PluginDescriptor(
 	name = "Cargo Full",
@@ -63,8 +69,10 @@ public class CargoFullPlugin extends Plugin
 {
 	private static final Logger LOG = LoggerFactory.getLogger(CargoFullPlugin.class);
 
-	/** Appears in the crewmate's speech and in game messages when nothing more fits in the hold. */
-	static final String HOLD_FULL_TEXT = "cargo hold is full";
+	/** RuneScape-profile config key prefix for the remembered count of each boat slot. */
+	private static final String USED_KEY_PREFIX = "used.";
+	/** Ticks to wait for the inventory to change after a deposit or withdraw click. */
+	private static final int DEPOSIT_DELTA_TICKS = 3;
 
 	@Inject
 	private Client client;
@@ -77,6 +85,9 @@ public class CargoFullPlugin extends Plugin
 
 	@Inject
 	private OverlayManager overlayManager;
+
+	@Inject
+	private ConfigManager configManager;
 
 	@Inject
 	private CargoFullOverlay overlay;
@@ -94,6 +105,14 @@ public class CargoFullPlugin extends Plugin
 	private long alertShownAt;
 	private boolean readInterfaceNextTick;
 
+	private int lastSailingXp = -1;
+	/** Game tick in which the ghost crewmate last spoke, or -1. */
+	private int ghostSpeechTick = -1;
+	/** Ticks left to wait for the inventory to change after a deposit or withdraw click; 0 when idle. */
+	private int pendingDeltaTicks;
+	private int inventoryBefore;
+	private boolean inventoryChanged;
+
 	@Provides
 	CargoFullConfig provideConfig(ConfigManager configManager)
 	{
@@ -109,6 +128,7 @@ public class CargoFullPlugin extends Plugin
 		{
 			if (client.getGameState() == GameState.LOGGED_IN)
 			{
+				lastSailingXp = client.getSkillExperience(Skill.SAILING);
 				rescan();
 			}
 		});
@@ -129,6 +149,12 @@ public class CargoFullPlugin extends Plugin
 		{
 			clearState();
 		}
+	}
+
+	@Subscribe
+	public void onRuneScapeProfileChanged(RuneScapeProfileChanged event)
+	{
+		reloadHold();
 	}
 
 	@Subscribe
@@ -172,6 +198,15 @@ public class CargoFullPlugin extends Plugin
 	@Subscribe
 	public void onItemContainerChanged(ItemContainerChanged event)
 	{
+		if (event.getContainerId() == InventoryID.INV)
+		{
+			if (pendingDeltaTicks > 0)
+			{
+				inventoryChanged = true;
+			}
+			return;
+		}
+
 		int slot = CargoHoldContainers.slotFor(event.getContainerId());
 		if (slot == 0)
 		{
@@ -189,8 +224,32 @@ public class CargoFullPlugin extends Plugin
 			monitoredSlot = slot;
 		}
 		monitor.setUsed(CargoHoldMonitor.countUsed(event.getItemContainer().getItems()));
+		// The real contents beat any guess still waiting to be applied.
+		pendingDeltaTicks = 0;
+		inventoryChanged = false;
+		saveUsed();
 		refreshCapacity();
 		evaluate();
+	}
+
+	@Subscribe
+	public void onMenuOptionClicked(MenuOptionClicked event)
+	{
+		String option = event.getMenuOption() == null ? "" : Text.removeTags(event.getMenuOption()).toLowerCase();
+		if (!option.startsWith("deposit") && !option.startsWith("withdraw"))
+		{
+			return;
+		}
+		String target = event.getMenuTarget() == null ? "" : Text.removeTags(event.getMenuTarget()).toLowerCase();
+		if (!target.contains("cargo hold") && !isCargoInterfaceOpen())
+		{
+			return;
+		}
+		// Quick deposits on the hold itself never open the interface, so the container is not
+		// resent. Watch the inventory instead and apply the difference to the hold.
+		pendingDeltaTicks = DEPOSIT_DELTA_TICKS;
+		inventoryBefore = occupiedInventorySlots();
+		inventoryChanged = false;
 	}
 
 	@Subscribe
@@ -210,6 +269,23 @@ public class CargoFullPlugin extends Plugin
 		{
 			readInterfaceNextTick = false;
 			readCargoInterface();
+		}
+		if (pendingDeltaTicks > 0)
+		{
+			if (inventoryChanged)
+			{
+				int delta = inventoryBefore - occupiedInventorySlots();
+				pendingDeltaTicks = 0;
+				inventoryChanged = false;
+				if (delta != 0)
+				{
+					cargoEstimated(delta);
+				}
+			}
+			else
+			{
+				pendingDeltaTicks--;
+			}
 		}
 		if (monitor.isReportedFullByGame() && !isSailing())
 		{
@@ -233,9 +309,37 @@ public class CargoFullPlugin extends Plugin
 		{
 			return;
 		}
-		if (mentionsFullHold(event.getOverheadText()))
+
+		String text = event.getOverheadText();
+		if (CrewSpeech.reportsFullHold(text))
 		{
 			holdReportedFull();
+		}
+		else if (CrewSpeech.reportsCrewSalvage(text))
+		{
+			cargoEstimated(1);
+		}
+		else if (CrewSpeech.isGhostSpeech(text))
+		{
+			ghostSpeechTick = client.getTickCount();
+		}
+	}
+
+	@Subscribe
+	public void onStatChanged(StatChanged event)
+	{
+		if (event.getSkill() != Skill.SAILING)
+		{
+			return;
+		}
+		int xp = event.getXp();
+		boolean gained = lastSailingXp >= 0 && xp > lastSailingXp;
+		lastSailingXp = xp;
+		if (gained && ghostSpeechTick == client.getTickCount())
+		{
+			// The ghost crewmate cannot say he salvaged something; the XP he earns you says it for him.
+			ghostSpeechTick = -1;
+			cargoEstimated(1);
 		}
 	}
 
@@ -248,9 +352,14 @@ public class CargoFullPlugin extends Plugin
 		{
 			return;
 		}
-		if (mentionsFullHold(event.getMessage()))
+		String text = event.getMessage();
+		if (CrewSpeech.reportsFullHold(text))
 		{
 			holdReportedFull();
+		}
+		else if (CrewSpeech.reportsPlayerDeposit(text))
+		{
+			cargoEstimated(1);
 		}
 	}
 
@@ -281,6 +390,12 @@ public class CargoFullPlugin extends Plugin
 		return monitor.getCapacity();
 	}
 
+	/** Whether the count has been carried forward since the last time the game sent the hold's contents. */
+	public boolean isEstimate()
+	{
+		return monitor.isEstimate();
+	}
+
 	/** The banner to draw right now, or OK for none. */
 	public CargoHoldMonitor.Level bannerLevel(long now)
 	{
@@ -305,6 +420,10 @@ public class CargoFullPlugin extends Plugin
 		monitoredSlot = 0;
 		alertShownAt = 0;
 		readInterfaceNextTick = false;
+		lastSailingXp = -1;
+		ghostSpeechTick = -1;
+		pendingDeltaTicks = 0;
+		inventoryChanged = false;
 	}
 
 	/** Picks up what the plugin missed when it was enabled while the player was already aboard. */
@@ -355,7 +474,7 @@ public class CargoFullPlugin extends Plugin
 		}
 	}
 
-	/** Re-reads the hold of the boat the player last boarded. */
+	/** Re-reads the hold of the boat the player last boarded, falling back to the remembered count. */
 	private void reloadHold()
 	{
 		int slot = currentBoatSlot();
@@ -372,6 +491,11 @@ public class CargoFullPlugin extends Plugin
 		if (container != null)
 		{
 			monitor.setUsed(CargoHoldMonitor.countUsed(container.getItems()));
+			saveUsed();
+		}
+		else if (monitor.getUsed() == CargoHoldCapacity.UNKNOWN)
+		{
+			loadSavedUsed(slot);
 		}
 		refreshCapacity();
 		evaluate();
@@ -410,6 +534,7 @@ public class CargoFullPlugin extends Plugin
 		if (used >= 0 && used <= CargoHoldCapacity.MAX_SLOTS)
 		{
 			monitor.setUsed(used);
+			saveUsed();
 		}
 		evaluate();
 	}
@@ -426,6 +551,18 @@ public class CargoFullPlugin extends Plugin
 		return last ? CargoHoldCapacity.lastNumber(plain) : CargoHoldCapacity.firstNumber(plain);
 	}
 
+	private boolean isCargoInterfaceOpen()
+	{
+		Widget root = client.getWidget(InterfaceID.SailingBoatCargohold.UNIVERSE);
+		return root != null && !root.isHidden();
+	}
+
+	private int occupiedInventorySlots()
+	{
+		ItemContainer inventory = client.getItemContainer(InventoryID.INV);
+		return inventory == null ? 0 : CargoHoldMonitor.countUsed(inventory.getItems());
+	}
+
 	private void holdReportedFull()
 	{
 		if (!config.alertOnGameMessage())
@@ -433,7 +570,57 @@ public class CargoFullPlugin extends Plugin
 			return;
 		}
 		monitor.markFullByGame();
+		saveUsed();
 		evaluate();
+	}
+
+	/** Applies cargo seen going in (positive) or out (negative) while the hold is closed. */
+	private void cargoEstimated(int delta)
+	{
+		if (!config.liveEstimate() || !monitor.adjust(delta))
+		{
+			return;
+		}
+		saveUsed();
+		evaluate();
+	}
+
+	private void saveUsed()
+	{
+		if (monitoredSlot == 0 || configManager.getRSProfileKey() == null)
+		{
+			return;
+		}
+		String key = USED_KEY_PREFIX + monitoredSlot;
+		if (monitor.getUsed() == CargoHoldCapacity.UNKNOWN)
+		{
+			configManager.unsetRSProfileConfiguration(CargoFullConfig.GROUP, key);
+		}
+		else
+		{
+			configManager.setRSProfileConfiguration(CargoFullConfig.GROUP, key, monitor.getUsed());
+		}
+	}
+
+	private void loadSavedUsed(int slot)
+	{
+		if (configManager.getRSProfileKey() == null)
+		{
+			return;
+		}
+		String saved = configManager.getRSProfileConfiguration(CargoFullConfig.GROUP, USED_KEY_PREFIX + slot);
+		if (saved == null)
+		{
+			return;
+		}
+		try
+		{
+			monitor.setEstimatedUsed(Integer.parseInt(saved.trim()));
+		}
+		catch (NumberFormatException e)
+		{
+			LOG.debug("Ignoring unreadable remembered cargo count '{}' for boat {}", saved, slot);
+		}
 	}
 
 	private void evaluate()
@@ -450,17 +637,14 @@ public class CargoFullPlugin extends Plugin
 
 	private String messageFor(CargoHoldMonitor.Level level)
 	{
-		String count = monitor.hasCount() && !monitor.isReportedFullByGame()
-			? " (" + monitor.getUsed() + "/" + monitor.getCapacity() + ")"
-			: "";
+		String count = "";
+		if (monitor.hasCount() && !monitor.isReportedFullByGame())
+		{
+			count = " (" + (monitor.isEstimate() ? "~" : "") + monitor.getUsed() + "/" + monitor.getCapacity() + ")";
+		}
 		return level == CargoHoldMonitor.Level.FULL
 			? "Your cargo hold is full" + count + "."
 			: "Your cargo hold is nearly full" + count + ".";
-	}
-
-	private boolean mentionsFullHold(String text)
-	{
-		return text != null && Text.removeTags(text).toLowerCase().contains(HOLD_FULL_TEXT);
 	}
 
 	/** The boat slot (1 to 5) the player last boarded, or 0 if none. */

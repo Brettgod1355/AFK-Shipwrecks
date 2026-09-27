@@ -10,8 +10,9 @@ import net.runelite.api.Item;
 /**
  * Tracks how full the current cargo hold is and decides when an alert is due.
  * <p>
- * Holds plain state with no client access so the alert rules can be unit tested.
- * All times are milliseconds from the same clock.
+ * The count is exact right after an item container update and becomes an estimate as
+ * salvage and deposits are added to it between updates. Holds plain state with no client
+ * access so the rules can be unit tested. All times are milliseconds from the same clock.
  */
 public final class CargoHoldMonitor
 {
@@ -24,11 +25,12 @@ public final class CargoHoldMonitor
 
 	private int used = CargoHoldCapacity.UNKNOWN;
 	private int capacity = CargoHoldCapacity.UNKNOWN;
+	private boolean estimate;
 	private boolean reportedFullByGame;
 	private Level alerted = Level.OK;
 	private long lastAlertAt;
 
-	/** Counts occupied slots in a cargo item container. Empty slots have no item or id -1. */
+	/** Counts occupied slots in an item container. Empty slots have no item or id -1. */
 	public static int countUsed(Item[] items)
 	{
 		if (items == null)
@@ -46,11 +48,42 @@ public final class CargoHoldMonitor
 		return count;
 	}
 
-	/** Records a fresh count from the item container. This supersedes any full message from the game. */
+	/** Records an exact count from the item container. This supersedes any estimate or full message. */
 	public void setUsed(int used)
 	{
 		this.used = used < 0 ? CargoHoldCapacity.UNKNOWN : used;
+		estimate = false;
 		reportedFullByGame = false;
+	}
+
+	/** Restores a remembered count that may be out of date, for example after logging in. */
+	public void setEstimatedUsed(int used)
+	{
+		this.used = used < 0 ? CargoHoldCapacity.UNKNOWN : used;
+		estimate = true;
+		reportedFullByGame = false;
+	}
+
+	/**
+	 * Adds cargo that was seen going in (positive) or out (negative) without a container update.
+	 * The result stays between empty and the capacity, or the largest hold if the capacity is unknown.
+	 *
+	 * @return false when there is no count yet to adjust
+	 */
+	public boolean adjust(int delta)
+	{
+		if (used == CargoHoldCapacity.UNKNOWN)
+		{
+			return false;
+		}
+		int limit = capacity == CargoHoldCapacity.UNKNOWN ? CargoHoldCapacity.MAX_SLOTS : Math.max(capacity, used);
+		used = Math.max(0, Math.min(limit, used + delta));
+		estimate = true;
+		if (delta != 0)
+		{
+			reportedFullByGame = false;
+		}
+		return true;
 	}
 
 	public void setCapacity(int capacity)
@@ -60,11 +93,17 @@ public final class CargoHoldMonitor
 
 	/**
 	 * The game itself said the hold is full, through a crewmate or a chat message.
-	 * Treated as full until the next item container update.
+	 * Treated as full until the next item container update, and the count moves up to the
+	 * capacity so the counter agrees.
 	 */
 	public void markFullByGame()
 	{
 		reportedFullByGame = true;
+		if (capacity != CargoHoldCapacity.UNKNOWN && (used == CargoHoldCapacity.UNKNOWN || used < capacity))
+		{
+			used = capacity;
+			estimate = true;
+		}
 	}
 
 	/** Forgets a full message from the game, for example once the player has left the boat. */
@@ -76,6 +115,12 @@ public final class CargoHoldMonitor
 	public boolean isReportedFullByGame()
 	{
 		return reportedFullByGame;
+	}
+
+	/** Whether the count has drifted from the last exact container update. */
+	public boolean isEstimate()
+	{
+		return estimate;
 	}
 
 	public int getUsed()
@@ -174,6 +219,7 @@ public final class CargoHoldMonitor
 	{
 		used = CargoHoldCapacity.UNKNOWN;
 		capacity = CargoHoldCapacity.UNKNOWN;
+		estimate = false;
 		reportedFullByGame = false;
 		alerted = Level.OK;
 		lastAlertAt = 0;

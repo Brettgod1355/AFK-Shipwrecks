@@ -8,6 +8,7 @@ package com.cargofull;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import javax.inject.Inject;
 import net.runelite.client.ui.FontManager;
@@ -26,8 +27,10 @@ public class CargoFullOverlay extends OverlayPanel
 {
 	/** Panel width at 100% banner size. */
 	private static final int BASE_WIDTH = 200;
-	/** Breathing room either side of banner text that is wider than the panel. */
+	/** Breathing room either side of text that is wider than the panel. */
 	private static final int TEXT_PADDING = 8;
+	/** Minimum space between the counter's label and its number. */
+	private static final int COUNTER_GAP = 12;
 	private static final long FLASH_PERIOD_MS = 500;
 	private static final Color COUNTER_EMPTY = new Color(70, 200, 70);
 	private static final Color COUNTER_FULL = new Color(230, 60, 60);
@@ -59,7 +62,9 @@ public class CargoFullOverlay extends OverlayPanel
 		}
 
 		Color background = ComponentConstants.STANDARD_BACKGROUND_COLOR;
-		int width = BASE_WIDTH;
+		// The panel only grows as wide as what it shows: the counter alone hugs its text,
+		// while the banner has a comfortable minimum width.
+		int width = 0;
 		if (banner != CargoHoldMonitor.Level.OK)
 		{
 			background = config.bannerColor();
@@ -85,11 +90,6 @@ public class CargoFullOverlay extends OverlayPanel
 				.build());
 		}
 		panelComponent.setBackgroundColor(background);
-		if (getPreferredSize() == null)
-		{
-			// Follow the banner size unless the player has resized the overlay themselves.
-			panelComponent.setPreferredSize(new Dimension(width, 0));
-		}
 
 		if (showCounter)
 		{
@@ -99,15 +99,30 @@ public class CargoFullOverlay extends OverlayPanel
 			Color color = banner != CargoHoldMonitor.Level.OK
 				? Color.WHITE
 				: ColorUtil.colorLerp(COUNTER_EMPTY, COUNTER_FULL, fill);
-			// The counter keeps the normal font whatever size the banner is.
-			Font counterFont = FontManager.getRunescapeFont();
+
+			// The counter has its own size, independent of the banner's.
+			String left = "Cargo hold";
+			String right = (plugin.isEstimate() ? "~" : "") + used + "/" + capacity;
+			float counterScale = config.counterScale() / 100f;
+			Font normal = FontManager.getRunescapeFont();
+			Font counterFont = normal.deriveFont(normal.getSize2D() * counterScale);
+			FontMetrics metrics = graphics.getFontMetrics(counterFont);
+			int lineWidth = metrics.stringWidth(left) + metrics.stringWidth(right) + COUNTER_GAP;
+			width = Math.max(width, lineWidth + 2 * ComponentConstants.STANDARD_BORDER + TEXT_PADDING);
+
 			panelComponent.getChildren().add(LineComponent.builder()
-				.left("Cargo hold")
-				.right(used + "/" + capacity)
+				.left(left)
+				.right(right)
 				.rightColor(color)
 				.leftFont(counterFont)
 				.rightFont(counterFont)
 				.build());
+		}
+
+		if (getPreferredSize() == null)
+		{
+			// Follow the chosen sizes unless the player has resized the overlay themselves.
+			panelComponent.setPreferredSize(new Dimension(width, 0));
 		}
 
 		return super.render(graphics);

@@ -151,6 +151,89 @@ public class CargoHoldMonitorTest
 	}
 
 	@Test
+	public void estimatesBetweenContainerUpdates()
+	{
+		monitor.setCapacity(160);
+		monitor.setUsed(154);
+		assertFalse(monitor.isEstimate());
+
+		assertTrue(monitor.adjust(1));
+		assertTrue(monitor.adjust(1));
+		assertEquals(156, monitor.getUsed());
+		assertTrue(monitor.isEstimate());
+
+		assertTrue(monitor.adjust(-2));
+		assertEquals(154, monitor.getUsed());
+
+		monitor.setUsed(158);
+		assertEquals(158, monitor.getUsed());
+		assertFalse(monitor.isEstimate());
+	}
+
+	@Test
+	public void estimateStaysWithinTheHold()
+	{
+		monitor.setCapacity(40);
+		monitor.setUsed(39);
+		monitor.adjust(5);
+		assertEquals(40, monitor.getUsed());
+		assertEquals(Level.FULL, monitor.level(0));
+
+		monitor.adjust(-100);
+		assertEquals(0, monitor.getUsed());
+		assertEquals(Level.OK, monitor.level(0));
+	}
+
+	@Test
+	public void estimateWithoutCapacityIsCappedAtTheLargestHold()
+	{
+		monitor.setUsed(239);
+		monitor.adjust(5);
+		assertEquals(CargoHoldCapacity.MAX_SLOTS, monitor.getUsed());
+	}
+
+	@Test
+	public void cannotEstimateWithoutAStartingCount()
+	{
+		assertFalse(monitor.adjust(1));
+		assertEquals(CargoHoldCapacity.UNKNOWN, monitor.getUsed());
+
+		monitor.setEstimatedUsed(12);
+		assertEquals(12, monitor.getUsed());
+		assertTrue(monitor.isEstimate());
+		assertTrue(monitor.adjust(1));
+		assertEquals(13, monitor.getUsed());
+	}
+
+	@Test
+	public void fullMessageFillsTheCounterUntilTheNextRealCount()
+	{
+		monitor.setCapacity(40);
+		monitor.setUsed(37);
+		monitor.markFullByGame();
+		assertEquals(40, monitor.getUsed());
+		assertTrue(monitor.isEstimate());
+		assertEquals(Level.FULL, monitor.poll(0, 0, NO_REPEAT));
+
+		monitor.setUsed(38);
+		assertFalse(monitor.isEstimate());
+		assertFalse(monitor.isReportedFullByGame());
+		assertEquals(Level.OK, monitor.level(0));
+	}
+
+	@Test
+	public void newSalvageAfterAFullMessageMeansTheHoldHadRoom()
+	{
+		monitor.setCapacity(40);
+		monitor.setUsed(40);
+		monitor.markFullByGame();
+		monitor.adjust(-3);
+		assertFalse(monitor.isReportedFullByGame());
+		assertEquals(37, monitor.getUsed());
+		assertEquals(Level.OK, monitor.level(0));
+	}
+
+	@Test
 	public void resetForgetsEverything()
 	{
 		monitor.setCapacity(40);

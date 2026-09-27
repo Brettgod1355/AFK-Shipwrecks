@@ -88,6 +88,20 @@ public interface CargoFullConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "liveEstimate",
+		name = "Track between hold openings",
+		description = "The game only sends the hold's contents while it is open. Keep counting in between from "
+			+ "crewmate salvage messages and your own deposits and withdrawals. The real contents take over "
+			+ "whenever you open the hold. Estimated counts show a ~ in the counter.",
+		section = ALERTS,
+		position = 4
+	)
+	default boolean liveEstimate()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "showBanner",
 		name = "Show banner",
 		description = "Draw a large CARGO HOLD FULL banner at the top of the game while the hold is full.",
@@ -162,5 +176,19 @@ public interface CargoFullConfig extends Config
 	default boolean showCounter()
 	{
 		return true;
+	}
+
+	@ConfigItem(
+		keyName = "counterScale",
+		name = "Counter size",
+		description = "Size of the cargo counter shown while you sail. 100% is the normal RuneLite overlay size.",
+		section = ON_SCREEN,
+		position = 6
+	)
+	@Range(min = 50, max = 300)
+	@Units(Units.PERCENT)
+	default int counterScale()
+	{
+		return 100;
 	}
 }
