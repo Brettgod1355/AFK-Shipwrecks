@@ -42,6 +42,9 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.config.Notification;
+import net.runelite.client.config.NotificationSound;
+import net.runelite.client.config.RuneLiteConfig;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.RuneScapeProfileChanged;
 import net.runelite.client.plugins.Plugin;
@@ -88,6 +91,9 @@ public class CargoFullPlugin extends Plugin
 
 	@Inject
 	private ConfigManager configManager;
+
+	@Inject
+	private RuneLiteConfig runeLiteConfig;
 
 	@Inject
 	private CargoFullOverlay overlay;
@@ -390,12 +396,6 @@ public class CargoFullPlugin extends Plugin
 		return monitor.getCapacity();
 	}
 
-	/** Whether the count has been carried forward since the last time the game sent the hold's contents. */
-	public boolean isEstimate()
-	{
-		return monitor.isEstimate();
-	}
-
 	/** The banner to draw right now, or OK for none. */
 	public CargoHoldMonitor.Level bannerLevel(long now)
 	{
@@ -632,7 +632,38 @@ public class CargoFullPlugin extends Plugin
 			return;
 		}
 		alertShownAt = now;
-		notifier.notify(config.notification(), messageFor(level));
+		Notification notification = config.notification();
+		if (level == CargoHoldMonitor.Level.NEARLY_FULL && !config.earlyWarningSound())
+		{
+			notification = withoutSound(notification);
+		}
+		notifier.notify(notification, messageFor(level));
+	}
+
+	/**
+	 * The same notification with its sound turned off. A notification the player has not customised
+	 * would otherwise be replaced by RuneLite's global settings on the way out, so those are copied in
+	 * first, exactly as the Notifier does, before the sound is switched off.
+	 */
+	private Notification withoutSound(Notification base)
+	{
+		Notification resolved = base;
+		if (!base.isOverride() || !base.isInitialized())
+		{
+			resolved = new Notification()
+				.withEnabled(base.isEnabled())
+				.withInitialized(true)
+				.withOverride(true)
+				.withTray(runeLiteConfig.enableTrayNotifications())
+				.withRequestFocus(runeLiteConfig.notificationRequestFocus())
+				.withVolume(runeLiteConfig.notificationVolume())
+				.withTimeout(runeLiteConfig.notificationTimeout())
+				.withGameMessage(runeLiteConfig.enableGameMessageNotification())
+				.withFlash(runeLiteConfig.flashNotification())
+				.withFlashColor(runeLiteConfig.notificationFlashColor())
+				.withSendWhenFocused(runeLiteConfig.sendNotificationsWhenFocused());
+		}
+		return resolved.withSound(NotificationSound.OFF);
 	}
 
 	private String messageFor(CargoHoldMonitor.Level level)
@@ -640,7 +671,7 @@ public class CargoFullPlugin extends Plugin
 		String count = "";
 		if (monitor.hasCount() && !monitor.isReportedFullByGame())
 		{
-			count = " (" + (monitor.isEstimate() ? "~" : "") + monitor.getUsed() + "/" + monitor.getCapacity() + ")";
+			count = " (" + monitor.getUsed() + "/" + monitor.getCapacity() + ")";
 		}
 		return level == CargoHoldMonitor.Level.FULL
 			? "Your cargo hold is full" + count + "."

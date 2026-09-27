@@ -28,9 +28,16 @@ public interface CargoFullConfig extends Config
 	String ALERTS = "alerts";
 
 	@ConfigSection(
+		name = "Early warning",
+		description = "A heads-up before the hold is completely full",
+		position = 1
+	)
+	String EARLY_WARNING = "earlyWarning";
+
+	@ConfigSection(
 		name = "On screen",
 		description = "What is drawn over the game",
-		position = 1
+		position = 2
 	)
 	String ON_SCREEN = "onScreen";
 
@@ -48,24 +55,11 @@ public interface CargoFullConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "warnSlotsRemaining",
-		name = "Warn with slots left",
-		description = "Also alert once this many free slots remain. 0 only alerts when the hold is completely full.",
-		section = ALERTS,
-		position = 1
-	)
-	@Range(min = 0, max = 239)
-	default int warnSlotsRemaining()
-	{
-		return 0;
-	}
-
-	@ConfigItem(
 		keyName = "repeatSeconds",
 		name = "Repeat alert every",
 		description = "Send the alert again this often while the hold stays full. 0 alerts once each time it fills.",
 		section = ALERTS,
-		position = 2
+		position = 1
 	)
 	@Range(min = 0, max = 600)
 	@Units(Units.SECONDS)
@@ -80,7 +74,7 @@ public interface CargoFullConfig extends Config
 		description = "Also alert when a crewmate or the game says the cargo hold is full, "
 			+ "even if the plugin could not count the hold itself.",
 		section = ALERTS,
-		position = 3
+		position = 2
 	)
 	default boolean alertOnGameMessage()
 	{
@@ -92,11 +86,37 @@ public interface CargoFullConfig extends Config
 		name = "Track between hold openings",
 		description = "The game only sends the hold's contents while it is open. Keep counting in between from "
 			+ "crewmate salvage messages and your own deposits and withdrawals. The real contents take over "
-			+ "whenever you open the hold. Estimated counts show a ~ in the counter.",
+			+ "whenever you open the hold.",
 		section = ALERTS,
-		position = 4
+		position = 3
 	)
 	default boolean liveEstimate()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "warnSlotsRemaining",
+		name = "Warn with slots left",
+		description = "Alert once this many free slots remain, before the hold is completely full. 0 turns the early warning off.",
+		section = EARLY_WARNING,
+		position = 0
+	)
+	@Range(min = 0, max = 239)
+	default int warnSlotsRemaining()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
+		keyName = "earlyWarningSound",
+		name = "Play sound",
+		description = "Play the alert sound for the early warning. Off keeps the early warning silent while the "
+			+ "tray popup, screen flash and banner still show; the full alert always uses the Cargo alert settings.",
+		section = EARLY_WARNING,
+		position = 1
+	)
+	default boolean earlyWarningSound()
 	{
 		return true;
 	}

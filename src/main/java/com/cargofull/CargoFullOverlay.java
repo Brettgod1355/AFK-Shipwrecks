@@ -102,7 +102,7 @@ public class CargoFullOverlay extends OverlayPanel
 
 			// The counter has its own size, independent of the banner's.
 			String left = "Cargo hold";
-			String right = (plugin.isEstimate() ? "~" : "") + used + "/" + capacity;
+			String right = used + "/" + capacity;
 			float counterScale = config.counterScale() / 100f;
 			Font normal = FontManager.getRunescapeFont();
 			Font counterFont = normal.deriveFont(normal.getSize2D() * counterScale);

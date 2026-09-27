@@ -12,7 +12,8 @@ it fills up: a RuneLite notification (sound, tray popup, screen flash), a big
   next to the setting to pick the sound (including your own custom sound file),
   tray popup, screen flash, and whether to pull the client into focus.
 - **Early warning.** Optionally alert when a chosen number of free slots remain,
-  so you can head for port before the last salvage is wasted.
+  so you can head for port before the last salvage is wasted. It has its own
+  section, with a switch to keep that first heads-up silent.
 - **Repeat.** Optionally send the alert again every so often while the hold stays
   full, for the times you missed the first one.
 - **Banner.** A flashing banner at the top of the game. It stays until you make
@@ -27,8 +28,8 @@ it fills up: a RuneLite notification (sound, tray popup, screen flash), a big
   while the cargo hold is open, so in between the plugin keeps counting on its own:
   one for every crewmate *"Managed to hook some salvage"* line (Cabin Boy Jenkins
   is caught through the Sailing XP he earns you), plus your own deposits and
-  withdrawals. Estimated counts show a `~`, and opening the hold snaps the count
-  back to the real contents. The count is remembered per boat between sessions.
+  withdrawals. Opening the hold snaps the count back to the real contents. The
+  count is remembered per boat between sessions.
 - The capacity comes from the cargo hold built on your boat: each tier holds a
   different amount on a raft, skiff, or sloop. Opening the cargo hold once lets the
   plugin read the game's own numbers, which then take priority.
