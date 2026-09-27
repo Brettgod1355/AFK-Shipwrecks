@@ -12,7 +12,7 @@ repositories {
 
 def runeLiteVersion = providers.gradleProperty('runeLiteVersion').getOrElse('latest.release')
 group = 'com.cargofull'
-version = '0.1.0'
+version = '1.0'
 
 dependencies {
     compileOnly "net.runelite:client:${runeLiteVersion}"
