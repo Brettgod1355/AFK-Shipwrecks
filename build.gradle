@@ -1,0 +1,39 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    maven {
+        url = 'https://repo.runelite.net'
+        content { includeGroupByRegex("net[.]runelite.*") }
+    }
+    mavenCentral()
+}
+
+def runeLiteVersion = providers.gradleProperty('runeLiteVersion').getOrElse('latest.release')
+group = 'com.cargofull'
+version = '0.1.0'
+
+dependencies {
+    compileOnly "net.runelite:client:${runeLiteVersion}"
+    testImplementation "net.runelite:client:${runeLiteVersion}"
+    testImplementation "net.runelite:jshell:${runeLiteVersion}"
+    testImplementation 'junit:junit:4.13.2'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release.set(11)
+}
+
+test {
+    systemProperty 'java.awt.headless', 'true'
+    testLogging { events 'passed', 'skipped', 'failed' }
+}
+
+tasks.register('run', JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.cargofull.CargoFullPluginTest'
+    jvmArgs '-ea'
+    args '--developer-mode', '--debug'
+}
