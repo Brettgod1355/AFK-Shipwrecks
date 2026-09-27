@@ -1,74 +1,109 @@
 # Cargo Hold Alert
 
-**Never sail on with a full hold again.**
+A RuneLite plugin for Sailing. It tells you when your cargo hold is full, loudly,
+so you stop wasting salvage.
 
-Cargo Hold Alert watches your boat's cargo hold while you sail and tells you the
-moment it fills up: a RuneLite notification (sound, tray popup, screen flash), a
-big **CARGO HOLD FULL** banner over the game, and a live counter of used slots.
+If you've ever parked at a shipwreck, let the crew get on with hooking salvage,
+tabbed out for a bit and come back to find they'd been shrugging at a full hold
+for ten minutes, this is for you.
 
-## What you get
+## What it does
 
-- **Cargo alert.** A RuneLite notification when the hold is full. Click the gear
-  next to the setting to pick the sound (including your own custom sound file),
-  tray popup, screen flash, and whether to pull the client into focus.
-- **Early warning.** Optionally alert when a chosen number of free slots remain,
-  so you can head for port before the last salvage is wasted. It has its own
-  section, with a switch to keep that first heads-up silent.
-- **Repeat.** Optionally send the alert again every so often while the hold stays
-  full, for the times you missed the first one.
-- **Banner.** A flashing banner at the top of the game. It stays until you make
-  room, or hides after a timer of your choosing. Size, colour and flashing are yours to
-  change.
-- **Counter.** `Cargo hold 37/40` while you are aboard, coloured from green to red
-  as it fills. It has its own size setting and can be switched off.
+- Fires a notification the moment the hold fills up. Sound, tray popup, screen
+  flash, pull the client to the front, whatever you've got set up in RuneLite.
+  Custom sound files work too.
+- Puts a big red CARGO HOLD FULL banner over the game and keeps it there until
+  you make room, or for as long as you tell it to.
+- Shows a small `Cargo hold 154/160` counter while you're aboard, going from
+  green to red as it fills, so you can see it coming.
+- Optional early warning when you're down to your last few slots. It has its own
+  sound switch, so it can nag quietly and save the loud one for actually full.
+- Can repeat the alert every so often while the hold stays full, for the
+  properly AFK.
 
-## How it works
+Everything comes from game state your client already has. No web requests, no
+accounts, nothing sent anywhere, and it never clicks anything for you.
 
-- The used count comes from the hold's item container. The game only sends that
-  while the cargo hold is open, so in between the plugin keeps counting on its own:
-  one for every crewmate *"Managed to hook some salvage"* line (Cabin Boy Jenkins
-  is caught through the Sailing XP he earns you), plus your own deposits and
-  withdrawals. Opening the hold snaps the count back to the real contents. The
-  count is remembered per boat between sessions.
-- The capacity comes from the cargo hold built on your boat: each tier holds a
-  different amount on a raft, skiff, or sloop. Opening the cargo hold once lets the
-  plugin read the game's own numbers, which then take priority.
-- A crewmate saying *"The cargo hold is full"* and the matching game message also
-  trigger the alert, so you are still told even when the plugin cannot count for
-  you (for example when you are crewing on someone else's boat).
+## Settings
 
-Everything is read from the game state already sent to your client. The plugin
-makes no network requests and never acts on your behalf.
+**Cargo full**
 
-## Good to know
+- Notification. The RuneLite notification for a full hold. Hit the gear to pick
+  sound, tray, flash and focus.
+- Repeat every. Re-send the alert every so many seconds while the hold stays
+  full. 0 means once per fill.
 
-- Only cargo holds are tracked. The trawling net has its own storage and is not
-  covered yet.
-- The counter only shows while you are aboard a boat. Alerts fire wherever you are
-  when the hold fills.
-- The counter needs one real look at the hold to start from. If it is missing after
-  you first enable the plugin, open the cargo hold once and it will follow from there.
-- Stackable items take one slot for the whole stack, exactly as in the game.
+**Early warning**
 
-## Development
+- Warn with slots left. Alert when this many free slots remain. 0 turns it off.
+- Play sound. Untick to keep the early warning silent. The banner, tray popup
+  and flash still happen.
 
-```bash
-./gradlew test
-```
+**Banner**
 
-```bash
-./gradlew run
-```
+- Show banner and Flash banner do what they say.
+- Banner size, 50% to 300%.
+- Hide banner after, in seconds. 0 keeps it up until the hold has space again.
+- Banner colour.
 
-`run` starts a RuneLite developer client with the plugin loaded. In IntelliJ, run
-`CargoFullPluginTest` from `src/test`.
+**Counter**
 
-## Feedback
+- Show cargo counter.
+- Counter size, 50% to 300%. It's a small box that hugs its text and only grows
+  while an alert is up.
 
-Problems or ideas? Open an issue at
-[github.com/Brettgod1355/Cargo-Hold-Alert/issues](https://github.com/Brettgod1355/Cargo-Hold-Alert/issues).
+## How it counts
+
+Here's the honest version, because it matters.
+
+The game only sends your client the hold's contents while the cargo hold
+interface is open. Close it and the client hears nothing about what your crew
+are stuffing in there. So the plugin does two things:
+
+1. Whenever the hold is open, or the game sends it for any other reason, it takes
+   the real count. That's the truth and it always wins.
+2. In between, it keeps a running tally. Every time a crewmate says *"Managed to
+   hook some salvage! I'll put it in the cargo hold."* that's one more. Cabin Boy
+   Jenkins only ever says "Wooo", so he's counted from the Sailing XP he hands
+   you. Your own deposits and withdrawals are picked up from your inventory
+   changing, including the quick Deposit on the hold itself that never opens the
+   interface.
+
+The capacity comes from the cargo hold built on your boat. Each tier holds a
+different amount on a raft, skiff and sloop: a basic hold on a raft takes 20, a
+rosewood hold on a sloop takes 240. Opening the hold once lets the plugin read
+the game's own number, which it then trusts over its table.
+
+On top of all that, if a crewmate says *"The cargo hold is full"* you get the
+alert no matter what the tally thinks. That's also what fires when you're crewing
+on someone else's boat and can't count their hold at all.
+
+The tally is remembered per boat, so it survives logging out and restarting the
+client.
+
+## Things worth knowing
+
+- First run: the counter needs one real look at the hold to start from. Open the
+  cargo hold once and it'll follow from there.
+- Only cargo holds. The trawling net has its own storage and isn't tracked, yet.
+- Stackables take one slot for the whole stack, same as in the game.
+- The tally can drift if something goes in or out that the plugin can't see.
+  Opening the hold fixes it instantly. If you find a case where it's
+  consistently off, tell me what you were doing and I'll chase it.
+
+## Install
+
+Search for **Cargo Hold Alert** in the RuneLite Plugin Hub.
+
+To run it from source, clone the repo and use `./gradlew run` for a dev client
+or `./gradlew test` for the tests. In IntelliJ, run `CargoFullPluginTest`.
+
+## Found a bug? Want something?
+
+Open an issue: <https://github.com/Brettgod1355/Cargo-Hold-Alert/issues>
 
 ## License
 
 BSD 2-Clause. See [LICENSE](LICENSE) and
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Not affiliated with Jagex or
+RuneLite.

@@ -66,7 +66,12 @@ import org.slf4j.LoggerFactory;
 @PluginDescriptor(
 	name = "Cargo Hold Alert",
 	description = "Sound and on-screen alerts when your boat's cargo hold fills up while sailing",
-	tags = {"sailing", "cargo", "hold", "salvage", "boat", "notification", "alert"}
+	tags = {
+		"sailing", "sail", "sailor", "boat", "ship", "raft", "skiff", "sloop", "sea", "ocean", "port", "voyage",
+		"cargo", "cargo hold", "hold", "capacity", "full", "salvage", "salvaging", "shipwreck", "wreck",
+		"crew", "crewmate", "deckhand", "alert", "notification", "notify", "reminder", "warning", "sound",
+		"overlay", "counter", "banner", "afk", "idle"
+	}
 )
 public class CargoFullPlugin extends Plugin
 {
