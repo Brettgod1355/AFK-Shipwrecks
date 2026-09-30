@@ -3,7 +3,7 @@
  * Copyright (c) 2026, Brettgod1355 <github.com/Brettgod1355>
  * See LICENSE for redistribution conditions and disclaimer.
  */
-package com.afksalvaging;
+package com.cargofull;
 
 import net.runelite.api.Item;
 
@@ -23,16 +23,10 @@ public final class CargoHoldMonitor
 		FULL
 	}
 
-	/** Crew salvage arriving while the tally says full before the tally is pulled back by that many. */
-	public static final int OVERCOUNT_EVIDENCE = 2;
-
 	private int used = CargoHoldCapacity.UNKNOWN;
 	private int capacity = CargoHoldCapacity.UNKNOWN;
 	private boolean estimate;
 	private boolean reportedFullByGame;
-	private int overcountEvidence;
-	/** The tally has been shown to be too high; it is held below capacity until something real arrives. */
-	private boolean driftKnown;
 	private Level alerted = Level.OK;
 	private long lastAlertAt;
 
@@ -60,8 +54,6 @@ public final class CargoHoldMonitor
 		this.used = used < 0 ? CargoHoldCapacity.UNKNOWN : used;
 		estimate = false;
 		reportedFullByGame = false;
-		overcountEvidence = 0;
-		driftKnown = false;
 	}
 
 	/** Restores a remembered count that may be out of date, for example after logging in. */
@@ -70,8 +62,6 @@ public final class CargoHoldMonitor
 		this.used = used < 0 ? CargoHoldCapacity.UNKNOWN : used;
 		estimate = true;
 		reportedFullByGame = false;
-		overcountEvidence = 0;
-		driftKnown = false;
 	}
 
 	/**
@@ -87,71 +77,13 @@ public final class CargoHoldMonitor
 			return false;
 		}
 		int limit = capacity == CargoHoldCapacity.UNKNOWN ? CargoHoldCapacity.MAX_SLOTS : Math.max(capacity, used);
-		if (driftKnown && capacity != CargoHoldCapacity.UNKNOWN)
-		{
-			// A tally that was already proved too high may not claim full again on its own.
-			limit = Math.min(limit, capacity - 1);
-		}
 		used = Math.max(0, Math.min(limit, used + delta));
 		estimate = true;
-		if (delta != 0 && !(delta > 0 && used >= capacity && capacity != CargoHoldCapacity.UNKNOWN))
+		if (delta != 0)
 		{
-			// Cargo moving cancels a full message, unless the hold is still at capacity anyway.
 			reportedFullByGame = false;
 		}
-		if (delta < 0)
-		{
-			overcountEvidence = 0;
-		}
 		return true;
-	}
-
-	/**
-	 * A crewmate hooked salvage while the tally already said the hold was full. Crew stop when the
-	 * hold is really full, so the tally was too high. One such event might be a race with the count;
-	 * after {@link #OVERCOUNT_EVIDENCE} of them the tally is pulled back below capacity and held
-	 * there until a real count or the game's own word arrives, so a drifted count can neither leave
-	 * the timer stuck at "full" nor keep re-announcing it.
-	 *
-	 * @return true when the tally was corrected
-	 */
-	public boolean crewSalvagedWhileFull()
-	{
-		if (!isFullByEstimate())
-		{
-			return false;
-		}
-		overcountEvidence++;
-		if (overcountEvidence < OVERCOUNT_EVIDENCE)
-		{
-			return false;
-		}
-		driftKnown = true;
-		used = Math.max(0, capacity - 1);
-		estimate = true;
-		return true;
-	}
-
-	/** Whether the tally was proved too high and is being held below capacity until it can be checked. */
-	public boolean isDriftKnown()
-	{
-		return driftKnown;
-	}
-
-	/** Whether the hold reads full only because of the running tally, not a real count or the game saying so. */
-	public boolean isFullByEstimate()
-	{
-		return estimate && !reportedFullByGame && hasCount() && used >= capacity;
-	}
-
-	/** Whether the hold is known full: the game said so, or an exact count reached the capacity. */
-	public boolean isConfirmedFull()
-	{
-		if (reportedFullByGame)
-		{
-			return true;
-		}
-		return !estimate && hasCount() && used >= capacity;
 	}
 
 	public void setCapacity(int capacity)
@@ -167,7 +99,6 @@ public final class CargoHoldMonitor
 	public void markFullByGame()
 	{
 		reportedFullByGame = true;
-		driftKnown = false;
 		if (capacity != CargoHoldCapacity.UNKNOWN && (used == CargoHoldCapacity.UNKNOWN || used < capacity))
 		{
 			used = capacity;
@@ -290,8 +221,6 @@ public final class CargoHoldMonitor
 		capacity = CargoHoldCapacity.UNKNOWN;
 		estimate = false;
 		reportedFullByGame = false;
-		overcountEvidence = 0;
-		driftKnown = false;
 		alerted = Level.OK;
 		lastAlertAt = 0;
 	}

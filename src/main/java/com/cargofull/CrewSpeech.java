@@ -3,7 +3,7 @@
  * Copyright (c) 2026, Brettgod1355 <github.com/Brettgod1355>
  * See LICENSE for redistribution conditions and disclaimer.
  */
-package com.afksalvaging;
+package com.cargofull;
 
 import java.util.regex.Pattern;
 import net.runelite.client.util.Text;
@@ -23,10 +23,6 @@ public final class CrewSpeech
 	private static final String[] CREW_SALVAGE = {"hook some salvage", "put it in the cargo hold"};
 	/** Game message when the player deposits carried cargo without opening the hold. */
 	private static final String PLAYER_DEPOSIT = "you deposit some cargo into the cargo hold";
-	/** Game message when the boat is somewhere it may not salvage. */
-	private static final String HAZARDOUS = "not safe to salvage while in hazardous waters";
-	/** Game message when the wreck the player was working sinks. */
-	private static final String WRECK_SUNK = "reclaimed by the sea";
 	/** The ghostly cabin boy only ever says variations of "Wooo wooo." */
 	private static final Pattern GHOST_SPEECH = Pattern.compile("(?i)^(?:w+o+[ ,]*)+[.!]*$");
 
@@ -62,18 +58,6 @@ public final class CrewSpeech
 	public static boolean reportsPlayerDeposit(String text)
 	{
 		return plain(text).contains(PLAYER_DEPOSIT);
-	}
-
-	/** Whether the game refused to salvage because the boat is in hazardous waters. */
-	public static boolean reportsHazardousWaters(String text)
-	{
-		return plain(text).contains(HAZARDOUS);
-	}
-
-	/** Whether the game says the wreck the player was salvaging has sunk. */
-	public static boolean reportsWreckSunk(String text)
-	{
-		return plain(text).contains(WRECK_SUNK);
 	}
 
 	/**
