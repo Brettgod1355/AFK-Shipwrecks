@@ -92,8 +92,9 @@ Hooks    Jenkins, Jolly Jim
 Wrecks   2 up (Merchant) · last sinks in ≤ 1:20
 ```
 
-The "~" means the rate still rests mostly on the published tables; it goes away after about 25
-salvages have been seen. Other lines you may see:
+The time is always a forecast, hence "about". Early on it rests mostly on the published tables and
+firms up after about 25 salvages have been seen; until then the "Left to salvage" line, shown
+while waiting for a wreck, carries a "~". Other lines you may see:
 
 - `open the cargo hold once to start`: it needs one real count to work from.
 - `Waiting for a wreck · 1:20 so far` and `Left to salvage · 34 min`: nobody can salvage until a
