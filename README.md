@@ -1,102 +1,126 @@
-# Cargo Hold Alert
+# AFK Salvaging
 
-A RuneLite plugin for Sailing. It tells you when your cargo hold is full, loudly,
-so you stop wasting salvage.
+A RuneLite plugin for Sailing. Park at a shipwreck, put your crew on the hooks, and it tells you
+how long until the cargo hold is full, then tells you loudly when it is.
 
-If you've ever parked at a shipwreck, let the crew get on with hooking salvage,
-tabbed out for a bit and come back to find they'd been shrugging at a full hold
-for ten minutes, this is for you.
+It grew out of Cargo Hold Alert, and everything that plugin did is still here: the full-hold
+alert, the banner, the early warning and the cargo counter. What is new is the timer and the
+things an AFK salvager actually needs to hear about: a hook standing empty, the crew having
+stopped, and the fact that your own hook does not restart itself.
 
 ## What it does
 
-- Fires a notification the moment the hold fills up. Sound, tray popup, screen
-  flash, pull the client to the front, whatever you've got set up in RuneLite.
-  Custom sound files work too.
-- Puts a big red CARGO HOLD FULL banner over the game and keeps it there until
-  you make room, or for as long as you tell it to.
-- Shows a small `Cargo hold 154/160` counter while you're aboard, going from
-  green to red as it fills, so you can see it coming.
-- Optional early warning when you're down to your last few slots. It has its own
-  sound switch, so it can nag quietly and save the loud one for actually full.
-- Can repeat the alert every so often while the hold stays full, for the
-  properly AFK.
+- **Countdown to a full hold.** "Hold full in ~52 min", with the clock time if you like. It is
+  built from the game's published salvage chances for your wreck, hooks and level, then corrected
+  by what your crew actually bring in, so it shows a number from the first tick and gets better
+  as it goes. Under ten minutes it counts in seconds.
+- **Knows about wrecks sinking.** A wreck lasts about a fixed time once anyone starts salvaging
+  it (the wiki's figures, from one minute for a small wreck to four for a merchant). The plugin
+  tracks the wrecks in reach of your hooks, shows the longest one has left at most, and when none
+  is up the timer pauses and says so rather than lying.
+- **Knows about salvaging worlds.** On the official salvaging worlds (596 and 597, and any you
+  add) every wreck site is being worked, so a sunk wreck near you is replaced quickly. Elsewhere
+  your crew can sit idle for a long time. The plugin measures how much of the time a wreck has
+  been up and folds that into the estimate. If you have been waiting a while on an ordinary
+  world it mentions the salvaging worlds, once.
+- **Counts you too.** Salvage you hook yourself goes to your inventory first; the plugin counts
+  it as bound for the hold and knows you stop when your inventory is full or the wreck sinks.
+  Salvage you withdraw to sort is never counted, and sorting shows its own little countdown.
+- **Hook reminders.** Step off your hook to sort and forget to hand it over, and after a short
+  grace period it reminds you: "A salvaging hook is empty. Assign a crewmate to it." If nobody
+  aboard can take the hook (a crewmate needs enough deckhandiness for it) and a wreck is up, it
+  asks you to click the hook instead, because unlike your crew you do not restart by yourself.
+- **Crew stopped.** Crew salvage on your level, boosted or not. If it drops below what the wreck
+  needs they stop; the plugin says so.
+- **Full-hold alert.** Sound, tray popup, screen flash, focus, whatever you set up in RuneLite,
+  plus a big red banner and an optional early warning and repeat. As before.
+- **Idle logout.** If the hold will take longer to fill than you have left before the game logs
+  you out for idling, it shows that too. It cannot press a key for you.
 
-Everything comes from game state your client already has. No web requests, no
-accounts, nothing sent anywhere, and it never clicks anything for you.
+Everything comes from game state your client already has. No web requests other than RuneLite's
+own world list, no accounts, nothing sent anywhere, and it never clicks anything for you.
+
+## The overlay
+
+A small panel at the top of the game while you are on your own boat:
+
+```
+Hold full in        ~52 min
+                   at 14:32
+Cargo hold          188/240
+Hooks    Jenkins, Jolly Jim
+Wrecks   2 up (Merchant) · last sinks in ≤ 1:20
+```
+
+The "~" means the rate still rests mostly on the published tables; it goes away after about 25
+salvages have been seen. Other lines you may see:
+
+- `open the cargo hold once to start`: it needs one real count to work from.
+- `Waiting for a wreck · 1:20 so far` and `Left to salvage · 34 min`: nobody can salvage until a
+  wreck rises; the second line is what remains once one does.
+- `Hooks  Jenkins · 1 empty (no crewmate can use it)`: a hook is standing empty.
+- `Crew stopped  Sailing level too low (needs 87)`.
+- `Hold  full by the tally; open it to check`: the running tally says full, but nothing has
+  confirmed it. If the crew keep bringing salvage in, the tally was high: it becomes
+  `Hold  tally has drifted; open it to resync` and stays there, without alerting again, until you
+  open the hold or a crewmate says it is full.
+- `Timer  crew do not seem to be salvaging`: far more salvage was expected than has arrived. Check
+  the hooks are really in range of the wreck. The last countdown stays up while it works this out.
 
 ## Settings
 
-**Cargo full**
+**Timer**: show timer (turning it off hides the countdown lines; the status lines, such as waiting
+for a wreck, stay); show clock time; count salvage you hooked; salvaging worlds (default
+`596, 597`); salvaging world tip.
 
-- Notification. The RuneLite notification for a full hold. Hit the gear to pick
-  sound, tray, flash and focus.
-- Repeat every. Re-send the alert every so many seconds while the hold stays
-  full. 0 means once per fill.
+**Reminders**: three RuneLite notifications you can shape separately (hook empty with a crewmate
+free; your hook is idle; crew stopped because your level is too low), the grace period before the
+first reminder (15 s by default; using the hold buys a little more, settling in to sort shortens
+it) and how often to repeat.
 
-**Early warning**
+**Cargo full** and **Early warning**: as before. **Banner**: as before, plus a colour for the
+reminder banner. **Overlay**: the cargo counter, the hooks line, the wrecks line and text size.
 
-- Warn with slots left. Alert when this many free slots remain. 0 turns it off.
-- Play sound. Untick to keep the early warning silent. The banner, tray popup
-  and flash still happen.
+## What it can and cannot know
 
-**Banner**
+Here is the honest version, because a countdown invites more trust than a counter.
 
-- Show banner and Flash banner do what they say.
-- Banner size, 50% to 300%.
-- Hide banner after, in seconds. 0 keeps it up until the hold has space again.
-- Banner colour.
-
-**Counter**
-
-- Show cargo counter.
-- Counter size, 50% to 300%. It's a small box that hugs its text and only grows
-  while an alert is up.
-
-## How it counts
-
-Here's the honest version, because it matters.
-
-The game only sends your client the hold's contents while the cargo hold
-interface is open. Close it and the client hears nothing about what your crew
-are stuffing in there. So the plugin does two things:
-
-1. Whenever the hold is open, or the game sends it for any other reason, it takes
-   the real count. That's the truth and it always wins.
-2. In between, it keeps a running tally. Every time a crewmate says *"Managed to
-   hook some salvage! I'll put it in the cargo hold."* that's one more. Cabin Boy
-   Jenkins only ever says "Wooo", so he's counted from the Sailing XP he hands
-   you. Your own deposits and withdrawals are picked up from your inventory
-   changing, including the quick Deposit on the hold itself that never opens the
-   interface.
-
-The capacity comes from the cargo hold built on your boat. Each tier holds a
-different amount on a raft, skiff and sloop: a basic hold on a raft takes 20, a
-rosewood hold on a sloop takes 240. Opening the hold once lets the plugin read
-the game's own number, which it then trusts over its table.
-
-On top of all that, if a crewmate says *"The cargo hold is full"* you get the
-alert no matter what the tally thinks. That's also what fires when you're crewing
-on someone else's boat and can't count their hold at all.
-
-The tally is remembered per boat, so it survives logging out and restarting the
-client.
-
-## Things worth knowing
-
-- First run: the counter needs one real look at the hold to start from. Open the
-  cargo hold once and it'll follow from there.
-- Only cargo holds. The trawling net has its own storage and isn't tracked, yet.
-- Stackables take one slot for the whole stack, same as in the game.
-- The tally can drift if something goes in or out that the plugin can't see.
-  Opening the hold fixes it instantly. If you find a case where it's
-  consistently off, tell me what you were doing and I'll chase it.
+1. **The hold count.** The game only sends the hold's contents while the hold interface is open.
+   Between openings the plugin keeps a tally: one for each crewmate line *"Managed to hook some
+   salvage!"*, one for each Sailing XP drop that matches a crewmate's share (a crewmate earns you
+   10% of the wreck's XP per point of deckhandiness, so the size of the drop says who earned it;
+   this is how Cabin Boy Jenkins, who only says "Wooo", is counted), and your own deposits and
+   withdrawals from your inventory changing. The tally is remembered per boat. Opening the hold
+   resyncs it instantly.
+2. **The rate.** It starts from the wiki's success tables for your wreck, hook and Sailing level
+   and learns a correction from what actually arrives, remembered per wreck between sessions.
+   Expect the first countdown to be within about 20%; it tightens over the next quarter hour.
+3. **Wreck timers are ceilings.** A wreck's clock starts when *any* player first salvages it,
+   which your client cannot see. "Sinks in ≤ 2:40" means no later than that, counted from the
+   moment your own hooks started working it.
+4. **Respawns.** When a wreck sinks the next one rises somewhere in the area, not necessarily
+   next to you. The plugin cannot predict when your site refills; it measures how often a wreck
+   has been up and shows how long you have waited. That is why the salvaging worlds are worth it.
+5. **Your own hook stops.** When the wreck you are on sinks you stop and do not restart, unlike
+   your crew. The plugin tells you; it cannot click for you.
+6. **Crewmate stats** come from the game's crew table, with the wiki's figures as a fallback and
+   a middling guess for anyone it cannot place. A keg of whirlpool surprise is taken into account.
+7. **Only your own boat.** On someone else's boat you get one notification when their crew say
+   the hold is full, and nothing else: no timer, no counter, no reminders. Barracuda Trials,
+   trawling and courier cargo are not tracked.
+8. **Fully AFK still means touching the client** before the game's idle logout. The overlay
+   warns when the hold will outlast it.
+9. **Things that need confirming in game.** The player animations for salvaging and sorting, the
+   crew assignment values for the two sloop hooks, and the hook's reach (taken as 8 tiles) come from
+   other plugins' observations and the wiki rather than from the game's code. If you find a case
+   where the plugin is consistently wrong, tell me what you were doing and I'll chase it.
 
 ## Install
 
-Search for **Cargo Hold Alert** in the RuneLite Plugin Hub.
+Search for **AFK Salvaging** in the RuneLite Plugin Hub.
 
-To run it from source, clone the repo and use `./gradlew run` for a dev client
-or `./gradlew test` for the tests. In IntelliJ, run `CargoFullPluginTest`.
+To run it from source, clone the repo and use `./gradlew run` for a dev client or
+`./gradlew test` for the tests. In IntelliJ, run `AfkSalvagingPluginTest`.
 
 ## Found a bug? Want something?
 

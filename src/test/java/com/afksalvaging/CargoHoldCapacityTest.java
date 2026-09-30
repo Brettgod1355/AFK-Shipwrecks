@@ -3,7 +3,7 @@
  * Copyright (c) 2026, Brettgod1355 <github.com/Brettgod1355>
  * See LICENSE for redistribution conditions and disclaimer.
  */
-package com.cargofull;
+package com.afksalvaging;
 
 import net.runelite.api.gameval.ObjectID;
 import org.junit.Test;
