@@ -32,8 +32,11 @@ public final class SalvageRateModel
 	public static final double PRIOR_WEIGHT = 25;
 	/** Observed salvage before the estimate is called confident rather than approximate. */
 	public static final int CONFIDENT_EVENTS = 25;
-	/** Expected salvage without any arriving before the occupants are presumed not to be salvaging. */
-	public static final double STALL_EXPECTED = 6;
+	/**
+	 * Expected salvage without any arriving before the occupants are presumed not to be salvaging.
+	 * Ten keeps a run of plain bad luck (about one in twenty thousand gaps) from tripping it.
+	 */
+	public static final double STALL_EXPECTED = 10;
 	private static final double MIN_CORRECTION = 0.1;
 	private static final double MAX_CORRECTION = 4.0;
 

@@ -37,6 +37,19 @@ public class DurationsTest
 	}
 
 	@Test
+	public void coarseFormIsSecondsWhenCloseAndMinutesWhenNot()
+	{
+		assertEquals("9:00", Durations.coarse(9 * 60_000L));
+		assertEquals("9:59", Durations.coarse(Durations.FINE_MILLIS - 1_000));
+		assertEquals("10 min", Durations.coarse(Durations.FINE_MILLIS));
+		assertEquals("52 min", Durations.coarse(52 * 60_000L + 10_000));
+		assertEquals("53 min", Durations.coarse(52 * 60_000L + 30_000));
+		assertEquals("1 h", Durations.coarse(3_600_000));
+		assertEquals("1 h 30 min", Durations.coarse(90 * 60_000L));
+		assertEquals("?", Durations.coarse(-1));
+	}
+
+	@Test
 	public void clockTimeIsWhenTheCountdownEnds()
 	{
 		long noon = 12 * 3_600_000L;

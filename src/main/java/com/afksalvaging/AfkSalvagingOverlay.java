@@ -35,8 +35,6 @@ public class AfkSalvagingOverlay extends OverlayPanel
 	/** Minimum space between a line's label and its value. */
 	private static final int LINE_GAP = 12;
 	private static final long FLASH_PERIOD_MS = 500;
-	/** Under this the countdown shows seconds; above it, minutes. */
-	private static final long FINE_COUNTDOWN_MILLIS = 10 * 60_000L;
 	private static final Color COUNTER_EMPTY = new Color(70, 200, 70);
 	private static final Color COUNTER_FULL = new Color(230, 60, 60);
 	private static final Color AMBER = new Color(255, 190, 70);
@@ -84,14 +82,13 @@ public class AfkSalvagingOverlay extends OverlayPanel
 
 		CargoHoldMonitor.Level holdBanner = plugin.bannerLevel(now);
 		HookWatch.Reason reminder = holdBanner == CargoHoldMonitor.Level.OK ? plugin.reminderBanner(now) : null;
-		boolean sailing = plugin.isSailing();
 		boolean aboardOwnBoat = view.estimate.getState() != AfkEstimate.State.NOT_SAILING;
 		List<Line> lines = new ArrayList<>();
 		if (aboardOwnBoat)
 		{
-			addTimerLines(lines, view, now);
+			addTimerLines(lines, view, holdBanner);
 		}
-		if (config.showCounter() && sailing && monitor.hasCount())
+		if (config.showCounter() && aboardOwnBoat && monitor.hasCount())
 		{
 			int used = monitor.getUsed();
 			int capacity = monitor.getCapacity();
@@ -177,14 +174,12 @@ public class AfkSalvagingOverlay extends OverlayPanel
 		return super.render(graphics);
 	}
 
-	private void addTimerLines(List<Line> lines, AfkSession.View view, long now)
+	private void addTimerLines(List<Line> lines, AfkSession.View view, CargoHoldMonitor.Level holdBanner)
 	{
-		if (!config.showTimer())
-		{
-			return;
-		}
 		AfkEstimate estimate = view.estimate;
 		String approx = estimate.isApproximate() ? "~" : "";
+		boolean timer = config.showTimer();
+		boolean crew = !view.crewOnHooks.isEmpty();
 		switch (estimate.getState())
 		{
 			case NO_HOOK:
@@ -194,9 +189,16 @@ public class AfkSalvagingOverlay extends OverlayPanel
 				lines.add(new Line("Timer", "open the cargo hold once to start", AMBER));
 				break;
 			case HOLD_FULL:
+				if (holdBanner == CargoHoldMonitor.Level.OK)
+				{
+					lines.add(new Line("Hold", "full", COUNTER_FULL));
+				}
 				break;
 			case HOLD_FULL_UNCONFIRMED:
-				lines.add(new Line("Hold", "should be full, waiting for the crew to confirm", AMBER));
+				lines.add(new Line("Hold", "full by the tally; open it to check", AMBER));
+				break;
+			case HOLD_DRIFTED:
+				lines.add(new Line("Hold", "tally has drifted; open it to resync", AMBER));
 				break;
 			case NOBODY_SALVAGING:
 				lines.add(new Line("Timer", "no one is on a hook", DIM));
@@ -205,34 +207,56 @@ public class AfkSalvagingOverlay extends OverlayPanel
 				lines.add(new Line("Timer", "not safe to salvage here", BAD));
 				break;
 			case LEVEL_TOO_LOW:
-				lines.add(new Line("Crew stopped", "Sailing level too low" + (view.levelNeeded > 0 ? " (needs " + view.levelNeeded + ")" : ""), BAD));
+				lines.add(new Line(crew ? "Crew stopped" : "Timer",
+					"Sailing level too low" + (view.levelNeeded > 0 ? " (needs " + view.levelNeeded + ")" : ""), BAD));
 				break;
 			case WAITING_FOR_WRECK:
 				lines.add(new Line("Waiting for a wreck", view.waitingMillis >= 0 ? Durations.countdown(view.waitingMillis) + " so far" : "", AMBER));
-				if (estimate.hasWork())
+				if (timer && estimate.hasWork())
 				{
-					lines.add(new Line("Left to salvage", approx + coarse(estimate.getWorkMillis()), DIM));
+					lines.add(new Line("Left to salvage", approx + Durations.coarse(estimate.getWorkMillis()), DIM));
 				}
 				if (view.showWorldTip && config.worldTip())
 				{
-					lines.add(new Line("Tip", "wrecks refill faster on worlds " + SalvagingWorlds.DEFAULT_WORLDS, DIM));
+					lines.add(new Line("Tip", "wrecks refill faster on worlds " + plugin.salvagingWorldsText(), DIM));
 				}
 				break;
 			case STALLED:
-				lines.add(new Line("Timer", "crew do not seem to be salvaging", BAD));
+				lines.add(new Line("Timer", crew ? "crew do not seem to be salvaging" : "no salvage is arriving; is the hook in reach?", BAD));
+				break;
+			case PLAYER_HOOK_IDLE:
+				lines.add(new Line("Your hook", "idle; click it to salvage", AMBER));
+				break;
+			case INVENTORY_FULL:
+				lines.add(new Line("Inventory", "full; deposit to carry on", AMBER));
 				break;
 			case INVENTORY_FILLS_FIRST:
-				lines.add(new Line("Inventory full in", Durations.countdown(view.countdownMillis), AMBER));
-				lines.add(new Line("", "deposit to keep the hold filling", DIM));
+				if (timer)
+				{
+					lines.add(new Line("Inventory full in", Durations.countdown(view.countdownMillis), AMBER));
+					lines.add(new Line("", "deposit to keep the hold filling", DIM));
+				}
 				break;
 			case WRECK_SINKS_FIRST:
-				lines.add(new Line("Wreck sinks in", "≤ " + Durations.countdown(view.countdownMillis), AMBER));
-				lines.add(new Line("", "you stop then; crew carry on", DIM));
+				if (timer)
+				{
+					lines.add(new Line("Wreck sinks in", "≤ " + Durations.countdown(view.countdownMillis), AMBER));
+					lines.add(new Line("", "you stop then; nobody else is on a hook", DIM));
+				}
 				break;
 			case COUNTING_DOWN:
 			{
+				if (!timer)
+				{
+					break;
+				}
 				long remaining = view.countdownMillis;
-				lines.add(new Line("Hold full in", approx + coarse(remaining), Color.WHITE));
+				if (remaining == 0 && estimate.getWorkMillis() == 0)
+				{
+					lines.add(new Line("Hold", "full once you deposit your salvage", AMBER));
+					break;
+				}
+				lines.add(new Line("Hold full in", approx + Durations.coarse(remaining), Color.WHITE));
 				if (config.showClockTime() && remaining >= 0)
 				{
 					lines.add(new Line("", "at " + Durations.clockAfter(System.currentTimeMillis(), remaining, ZoneId.systemDefault()), DIM));
@@ -293,9 +317,9 @@ public class AfkSalvagingOverlay extends OverlayPanel
 	{
 		if (view.wrecksUp <= 0)
 		{
-			if (view.levelNeeded > 0)
+			if (view.higherWrecksUp > 0)
 			{
-				return new Line("Wrecks", "one up, needs level " + view.levelNeeded, BAD);
+				return new Line("Wrecks", view.higherWrecksUp + " up, need level " + view.levelNeeded, BAD);
 			}
 			return new Line("Wrecks", "none in reach", DIM);
 		}
@@ -313,24 +337,4 @@ public class AfkSalvagingOverlay extends OverlayPanel
 		return new Line("Wrecks", text.toString(), GOOD);
 	}
 
-	/** Seconds when it is close, whole minutes when it is not: the estimate is not that precise. */
-	private static String coarse(long millis)
-	{
-		if (millis < 0)
-		{
-			return "?";
-		}
-		if (millis < FINE_COUNTDOWN_MILLIS)
-		{
-			return Durations.countdown(millis);
-		}
-		long minutes = (millis + 30_000) / 60_000;
-		long hours = minutes / 60;
-		long rest = minutes % 60;
-		if (hours > 0)
-		{
-			return hours + " h " + (rest > 0 ? rest + " min" : "");
-		}
-		return minutes + " min";
-	}
 }

@@ -32,6 +32,20 @@ public class SalvageRateModelTest
 	}
 
 	@Test
+	public void becomesConfidentAtTwentyFiveSalvages()
+	{
+		for (int i = 0; i < SalvageRateModel.CONFIDENT_EVENTS - 1; i++)
+		{
+			steady.addExpected(PER_TICK);
+			steady.recordSalvage();
+		}
+		assertFalse(steady.isConfident());
+		steady.recordSalvage();
+		assertTrue(steady.isConfident());
+		assertEquals(SalvageRateModel.CONFIDENT_EVENTS, steady.lifetimeEvents());
+	}
+
+	@Test
 	public void learnsThatTheCrewAreSlowerThanPublished()
 	{
 		// Published: 1 per 25 ticks. Actual: 1 per 50 ticks, i.e. half.
@@ -133,11 +147,14 @@ public class SalvageRateModelTest
 	@Test
 	public void stallsWhenFarMoreWasExpectedThanArrived()
 	{
-		for (int tick = 1; tick <= 149; tick++)
+		// Ten expected pieces with none arriving: 250 ticks at this rate, two and a half minutes.
+		for (int tick = 1; tick <= 249; tick++)
 		{
 			model.addExpected(PER_TICK);
 		}
 		assertFalse(model.isStalled());
+		// One or two more ticks, allowing for the sum not being exact in floating point.
+		model.addExpected(PER_TICK);
 		model.addExpected(PER_TICK);
 		assertTrue(model.isStalled());
 		model.recordSalvage();

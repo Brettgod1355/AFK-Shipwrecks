@@ -58,6 +58,33 @@ public final class Durations
 		return text;
 	}
 
+	/** Under this the countdown shows seconds; above it, minutes. */
+	public static final long FINE_MILLIS = 10 * 60_000L;
+
+	/**
+	 * Seconds when it is close, whole minutes when it is not, because the estimate is not that
+	 * precise: {@code 4:31}, {@code 52 min}, {@code 1 h}, {@code 1 h 30 min}. A negative value is "?".
+	 */
+	public static String coarse(long millis)
+	{
+		if (millis < 0)
+		{
+			return "?";
+		}
+		if (millis < FINE_MILLIS)
+		{
+			return countdown(millis);
+		}
+		long minutes = (millis + 30_000) / 60_000;
+		long hours = minutes / 60;
+		long rest = minutes % 60;
+		if (hours == 0)
+		{
+			return minutes + " min";
+		}
+		return rest > 0 ? hours + " h " + rest + " min" : hours + " h";
+	}
+
 	/** The local wall-clock time this many milliseconds after {@code now}, as {@code HH:mm}. */
 	public static String clockAfter(long now, long millis, ZoneId zone)
 	{

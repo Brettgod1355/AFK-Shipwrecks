@@ -14,9 +14,10 @@ stopped, and the fact that your own hook does not restart itself.
   built from the game's published salvage chances for your wreck, hooks and level, then corrected
   by what your crew actually bring in, so it shows a number from the first tick and gets better
   as it goes. Under ten minutes it counts in seconds.
-- **Knows about wrecks sinking.** A wreck lasts a fixed time once anyone starts salvaging it. The
-  plugin tracks the wrecks in reach of your hooks, shows the longest one has left at most, and
-  when none is up the timer pauses and says so rather than lying.
+- **Knows about wrecks sinking.** A wreck lasts about a fixed time once anyone starts salvaging
+  it (the wiki's figures, from one minute for a small wreck to four for a merchant). The plugin
+  tracks the wrecks in reach of your hooks, shows the longest one has left at most, and when none
+  is up the timer pauses and says so rather than lying.
 - **Knows about salvaging worlds.** On the official salvaging worlds (596 and 597, and any you
   add) every wreck site is being worked, so a sunk wreck near you is replaced quickly. Elsewhere
   your crew can sit idle for a long time. The plugin measures how much of the time a wreck has
@@ -59,14 +60,17 @@ salvages have been seen. Other lines you may see:
   wreck rises; the second line is what remains once one does.
 - `Hooks  Jenkins · 1 empty (no crewmate can use it)`: a hook is standing empty.
 - `Crew stopped  Sailing level too low (needs 87)`.
-- `Hold  should be full, waiting for the crew to confirm`: the running tally says full, but nothing
-  has confirmed it. If the crew keep bringing salvage in, the tally was high and it corrects itself.
+- `Hold  full by the tally; open it to check`: the running tally says full, but nothing has
+  confirmed it. If the crew keep bringing salvage in, the tally was high: it becomes
+  `Hold  tally has drifted; open it to resync` and stays there, without alerting again, until you
+  open the hold or a crewmate says it is full.
 - `Timer  crew do not seem to be salvaging`: far more salvage was expected than has arrived. Check
-  the hooks are really in range of the wreck.
+  the hooks are really in range of the wreck. The last countdown stays up while it works this out.
 
 ## Settings
 
-**Timer**: show timer; show clock time; count salvage you hooked; salvaging worlds (default
+**Timer**: show timer (turning it off hides the countdown lines; the status lines, such as waiting
+for a wreck, stay); show clock time; count salvage you hooked; salvaging worlds (default
 `596, 597`); salvaging world tip.
 
 **Reminders**: three RuneLite notifications you can shape separately (hook empty with a crewmate
@@ -101,8 +105,9 @@ Here is the honest version, because a countdown invites more trust than a counte
    your crew. The plugin tells you; it cannot click for you.
 6. **Crewmate stats** come from the game's crew table, with the wiki's figures as a fallback and
    a middling guess for anyone it cannot place. A keg of whirlpool surprise is taken into account.
-7. **Only your own boat.** On someone else's boat you still get the full-hold alert from their
-   crewmate's line, and nothing else. Barracuda Trials, trawling and courier cargo are not tracked.
+7. **Only your own boat.** On someone else's boat you get one notification when their crew say
+   the hold is full, and nothing else: no timer, no counter, no reminders. Barracuda Trials,
+   trawling and courier cargo are not tracked.
 8. **Fully AFK still means touching the client** before the game's idle logout. The overlay
    warns when the hold will outlast it.
 9. **Things that need confirming in game.** The player animations for salvaging and sorting, the

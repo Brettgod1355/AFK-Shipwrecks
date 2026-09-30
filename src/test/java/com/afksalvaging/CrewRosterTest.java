@@ -48,6 +48,10 @@ public class CrewRosterTest
 		assertEquals(2, roster.countSpareFor(SalvagingHookTier.STEEL, 0));
 		assertEquals(1, roster.countSpareFor(SalvagingHookTier.DRAGON, 0));
 		assertEquals(2, roster.countSpareFor(null, 0));
+		// A keg of whirlpool surprise lifts everyone to deckhandiness 2, so Ada can take a steel hook.
+		assertEquals(2, roster.countSpareFor(SalvagingHookTier.STEEL, 0, 2));
+		assertEquals(2, roster.countSpareFor(SalvagingHookTier.ADAMANT, 0, 2));
+		assertEquals(1, roster.countSpareFor(SalvagingHookTier.RUNE, 0, 2));
 		roster.setPosition(1, CrewAssignment.HOOK_SLOOP_1);
 		assertEquals(0, roster.countSpareFor(SalvagingHookTier.DRAGON, 0));
 		roster.setPosition(0, 22);

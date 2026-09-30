@@ -22,6 +22,7 @@ import net.runelite.api.GameObject;
 import net.runelite.api.GameState;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
+import net.runelite.api.MenuAction;
 import net.runelite.api.NPC;
 import net.runelite.api.NPCComposition;
 import net.runelite.api.ObjectComposition;
@@ -167,7 +168,10 @@ public class AfkSalvagingPlugin extends Plugin
 	private int worldChecked = -1;
 	private boolean salvagingWorld;
 	private long lastMemoryFlushAt;
-	private int lastBoostNeeded;
+	/** Whether the next LOGGED_IN is a real login rather than a scene reload. */
+	private boolean loginPending = true;
+	/** Whether the full-hold shout for someone else's boat has been given this trip. */
+	private boolean otherBoatFullNotified;
 
 	@Provides
 	AfkSalvagingConfig provideConfig(ConfigManager configManager)
@@ -208,13 +212,22 @@ public class AfkSalvagingPlugin extends Plugin
 			case HOPPING:
 				session.worldHopped();
 				forgetBoat();
+				loginPending = true;
+				break;
+			case CONNECTION_LOST:
+				loginPending = true;
 				break;
 			case LOADING:
 				session.sceneReloading(clock());
 				break;
 			case LOGGED_IN:
-				worldDirty = true;
-				clientThread.invokeLater(this::loggedIn);
+				// The game reports LOGGED_IN after every scene load, not only at login.
+				if (loginPending)
+				{
+					loginPending = false;
+					worldDirty = true;
+					clientThread.invokeLater(this::loggedIn);
+				}
 				break;
 			default:
 				break;
@@ -252,7 +265,11 @@ public class AfkSalvagingPlugin extends Plugin
 			cargoHoldByWorldView.remove(worldViewId);
 		}
 		session.boat().remove(worldViewId, object.getHash());
-		hookObjects.remove(object.getHash());
+		if (worldViewId == session.boat().getWorldViewId())
+		{
+			// Object hashes carry no world view, so the same hook on another boat must not evict ours.
+			hookObjects.remove(object.getHash());
+		}
 		if (object.getWorldView().isTopLevel())
 		{
 			session.wreckGone(object.getWorldLocation(), object.getId(), clock());
@@ -367,22 +384,29 @@ public class AfkSalvagingPlugin extends Plugin
 	{
 		String option = event.getMenuOption() == null ? "" : Text.removeTags(event.getMenuOption()).toLowerCase();
 		String target = event.getMenuTarget() == null ? "" : Text.removeTags(event.getMenuTarget()).toLowerCase();
-		if (target.contains("crystal extractor") || BoatFacilities.isExtractor(event.getId()))
+		MenuAction action = event.getMenuAction();
+		if (action == MenuAction.CANCEL || option.startsWith("examine"))
+		{
+			return;
+		}
+		boolean objectOp = action == MenuAction.GAME_OBJECT_FIRST_OPTION || action == MenuAction.GAME_OBJECT_SECOND_OPTION
+			|| action == MenuAction.GAME_OBJECT_THIRD_OPTION || action == MenuAction.GAME_OBJECT_FOURTH_OPTION
+			|| action == MenuAction.GAME_OBJECT_FIFTH_OPTION;
+		if (objectOp && (target.contains("crystal extractor") || BoatFacilities.isExtractor(event.getId())))
 		{
 			session.extractorUsed(client.getTickCount());
 			return;
 		}
-		if (!option.startsWith("deposit") && !option.startsWith("withdraw"))
+		boolean holdAction = option.startsWith("deposit") || option.startsWith("withdraw");
+		if (holdAction && (target.contains("cargo hold") || isCargoInterfaceOpen()))
 		{
+			// Quick deposits on the hold itself never open the interface, so the container is not
+			// resent. The session watches the inventory instead and applies the difference to the hold.
+			session.holdActionClicked(option.startsWith("withdraw"));
 			return;
 		}
-		if (!target.contains("cargo hold") && !isCargoInterfaceOpen())
-		{
-			return;
-		}
-		// Quick deposits on the hold itself never open the interface, so the container is not
-		// resent. The session watches the inventory instead and applies the difference to the hold.
-		session.holdActionClicked(option.startsWith("withdraw"));
+		// Anything else the player does means they are not walking to the hold any more.
+		session.holdActionCancelled();
 	}
 
 	@Subscribe
@@ -413,8 +437,7 @@ public class AfkSalvagingPlugin extends Plugin
 		int tick = client.getTickCount();
 		if (CrewSpeech.reportsFullHold(text))
 		{
-			session.fullLine();
-			saveUsed();
+			holdReportedFull();
 		}
 		else if (CrewSpeech.reportsCrewSalvage(text))
 		{
@@ -455,8 +478,7 @@ public class AfkSalvagingPlugin extends Plugin
 		String text = event.getMessage();
 		if (CrewSpeech.reportsFullHold(text))
 		{
-			session.fullLine();
-			saveUsed();
+			holdReportedFull();
 		}
 		else if (CrewSpeech.reportsPlayerDeposit(text))
 		{
@@ -489,11 +511,15 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			followBoat(player.getWorldView());
 		}
-		else if (sailing && session.boat().hookCount() == 0 && tick % RESCAN_TICKS == 0 && player != null)
+		else if (sailing && player != null && tick % RESCAN_TICKS == 0 && hooksMissingObjects())
 		{
 			scanBoat(player.getWorldView());
 		}
 
+		if (!sailing)
+		{
+			otherBoatFullNotified = false;
+		}
 		AfkSession.Settings settings = session.settings();
 		settings.countHookedSalvage = config.countHookedSalvage();
 		settings.warnSlotsRemaining = config.warnSlotsRemaining();
@@ -511,9 +537,10 @@ public class AfkSalvagingPlugin extends Plugin
 		in.animation = player == null ? -1 : player.getAnimation();
 		in.boostedSailingLevel = client.getBoostedSkillLevel(Skill.SAILING);
 		in.hooks = hookInputs(boatEntity);
+		in.boatPoint = boatEntity == null ? null : topLevelPoint(boatEntity);
 		in.playerPoint = playerTopLevelPoint();
 		in.cargoInterfaceOpen = isCargoInterfaceOpen();
-		in.idleLogoutMillis = idleLogoutMillis();
+		in.idleLogoutMillis = AfkSession.idleLogoutMillis(client.getIdleTimeout(), client.getMouseIdleTicks(), client.getKeyboardIdleTicks());
 
 		List<AfkSession.Notice> notices = session.tick(in);
 		for (AfkSession.Notice notice : notices)
@@ -553,6 +580,20 @@ public class AfkSalvagingPlugin extends Plugin
 	public boolean isSalvagingWorld()
 	{
 		return salvagingWorld;
+	}
+
+	/** Whether the player is aboard a boat that is their own. */
+	public boolean isOwnBoat()
+	{
+		WorldEntity boat = boatEntity();
+		return boat != null && boat.getOwnerType() == WorldEntity.OWNER_TYPE_SELF_PLAYER;
+	}
+
+	/** The salvaging worlds to name in the tip: the player's list, or the default if they emptied it. */
+	public String salvagingWorldsText()
+	{
+		String configured = config.salvagingWorlds() == null ? "" : config.salvagingWorlds().trim();
+		return configured.isEmpty() ? SalvagingWorlds.DEFAULT_WORLDS : configured;
 	}
 
 	/** The hold banner to draw right now, or OK for none. */
@@ -597,7 +638,10 @@ public class AfkSalvagingPlugin extends Plugin
 
 	private void loggedIn()
 	{
-		lastSailingXp = client.getSkillExperience(Skill.SAILING);
+		// The stat packets may not have arrived yet; a zero would turn the first drop into a huge delta.
+		int xp = client.getSkillExperience(Skill.SAILING);
+		lastSailingXp = xp > 0 ? xp : -1;
+		inventoryChanged(client.getItemContainer(InventoryID.INV));
 		Player player = client.getLocalPlayer();
 		if (player != null && player.getWorldView() != null && !player.getWorldView().isTopLevel())
 		{
@@ -629,7 +673,7 @@ public class AfkSalvagingPlugin extends Plugin
 		lastSailingXp = -1;
 		worldChecked = -1;
 		worldDirty = true;
-		lastBoostNeeded = 0;
+		loginPending = true;
 	}
 
 	private void forgetBoat()
@@ -666,7 +710,6 @@ public class AfkSalvagingPlugin extends Plugin
 				break;
 			case BOOST_DROPPED:
 				int needed = session.view().levelNeeded;
-				lastBoostNeeded = needed;
 				notifier.notify(config.boostDroppedNotification(), "Your crew stopped salvaging: your Sailing level is too low for this wreck"
 					+ (needed > 0 ? " (needs " + needed + ")." : "."));
 				break;
@@ -674,7 +717,7 @@ public class AfkSalvagingPlugin extends Plugin
 				if (config.worldTip())
 				{
 					client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
-						"<col=" + TIP_COLOUR + ">Waiting for a wreck? On the salvaging worlds (" + SalvagingWorlds.DEFAULT_WORLDS
+						"<col=" + TIP_COLOUR + ">Waiting for a wreck? On the salvaging worlds (" + salvagingWorldsText()
 							+ ") every site is worked, so wrecks near you come back sooner.</col>", null);
 				}
 				break;
@@ -894,7 +937,9 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			return;
 		}
-		ItemContainer container = client.getItemContainer(CargoHoldContainers.containerFor(slot));
+		// The client keeps the hold's container after the interface closes, but the server only
+		// updates it while the interface is open, so it is only the truth while that is showing.
+		ItemContainer container = isCargoInterfaceOpen() ? client.getItemContainer(CargoHoldContainers.containerFor(slot)) : null;
 		if (container != null)
 		{
 			session.holdCount(CargoHoldMonitor.countUsed(container.getItems()), client.getTickCount());
@@ -907,12 +952,41 @@ public class AfkSalvagingPlugin extends Plugin
 		refreshCapacity();
 	}
 
+	/** A crewmate said the hold is full: ours if this is our boat, otherwise just worth a shout. */
+	private void holdReportedFull()
+	{
+		if (isOwnBoat() || !isSailing())
+		{
+			session.fullLine();
+			saveUsed();
+			return;
+		}
+		if (!otherBoatFullNotified)
+		{
+			otherBoatFullNotified = true;
+			notifier.notify(config.notification(), "The cargo hold is full.");
+		}
+	}
+
+	/** Whether a hook the boat is known to have lacks the object needed to place it. */
+	private boolean hooksMissingObjects()
+	{
+		for (BoatFacilities.Hook hook : session.boat().hooks())
+		{
+			if (!hookObjects.containsKey(hook.getHash()))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/** Prefers the capacity the game showed in the hold interface, then the hold object on the boat. */
 	private void refreshCapacity()
 	{
 		int slot = monitoredSlot != 0 ? monitoredSlot : currentBoatSlot();
 		int capacity = slot != 0 ? capacityFromInterface[slot] : CargoHoldCapacity.UNKNOWN;
-		if (capacity == CargoHoldCapacity.UNKNOWN && isSailing())
+		if (capacity == CargoHoldCapacity.UNKNOWN && isSailing() && isOwnBoat())
 		{
 			Integer objectId = cargoHoldByWorldView.get(client.getLocalPlayer().getWorldView().getId());
 			if (objectId != null)
@@ -1112,6 +1186,13 @@ public class AfkSalvagingPlugin extends Plugin
 		return top == null ? null : WorldPoint.fromLocal(client, top);
 	}
 
+	/** Where the boat itself is in the top-level world. */
+	private WorldPoint topLevelPoint(WorldEntity boat)
+	{
+		LocalPoint local = boat.getLocalLocation();
+		return local == null ? null : WorldPoint.fromLocal(client, local);
+	}
+
 	private List<AfkSession.HookInput> hookInputs(WorldEntity boat)
 	{
 		List<AfkSession.HookInput> hooks = new ArrayList<>();
@@ -1126,17 +1207,6 @@ public class AfkSalvagingPlugin extends Plugin
 			hooks.add(new AfkSession.HookInput(point, hook.getTier(), hook.isSecond()));
 		}
 		return hooks;
-	}
-
-	private long idleLogoutMillis()
-	{
-		int timeout = client.getIdleTimeout();
-		if (timeout <= 0)
-		{
-			return -1;
-		}
-		int idle = Math.min(client.getMouseIdleTicks(), client.getKeyboardIdleTicks());
-		return Math.max(0, (long) (timeout - idle) * AfkSession.CLIENT_TICK_MILLIS);
 	}
 
 	private void requestWorlds()

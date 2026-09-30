@@ -200,19 +200,28 @@ public final class CrewRoster
 		return list;
 	}
 
-	/** Idle crewmates who are deckhand enough to work a hook of this tier. */
-	public int countSpareFor(SalvagingHookTier tier, int tick)
+	/**
+	 * Idle crewmates who are deckhand enough to work a hook of this tier.
+	 *
+	 * @param minimumDeckhandiness a floor every crewmate gets, 2 with a keg of whirlpool surprise aboard
+	 */
+	public int countSpareFor(SalvagingHookTier tier, int tick, int minimumDeckhandiness)
 	{
 		int needed = tier == null ? 1 : tier.getDeckhandiness();
 		int count = 0;
 		for (Crewmate crewmate : idle(tick))
 		{
-			if (crewmate.effectiveDeckhandiness() >= needed)
+			if (Math.max(minimumDeckhandiness, crewmate.effectiveDeckhandiness()) >= needed)
 			{
 				count++;
 			}
 		}
 		return count;
+	}
+
+	public int countSpareFor(SalvagingHookTier tier, int tick)
+	{
+		return countSpareFor(tier, tick, 0);
 	}
 
 	public int countAboard()

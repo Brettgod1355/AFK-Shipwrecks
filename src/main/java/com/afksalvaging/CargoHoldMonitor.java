@@ -31,6 +31,8 @@ public final class CargoHoldMonitor
 	private boolean estimate;
 	private boolean reportedFullByGame;
 	private int overcountEvidence;
+	/** The tally has been shown to be too high; it is held below capacity until something real arrives. */
+	private boolean driftKnown;
 	private Level alerted = Level.OK;
 	private long lastAlertAt;
 
@@ -59,6 +61,7 @@ public final class CargoHoldMonitor
 		estimate = false;
 		reportedFullByGame = false;
 		overcountEvidence = 0;
+		driftKnown = false;
 	}
 
 	/** Restores a remembered count that may be out of date, for example after logging in. */
@@ -68,6 +71,7 @@ public final class CargoHoldMonitor
 		estimate = true;
 		reportedFullByGame = false;
 		overcountEvidence = 0;
+		driftKnown = false;
 	}
 
 	/**
@@ -83,10 +87,16 @@ public final class CargoHoldMonitor
 			return false;
 		}
 		int limit = capacity == CargoHoldCapacity.UNKNOWN ? CargoHoldCapacity.MAX_SLOTS : Math.max(capacity, used);
+		if (driftKnown && capacity != CargoHoldCapacity.UNKNOWN)
+		{
+			// A tally that was already proved too high may not claim full again on its own.
+			limit = Math.min(limit, capacity - 1);
+		}
 		used = Math.max(0, Math.min(limit, used + delta));
 		estimate = true;
-		if (delta != 0)
+		if (delta != 0 && !(delta > 0 && used >= capacity && capacity != CargoHoldCapacity.UNKNOWN))
 		{
+			// Cargo moving cancels a full message, unless the hold is still at capacity anyway.
 			reportedFullByGame = false;
 		}
 		if (delta < 0)
@@ -99,8 +109,9 @@ public final class CargoHoldMonitor
 	/**
 	 * A crewmate hooked salvage while the tally already said the hold was full. Crew stop when the
 	 * hold is really full, so the tally was too high. One such event might be a race with the count;
-	 * after {@link #OVERCOUNT_EVIDENCE} of them the tally is pulled back by that many and the alert
-	 * re-armed, so a drifted count cannot leave the timer stuck at "full" for the rest of the trip.
+	 * after {@link #OVERCOUNT_EVIDENCE} of them the tally is pulled back below capacity and held
+	 * there until a real count or the game's own word arrives, so a drifted count can neither leave
+	 * the timer stuck at "full" nor keep re-announcing it.
 	 *
 	 * @return true when the tally was corrected
 	 */
@@ -115,10 +126,16 @@ public final class CargoHoldMonitor
 		{
 			return false;
 		}
-		used = Math.max(0, capacity - overcountEvidence);
+		driftKnown = true;
+		used = Math.max(0, capacity - 1);
 		estimate = true;
-		overcountEvidence = 0;
 		return true;
+	}
+
+	/** Whether the tally was proved too high and is being held below capacity until it can be checked. */
+	public boolean isDriftKnown()
+	{
+		return driftKnown;
 	}
 
 	/** Whether the hold reads full only because of the running tally, not a real count or the game saying so. */
@@ -150,6 +167,7 @@ public final class CargoHoldMonitor
 	public void markFullByGame()
 	{
 		reportedFullByGame = true;
+		driftKnown = false;
 		if (capacity != CargoHoldCapacity.UNKNOWN && (used == CargoHoldCapacity.UNKNOWN || used < capacity))
 		{
 			used = capacity;
@@ -273,6 +291,7 @@ public final class CargoHoldMonitor
 		estimate = false;
 		reportedFullByGame = false;
 		overcountEvidence = 0;
+		driftKnown = false;
 		alerted = Level.OK;
 		lastAlertAt = 0;
 	}

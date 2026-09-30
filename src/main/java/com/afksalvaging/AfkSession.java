@@ -27,8 +27,8 @@ public final class AfkSession
 	public static final int PLAYER_RANGE = 12;
 	/** Ticks the boat must have stood still before it counts as parked. */
 	public static final int PARKED_TICKS = 5;
-	/** Ticks to wait for the inventory to change after a deposit or withdraw click. */
-	public static final int HOLD_ACTION_TICKS = 3;
+	/** Ticks to wait for the inventory to change after a deposit or withdraw click: the walk to the hold takes a few. */
+	public static final int HOLD_ACTION_TICKS = 10;
 	/** Ticks the player needs to sort one piece of salvage. */
 	public static final int SORT_TICKS = 3;
 	/** Unanswered wails from the ghost, in a row, before he is taken to have stopped salvaging. */
@@ -43,6 +43,8 @@ public final class AfkSession
 	public static final long WORLD_TIP_AFTER_MILLIS = 60_000;
 	/** Client ticks are 20 ms; the game's idle timeout is measured in them. */
 	public static final int CLIENT_TICK_MILLIS = 20;
+	/** Inventory slots. */
+	public static final int INVENTORY_SLOTS = 28;
 
 	/** Somewhere to remember the learned rate correction between sessions. */
 	public interface MemoryStore
@@ -90,6 +92,9 @@ public final class AfkSession
 		public int animation;
 		public int boostedSailingLevel;
 		public List<HookInput> hooks = Collections.emptyList();
+		/** Where the boat itself is, in the top-level world; it does not move when the player walks the deck. */
+		public WorldPoint boatPoint;
+		/** Where the player stands, in the top-level world. */
 		public WorldPoint playerPoint;
 		public boolean cargoInterfaceOpen;
 		/** Milliseconds before the game logs the player out for idling, or -1 when not known. */
@@ -121,7 +126,10 @@ public final class AfkSession
 		public int spareCrew;
 		public boolean spareCrewCannotUseHook;
 		public HookWatch.Reason reminder;
+		/** Usable wrecks up in reach. */
 		public int wrecksUp;
+		/** Wrecks up in reach that the player's level is too low for. */
+		public int higherWrecksUp;
 		public long wreckWindowMillis;
 		public boolean wreckWindowAnchored;
 		public ShipwreckType wreckType;
@@ -150,9 +158,13 @@ public final class AfkSession
 
 	private int tick;
 	private long now;
+	/** Whether the last tick found the player on their own boat: crew speech heard elsewhere is not ours. */
+	private boolean aboard;
 	private int lastContainerTick = Integer.MIN_VALUE;
+	private int fullLineTick = Integer.MIN_VALUE;
+	private boolean inventoryKnown;
 	private int inventorySalvage;
-	private int freeInventorySlots = 28;
+	private int freeInventorySlots = INVENTORY_SLOTS;
 	private int occupiedInventorySlots;
 	private Set<ShipwreckType> inventorySalvageTypes = Collections.emptySet();
 	private int hookedInInventory;
@@ -162,7 +174,7 @@ public final class AfkSession
 	private boolean inventoryChanged;
 	private int sortingFinishTick = -1;
 	private PlayerActivity lastActivity = PlayerActivity.IDLE;
-	private WorldPoint lastPlayerPoint;
+	private WorldPoint lastBoatPoint;
 	private int stillTicks;
 	private boolean hazardous;
 	private WorldPoint hazardAt;
@@ -221,11 +233,26 @@ public final class AfkSession
 		return hookedInInventory;
 	}
 
+	/** Milliseconds before the game's idle logout, from the client's idle counters, or -1 when it is not counting. */
+	public static long idleLogoutMillis(int timeoutClientTicks, int mouseIdleTicks, int keyboardIdleTicks)
+	{
+		if (timeoutClientTicks <= 0)
+		{
+			return -1;
+		}
+		int idle = Math.min(mouseIdleTicks, keyboardIdleTicks);
+		return Math.max(0, (long) (timeoutClientTicks - idle) * CLIENT_TICK_MILLIS);
+	}
+
 	// ---- Events from the client ----
 
-	/** A crewmate on this boat said they hooked salvage. */
+	/** A crewmate on this boat said they hooked salvage. Ignored unless the player is on their own boat. */
 	public void crewLine(String speakerName, int tick)
 	{
+		if (!aboard)
+		{
+			return;
+		}
 		int slot = roster.slotByName(speakerName);
 		int deckhandiness = 0;
 		if (slot >= 0)
@@ -239,13 +266,17 @@ public final class AfkSession
 	/** The ghost crewmate wailed. */
 	public void ghostLine(int tick)
 	{
-		events.ghostLine(tick);
+		if (aboard)
+		{
+			events.ghostLine(tick);
+		}
 	}
 
-	/** A crewmate, or the game, said the hold is full. */
+	/** A crewmate on this boat, or the game, said the hold is full. */
 	public void fullLine()
 	{
 		monitor.markFullByGame();
+		fullLineTick = tick;
 	}
 
 	/** The game said it is not safe to salvage here. */
@@ -258,6 +289,10 @@ public final class AfkSession
 	/** Sailing XP arrived. */
 	public void sailingXp(int delta, int tick)
 	{
+		if (!aboard)
+		{
+			return;
+		}
 		SalvageEvents.XpContext context = new SalvageEvents.XpContext();
 		context.wreck = view.wreckType;
 		context.playerSalvaging = activity.current() == PlayerActivity.SALVAGING;
@@ -273,14 +308,14 @@ public final class AfkSession
 		events.sailingXp(delta, tick, context);
 	}
 
-	/** The player clicked the crystal extractor, whose XP must not be read as salvage. */
+	/** The player used the crystal extractor, whose XP must not be read as salvage. */
 	public void extractorUsed(int tick)
 	{
 		events.ignoreXpUntil(tick + SalvageEvents.WINDOW_TICKS);
 	}
 
 	/**
-	 * The player's inventory changed.
+	 * The player's inventory changed. The first call after a reset only records where things stand.
 	 *
 	 * @param occupied     occupied inventory slots
 	 * @param salvage      unsorted salvage items in it
@@ -288,27 +323,37 @@ public final class AfkSession
 	 */
 	public void inventoryChanged(int occupied, int salvage, Set<ShipwreckType> salvageTypes, int tick)
 	{
-		if (pendingHoldTicks > 0)
+		if (inventoryKnown)
 		{
-			inventoryChanged = true;
+			if (pendingHoldTicks > 0)
+			{
+				// Only a change in the direction the click implies can be that click's doing.
+				boolean matches = pendingWithdraw ? occupied > inventoryBefore : occupied < inventoryBefore;
+				if (matches)
+				{
+					inventoryChanged = true;
+				}
+			}
+			int gained = salvage - inventorySalvage;
+			boolean withdrawing = pendingHoldTicks > 0 && pendingWithdraw;
+			if (gained > 0 && withdrawing)
+			{
+				hookedInInventory = 0;
+			}
+			else if (gained > 0 && aboard && activity.current() == PlayerActivity.SALVAGING)
+			{
+				events.playerGain(gained, tick);
+				hookedInInventory += gained;
+			}
+			if (salvage < hookedInInventory)
+			{
+				hookedInInventory = salvage;
+			}
 		}
-		int gained = salvage - inventorySalvage;
-		if (gained > 0 && activity.current() == PlayerActivity.SALVAGING && !(pendingHoldTicks > 0 && pendingWithdraw))
-		{
-			events.playerGain(gained, tick);
-			hookedInInventory += gained;
-		}
-		else if (gained > 0 && pendingHoldTicks > 0 && pendingWithdraw)
-		{
-			hookedInInventory = 0;
-		}
-		if (salvage < hookedInInventory)
-		{
-			hookedInInventory = salvage;
-		}
+		inventoryKnown = true;
 		occupiedInventorySlots = occupied;
 		inventorySalvage = salvage;
-		freeInventorySlots = Math.max(0, 28 - occupied);
+		freeInventorySlots = Math.max(0, INVENTORY_SLOTS - occupied);
 		inventorySalvageTypes = salvageTypes == null ? Collections.emptySet() : salvageTypes;
 	}
 
@@ -324,6 +369,13 @@ public final class AfkSession
 		{
 			hookedInInventory = 0;
 		}
+	}
+
+	/** The player clicked something else before reaching the hold, so the deposit or withdrawal is off. */
+	public void holdActionCancelled()
+	{
+		pendingHoldTicks = 0;
+		inventoryChanged = false;
 	}
 
 	/** An exact count of the hold arrived from the game. */
@@ -385,9 +437,12 @@ public final class AfkSession
 		countdown.reset();
 		rate = new SalvageRateModel();
 		rateWreck = null;
+		aboard = false;
 		lastContainerTick = Integer.MIN_VALUE;
+		fullLineTick = Integer.MIN_VALUE;
+		inventoryKnown = false;
 		inventorySalvage = 0;
-		freeInventorySlots = 28;
+		freeInventorySlots = INVENTORY_SLOTS;
 		occupiedInventorySlots = 0;
 		inventorySalvageTypes = Collections.emptySet();
 		hookedInInventory = 0;
@@ -396,7 +451,7 @@ public final class AfkSession
 		inventoryChanged = false;
 		sortingFinishTick = -1;
 		lastActivity = PlayerActivity.IDLE;
-		lastPlayerPoint = null;
+		lastBoatPoint = null;
 		stillTicks = 0;
 		hazardous = false;
 		hazardAt = null;
@@ -431,11 +486,16 @@ public final class AfkSession
 		List<Notice> notices = new ArrayList<>();
 		tick = in.tick;
 		now = in.now;
+		aboard = in.sailing && in.ownBoat;
 
 		resolvePendingHoldAction();
 
-		PlayerActivity current = in.sailing ? activity.update(in.animation, tick) : activity.current();
-		if (!in.sailing)
+		PlayerActivity current;
+		if (in.sailing)
+		{
+			current = activity.update(in.animation, tick);
+		}
+		else
 		{
 			activity.reset();
 			current = PlayerActivity.IDLE;
@@ -474,21 +534,24 @@ public final class AfkSession
 			range = PLAYER_RANGE;
 		}
 		int level = Math.max(1, in.boostedSailingLevel);
-		boolean aboard = in.sailing && in.ownBoat;
 
 		wrecks.prune(now);
 		List<WreckTracker.Site> eligible = aboard ? wrecks.eligibleActive(points, range, level) : Collections.emptyList();
 		boolean wreckInReach = !eligible.isEmpty();
-		boolean anyActive = aboard && wrecks.anyActive(points, range);
 		ShipwreckType type = wreckInReach ? eligible.get(0).getType() : null;
 		int levelNeeded = 0;
-		if (anyActive && !wreckInReach)
+		int higherWrecksUp = 0;
+		if (aboard)
 		{
 			for (WreckTracker.Site site : wrecks.nearby(points, range))
 			{
-				if (site.isActive() && (levelNeeded == 0 || site.getType().getSailingLevel() < levelNeeded))
+				if (site.isActive() && site.getType().getSailingLevel() > level)
 				{
-					levelNeeded = site.getType().getSailingLevel();
+					higherWrecksUp++;
+					if (levelNeeded == 0 || site.getType().getSailingLevel() < levelNeeded)
+					{
+						levelNeeded = site.getType().getSailingLevel();
+					}
 				}
 			}
 		}
@@ -498,26 +561,31 @@ public final class AfkSession
 		}
 
 		boolean confirmedFull = monitor.isConfirmedFull();
-		boolean estimatedFull = monitor.isFullByEstimate();
 		List<Integer> hookSlots = roster.hookSlots(tick);
+		boolean crewOnHooks = !hookSlots.isEmpty();
 		int playerLevel = boat.hasWhirlpoolKeg() ? level + 2 : level;
 
 		// What the tables say everyone on a hook would produce with a wreck up.
-		double crewPotential = 0;
 		ShipwreckType rateType = type != null ? type : rateWreck;
-		for (int slot : hookSlots)
+		double crewPotential = 0;
+		if (rateType != null)
 		{
-			SalvagingHookTier tier = boat.tierForAssignment(roster.getPosition(slot));
-			int d = effectiveDeckhandiness(roster.getCrewmate(slot));
-			crewPotential += rateType == null ? 0.01 : SalvageChance.crew(rateType, tier, level, d) / SalvageRateModel.CREW_ROLL_TICKS;
+			for (int slot : hookSlots)
+			{
+				SalvagingHookTier tier = boat.tierForAssignment(roster.getPosition(slot));
+				int d = effectiveDeckhandiness(roster.getCrewmate(slot));
+				crewPotential += SalvageChance.crew(rateType, tier, level, d) / SalvageRateModel.CREW_ROLL_TICKS;
+			}
 		}
-		boolean playerAtHook = aboard && current.isAtHook();
 		boolean inventoryFull = freeInventorySlots <= 0;
 		boolean playerRolling = aboard && current == PlayerActivity.SALVAGING && wreckInReach && !inventoryFull;
+		// Standing at a hook with a wreck up and not rolling is not manning it: the player will not restart.
+		boolean playerAtHook = aboard && (current == PlayerActivity.SALVAGING
+			|| (current == PlayerActivity.AT_HOOK_IDLE && !wreckInReach));
 		double playerPotential = rateType == null ? 0
 			: SalvageChance.player(rateType, playerHookTier(in), playerLevel) / SalvageRateModel.PLAYER_ROLL_TICKS;
 
-		boolean crewRolling = aboard && wreckInReach && !confirmedFull && !hookSlots.isEmpty();
+		boolean crewRolling = aboard && wreckInReach && !confirmedFull && crewOnHooks;
 		double expected = (crewRolling ? crewPotential : 0) + (playerRolling ? playerPotential : 0);
 		if (type != null)
 		{
@@ -531,37 +599,44 @@ public final class AfkSession
 		// Salvage that has arrived since last tick.
 		for (SalvageEvents.Event event : events.drain(tick))
 		{
-			rate.recordSalvage();
-			if (event.getSource() != SalvageEvents.Source.CREW)
+			if (!aboard)
 			{
+				continue;
+			}
+			rate.recordSalvage();
+			if (event.getSource() != SalvageEvents.Source.CREW || event.getTick() <= fullLineTick)
+			{
+				// The player's own salvage goes to their inventory; salvage hooked before the game said
+				// "full" was already in the hold when it said so.
 				continue;
 			}
 			if (monitor.isFullByEstimate())
 			{
-				if (monitor.crewSalvagedWhileFull())
-				{
-					monitor.adjust(1);
-				}
+				monitor.crewSalvagedWhileFull();
 			}
 			else if (!in.cargoInterfaceOpen && lastContainerTick != tick)
 			{
 				monitor.adjust(1);
 			}
 		}
-		if (events.unmatchedGhostLines() >= GHOST_SILENCE_LINES)
+		boolean ghostShouldBeSalvaging = ghostOnHook(hookSlots) && wreckInReach && parked && !confirmedFull;
+		if (!ghostShouldBeSalvaging)
+		{
+			// His wails only mean something while he ought to be hooking salvage.
+			events.resetUnmatchedGhostLines();
+		}
+		else if (events.unmatchedGhostLines() >= GHOST_SILENCE_LINES)
 		{
 			events.resetUnmatchedGhostLines();
-			if (ghostOnHook(hookSlots) && wreckInReach && parked && !confirmedFull && monitor.hasCount()
-				&& monitor.remaining() <= Math.max(settings.warnSlotsRemaining, GHOST_SILENCE_SLOTS))
+			if (monitor.hasCount() && monitor.remaining() <= GHOST_SILENCE_SLOTS)
 			{
 				monitor.markFullByGame();
-				confirmedFull = true;
+				fullLineTick = tick;
 			}
 		}
 		confirmedFull = monitor.isConfirmedFull();
-		estimatedFull = monitor.isFullByEstimate();
 
-		if (aboard && parked && !confirmedFull && (!hookSlots.isEmpty() || playerAtHook))
+		if (aboard && parked && !confirmedFull && (crewOnHooks || playerAtHook))
 		{
 			long dt = lastAvailabilityAt == Long.MIN_VALUE ? 600 : Math.max(0, Math.min(5_000, now - lastAvailabilityAt));
 			wrecks.recordAvailability(wreckInReach, dt, now);
@@ -573,17 +648,20 @@ public final class AfkSession
 		est.hookCount = boat.hookCount();
 		est.holdKnown = monitor.hasCount();
 		est.holdFull = confirmedFull;
-		est.holdFullUnconfirmed = estimatedFull;
+		est.holdFullUnconfirmed = monitor.isFullByEstimate();
+		est.holdDrifted = monitor.isDriftKnown();
 		est.holdRemaining = monitor.remaining();
+		est.crewOnHooks = crewOnHooks;
 		est.crewExpectedPerTick = crewPotential;
 		est.playerExpectedPerTick = playerPotential;
-		est.playerAtHook = playerAtHook;
+		est.playerAtHook = playerAtHook || (aboard && current == PlayerActivity.AT_HOOK_IDLE);
 		est.playerRolling = playerRolling;
+		est.inventoryFull = inventoryFull;
 		est.inventorySalvage = hookedInInventory;
 		est.freeInventorySlots = freeInventorySlots;
 		est.countInventorySalvage = settings.countHookedSalvage;
 		est.wreckInReach = wreckInReach;
-		est.onlyHigherWrecksInReach = anyActive && !wreckInReach;
+		est.onlyHigherWrecksInReach = higherWrecksUp > 0 && !wreckInReach;
 		est.hazardous = hazardous;
 		est.stalled = rate.isStalled() && expected > 0;
 		est.wreckWindowMillis = wrecks.allSunkWithin(points, range, level, now);
@@ -593,10 +671,19 @@ public final class AfkSession
 		est.confident = rate.isConfident();
 		AfkEstimate estimate = AfkEstimator.estimate(est);
 
-		boolean running = estimate.getState() == AfkEstimate.State.COUNTING_DOWN
-			|| estimate.getState() == AfkEstimate.State.INVENTORY_FILLS_FIRST
-			|| estimate.getState() == AfkEstimate.State.WRECK_SINKS_FIRST;
-		long shown = countdown.update(estimate.hasEta() ? estimate.getEtaMillis() : -1, running, now);
+		long shown;
+		if (estimate.getState() == AfkEstimate.State.STALLED)
+		{
+			// Hold the last figure rather than blanking it for what is probably a short gap.
+			shown = countdown.remainingAt(now, false);
+		}
+		else
+		{
+			boolean running = estimate.getState() == AfkEstimate.State.COUNTING_DOWN
+				|| estimate.getState() == AfkEstimate.State.INVENTORY_FILLS_FIRST
+				|| estimate.getState() == AfkEstimate.State.WRECK_SINKS_FIRST;
+			shown = countdown.update(estimate.hasEta() ? estimate.getEtaMillis() : -1, running, now);
+		}
 
 		if (estimate.getState() == AfkEstimate.State.WAITING_FOR_WRECK)
 		{
@@ -611,17 +698,17 @@ public final class AfkSession
 		}
 
 		// Alerts.
-		CargoHoldMonitor.Level level1 = monitor.poll(now, settings.warnSlotsRemaining, settings.repeatFullMillis);
-		if (level1 == CargoHoldMonitor.Level.FULL)
+		CargoHoldMonitor.Level alert = monitor.poll(now, settings.warnSlotsRemaining, settings.repeatFullMillis);
+		if (alert == CargoHoldMonitor.Level.FULL)
 		{
 			notices.add(Notice.HOLD_FULL);
 		}
-		else if (level1 == CargoHoldMonitor.Level.NEARLY_FULL)
+		else if (alert == CargoHoldMonitor.Level.NEARLY_FULL)
 		{
 			notices.add(Notice.HOLD_NEARLY_FULL);
 		}
 
-		int spare = roster.countSpareFor(boat.lowestHookTier(), tick);
+		int spare = roster.countSpareFor(emptyHookTier(in, hookSlots), tick, boat.hasWhirlpoolKeg() ? 2 : 0);
 		HookWatch.Situation situation = new HookWatch.Situation();
 		situation.hookCount = boat.hookCount();
 		situation.crewOnHooks = hookSlots.size();
@@ -637,7 +724,7 @@ public final class AfkSession
 			notices.add(hookWatch.getReason() == HookWatch.Reason.PLAYER_NEEDED ? Notice.HOOK_IDLE : Notice.HOOK_EMPTY);
 		}
 
-		if (estimate.getState() == AfkEstimate.State.LEVEL_TOO_LOW && !hookSlots.isEmpty())
+		if (estimate.getState() == AfkEstimate.State.LEVEL_TOO_LOW && crewOnHooks)
 		{
 			if (!boostDropNotified)
 			{
@@ -674,6 +761,7 @@ public final class AfkSession
 		view.spareCrewCannotUseHook = spare == 0 && !roster.idle(tick).isEmpty();
 		view.reminder = hookWatch.getReason();
 		view.wrecksUp = eligible.size();
+		view.higherWrecksUp = higherWrecksUp;
 		view.wreckWindowMillis = est.wreckWindowMillis;
 		view.wreckWindowAnchored = wrecks.allAnchored(points, range, level);
 		view.wreckType = type;
@@ -727,17 +815,33 @@ public final class AfkSession
 		}
 	}
 
+	/** Whether the boat has stood still for a while. The boat's own position, not the player's on deck. */
 	private boolean updateParked(TickInputs in)
 	{
-		WorldPoint point = in.playerPoint;
+		WorldPoint point = in.boatPoint;
+		if (point == null)
+		{
+			for (HookInput hook : in.hooks)
+			{
+				if (hook.point != null)
+				{
+					point = hook.point;
+					break;
+				}
+			}
+		}
+		if (point == null)
+		{
+			point = in.playerPoint;
+		}
 		if (point == null || !in.sailing)
 		{
 			stillTicks = 0;
-			lastPlayerPoint = point;
+			lastBoatPoint = point;
 			hazardous = false;
 			return false;
 		}
-		if (lastPlayerPoint != null && lastPlayerPoint.distanceTo2D(point) == 0 && lastPlayerPoint.getPlane() == point.getPlane())
+		if (lastBoatPoint != null && lastBoatPoint.getPlane() == point.getPlane() && lastBoatPoint.distanceTo2D(point) == 0)
 		{
 			stillTicks++;
 		}
@@ -745,7 +849,7 @@ public final class AfkSession
 		{
 			stillTicks = 0;
 		}
-		lastPlayerPoint = point;
+		lastBoatPoint = point;
 		if (hazardous && hazardAt != null && hazardAt.distanceTo2D(point) > 1)
 		{
 			hazardous = false;
@@ -814,32 +918,92 @@ public final class AfkSession
 		return false;
 	}
 
+	/** The hook nearest the player, if they are standing at one. */
+	private HookInput hookAtPlayer(TickInputs in)
+	{
+		if (in.playerPoint == null)
+		{
+			return null;
+		}
+		HookInput nearest = null;
+		int nearestDistance = Integer.MAX_VALUE;
+		for (HookInput hook : in.hooks)
+		{
+			if (hook.point == null || hook.point.getPlane() != in.playerPoint.getPlane())
+			{
+				continue;
+			}
+			int distance = hook.point.distanceTo2D(in.playerPoint);
+			if (distance < nearestDistance)
+			{
+				nearestDistance = distance;
+				nearest = hook;
+			}
+		}
+		return nearest != null && nearestDistance <= 2 ? nearest : null;
+	}
+
 	/** The hook the player is standing at, else the best hook aboard: the player normally takes the best. */
 	private SalvagingHookTier playerHookTier(TickInputs in)
 	{
-		if (in.playerPoint != null)
+		HookInput at = hookAtPlayer(in);
+		if (at != null && at.tier != null)
 		{
-			HookInput nearest = null;
-			int nearestDistance = Integer.MAX_VALUE;
-			for (HookInput hook : in.hooks)
-			{
-				if (hook.point == null || hook.point.getPlane() != in.playerPoint.getPlane())
-				{
-					continue;
-				}
-				int distance = hook.point.distanceTo2D(in.playerPoint);
-				if (distance < nearestDistance)
-				{
-					nearestDistance = distance;
-					nearest = hook;
-				}
-			}
-			if (nearest != null && nearestDistance <= 2 && nearest.tier != null)
-			{
-				return nearest.tier;
-			}
+			return at.tier;
 		}
 		SalvagingHookTier best = boat.bestHookTier();
 		return best != null ? best : SalvagingHookTier.BRONZE;
+	}
+
+	/**
+	 * The easiest hook nobody is working, which is where a spare crewmate would go. Crew are matched
+	 * to hooks by their assignment and the player to the hook they stand at; anything left is empty.
+	 * Falls back to the weakest hook aboard when nothing can be told apart.
+	 */
+	private SalvagingHookTier emptyHookTier(TickInputs in, List<Integer> hookSlots)
+	{
+		List<BoatFacilities.Hook> free = new ArrayList<>(boat.hooks());
+		if (free.isEmpty())
+		{
+			return null;
+		}
+		for (int slot : hookSlots)
+		{
+			int position = roster.getPosition(slot);
+			boolean wantSecond = position == CrewAssignment.HOOK_SLOOP_2;
+			boolean known = position == CrewAssignment.HOOK_SLOOP_1 || position == CrewAssignment.HOOK_SLOOP_2;
+			removeOne(free, known ? wantSecond : null);
+		}
+		HookInput at = hookAtPlayer(in);
+		if (at != null && aboard && activity.current().isAtHook())
+		{
+			removeOne(free, at.second);
+		}
+		SalvagingHookTier easiest = null;
+		for (BoatFacilities.Hook hook : free)
+		{
+			if (easiest == null || hook.getTier().ordinal() < easiest.ordinal())
+			{
+				easiest = hook.getTier();
+			}
+		}
+		return easiest != null ? easiest : boat.lowestHookTier();
+	}
+
+	/** Removes the hook in the given position (null for any) from the list, if there is one. */
+	private static void removeOne(List<BoatFacilities.Hook> hooks, Boolean second)
+	{
+		for (int i = 0; i < hooks.size(); i++)
+		{
+			if (second == null || hooks.get(i).isSecond() == second)
+			{
+				hooks.remove(i);
+				return;
+			}
+		}
+		if (!hooks.isEmpty())
+		{
+			hooks.remove(0);
+		}
 	}
 }

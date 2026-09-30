@@ -95,9 +95,6 @@ public class WreckTrackerTest
 		assertEquals(110_000, tracker.getLastSinkAt());
 		assertEquals(110_000, tracker.nearby(HOOKS, RANGE).get(0).getSunkAt());
 		assertFalse(tracker.anyActive(HOOKS, RANGE));
-		assertEquals(60_000, tracker.nextRiseWithin(110_000));
-		assertEquals(20_000, tracker.nextRiseWithin(150_000));
-		assertEquals(0, tracker.nextRiseWithin(200_000));
 
 		// The new wreck on the site starts with nothing known.
 		tracker.noteRolling(HOOKS, RANGE, LEVEL, 100_000);
@@ -188,7 +185,7 @@ public class WreckTrackerTest
 		tracker.recordAvailability(true, 1000, 1000);
 		tracker.clear();
 		assertEquals(0, tracker.siteCount());
-		assertEquals(-1, tracker.nextRiseWithin(10));
+		assertEquals(0, tracker.getLastSinkAt());
 		assertEquals(0.5, tracker.availability(0.5, 1000, 2000), 1e-9);
 	}
 }

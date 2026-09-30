@@ -68,7 +68,8 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "showTimer",
 		name = "Show timer",
-		description = "Show how long until the cargo hold is full at the current salvaging rate.",
+		description = "Show how long until the cargo hold is full at the current salvaging rate. Status lines such as "
+			+ "waiting for a wreck or the crew having stopped are shown either way.",
 		section = TIMER,
 		position = 0
 	)
@@ -374,7 +375,7 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "overlayScale",
+		keyName = "counterScale",
 		name = "Text size",
 		description = "Size of the overlay lines. 100% is the normal RuneLite overlay size.",
 		section = OVERLAY,

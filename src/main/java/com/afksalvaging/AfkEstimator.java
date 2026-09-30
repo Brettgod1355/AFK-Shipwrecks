@@ -29,6 +29,10 @@ public final class AfkEstimator
 		public boolean holdFull;
 		/** Only the running tally says the hold is full. */
 		public boolean holdFullUnconfirmed;
+		/** The tally was proved too high and is held below capacity. */
+		public boolean holdDrifted;
+		/** Whether any crewmate is on a hook, whatever they are expected to produce. */
+		public boolean crewOnHooks;
 		/** Free slots in the hold. */
 		public int holdRemaining;
 		/** Salvage per tick the published tables expect from crew whose hook has a wreck in reach. */
@@ -39,6 +43,7 @@ public final class AfkEstimator
 		public boolean playerAtHook;
 		/** Whether the player is actually rolling. */
 		public boolean playerRolling;
+		public boolean inventoryFull;
 		/** Unsorted salvage in the player's inventory. */
 		public int inventorySalvage;
 		public int freeInventorySlots;
@@ -56,8 +61,6 @@ public final class AfkEstimator
 		/** Observed over published rate. */
 		public double correction = 1;
 		public boolean confident;
-		/** Likely wait for the next wreck when none is up, or -1 when there is nothing to go on. */
-		public long expectedWaitMillis = -1;
 	}
 
 	private AfkEstimator()
@@ -82,12 +85,15 @@ public final class AfkEstimator
 		{
 			return AfkEstimate.of(AfkEstimate.State.HOLD_FULL);
 		}
+		if (in.holdDrifted)
+		{
+			return AfkEstimate.of(AfkEstimate.State.HOLD_DRIFTED);
+		}
 		if (in.holdFullUnconfirmed || in.holdRemaining <= 0)
 		{
 			return AfkEstimate.of(AfkEstimate.State.HOLD_FULL_UNCONFIRMED);
 		}
-		boolean crewOnHooks = in.crewExpectedPerTick > 0;
-		if (!crewOnHooks && !in.playerAtHook)
+		if (!in.crewOnHooks && !in.playerAtHook)
 		{
 			return AfkEstimate.of(AfkEstimate.State.NOBODY_SALVAGING);
 		}
@@ -116,11 +122,16 @@ public final class AfkEstimator
 			{
 				return AfkEstimate.of(AfkEstimate.State.LEVEL_TOO_LOW, -1, crewWork, approximate);
 			}
-			return AfkEstimate.of(AfkEstimate.State.WAITING_FOR_WRECK, in.expectedWaitMillis, crewWork, approximate);
+			return AfkEstimate.of(AfkEstimate.State.WAITING_FOR_WRECK, -1, crewWork, approximate);
 		}
 		if (in.stalled)
 		{
 			return AfkEstimate.of(AfkEstimate.State.STALLED, -1, crewWork, approximate);
+		}
+		if (!in.crewOnHooks && in.playerAtHook && !in.playerRolling)
+		{
+			// A wreck is up, nobody else is on a hook, and the player is not working theirs.
+			return AfkEstimate.of(in.inventoryFull ? AfkEstimate.State.INVENTORY_FULL : AfkEstimate.State.PLAYER_HOOK_IDLE);
 		}
 		if (remaining <= 0)
 		{
@@ -160,7 +171,7 @@ public final class AfkEstimator
 				return new AfkEstimate(inventoryFirst ? AfkEstimate.State.INVENTORY_FILLS_FIRST : AfkEstimate.State.WRECK_SINKS_FIRST,
 					millis(playerUntil), work, approximate, holdPerHour);
 			}
-			return AfkEstimate.of(AfkEstimate.State.WAITING_FOR_WRECK, in.expectedWaitMillis, work, approximate);
+			return AfkEstimate.of(AfkEstimate.State.WAITING_FOR_WRECK, -1, work, approximate);
 		}
 		double eta = window + (remaining - filledInWindow) / crewAfter;
 		return new AfkEstimate(AfkEstimate.State.COUNTING_DOWN, millis(eta), work, approximate, holdPerHour);

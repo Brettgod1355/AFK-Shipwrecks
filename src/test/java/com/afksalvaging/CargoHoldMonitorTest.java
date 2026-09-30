@@ -266,15 +266,51 @@ public class CargoHoldMonitorTest
 		// One event could be a race with the count; two mean the tally was high.
 		assertFalse(monitor.crewSalvagedWhileFull());
 		assertTrue(monitor.isFullByEstimate());
+		assertFalse(monitor.isDriftKnown());
 		assertTrue(monitor.crewSalvagedWhileFull());
-		assertEquals(38, monitor.getUsed());
+		assertEquals(39, monitor.getUsed());
 		assertTrue(monitor.isEstimate());
+		assertTrue(monitor.isDriftKnown());
 		assertFalse(monitor.isFullByEstimate());
 		assertNull(monitor.poll(1, 0, NO_REPEAT));
 		assertEquals(Level.OK, monitor.level(0));
 
+		// Until a real count arrives the tally may not claim full again by itself.
 		monitor.adjust(2);
-		assertEquals(Level.FULL, monitor.poll(2, 0, NO_REPEAT));
+		assertEquals(39, monitor.getUsed());
+		assertNull(monitor.poll(2, 0, NO_REPEAT));
+		monitor.adjust(-3);
+		assertEquals(36, monitor.getUsed());
+		assertTrue(monitor.isDriftKnown());
+
+		// A real count, or the game's own word, settles it.
+		monitor.setUsed(40);
+		assertFalse(monitor.isDriftKnown());
+		assertEquals(Level.FULL, monitor.poll(3, 0, NO_REPEAT));
+		monitor.setEstimatedUsed(38);
+		monitor.adjust(2);
+		assertTrue(monitor.crewSalvagedWhileFull() || monitor.crewSalvagedWhileFull());
+		assertTrue(monitor.isDriftKnown());
+		monitor.markFullByGame();
+		assertFalse(monitor.isDriftKnown());
+		assertTrue(monitor.isConfirmedFull());
+	}
+
+	@Test
+	public void cargoMovingClearsTheGamesFullMessageUnlessStillAtCapacity()
+	{
+		monitor.setCapacity(40);
+		monitor.setUsed(39);
+		monitor.markFullByGame();
+		assertEquals(40, monitor.getUsed());
+		// Another piece arriving after the message changes nothing.
+		monitor.adjust(1);
+		assertTrue(monitor.isReportedFullByGame());
+		assertEquals(40, monitor.getUsed());
+		// Cargo leaving does.
+		monitor.adjust(-1);
+		assertFalse(monitor.isReportedFullByGame());
+		assertEquals(39, monitor.getUsed());
 	}
 
 	@Test

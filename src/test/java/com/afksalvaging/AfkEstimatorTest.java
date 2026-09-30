@@ -27,6 +27,7 @@ public class AfkEstimatorTest
 		in.hookCount = 2;
 		in.holdKnown = true;
 		in.holdRemaining = 100;
+		in.crewOnHooks = true;
 		in.crewExpectedPerTick = TWO_CREW;
 		in.wreckInReach = true;
 		in.wreckWindowMillis = LONG_WINDOW;
@@ -62,9 +63,22 @@ public class AfkEstimatorTest
 		in.holdFullUnconfirmed = true;
 		assertEquals(State.HOLD_FULL_UNCONFIRMED, AfkEstimator.estimate(in).getState());
 
+		// A tally proved too high is its own state, whatever it reads, until the game says full.
 		in = afkWithTwoCrew();
-		in.crewExpectedPerTick = 0;
+		in.holdDrifted = true;
+		assertEquals(State.HOLD_DRIFTED, AfkEstimator.estimate(in).getState());
+		in.holdRemaining = 0;
+		assertEquals(State.HOLD_DRIFTED, AfkEstimator.estimate(in).getState());
+		in.holdFull = true;
+		assertEquals(State.HOLD_FULL, AfkEstimator.estimate(in).getState());
+
+		in = afkWithTwoCrew();
+		in.crewOnHooks = false;
 		assertEquals(State.NOBODY_SALVAGING, AfkEstimator.estimate(in).getState());
+		// Crew on hooks with nothing expected of them yet is not nobody salvaging.
+		in.crewOnHooks = true;
+		in.crewExpectedPerTick = 0;
+		assertFalse(AfkEstimator.estimate(in).getState() == State.NOBODY_SALVAGING);
 
 		in = afkWithTwoCrew();
 		in.hazardous = true;
@@ -77,15 +91,13 @@ public class AfkEstimatorTest
 
 		in = afkWithTwoCrew();
 		in.wreckInReach = false;
-		in.expectedWaitMillis = 90_000;
 		AfkEstimate waiting = AfkEstimator.estimate(in);
 		assertEquals(State.WAITING_FOR_WRECK, waiting.getState());
-		assertEquals(90_000, waiting.getEtaMillis());
+		// Nobody can say when the next wreck rises, so there is no ETA while waiting.
+		assertFalse(waiting.hasEta());
 		// The paused states still say how much salvaging is left once a wreck is up.
 		assertEquals(750_000, waiting.getWorkMillis());
-		in.expectedWaitMillis = -1;
-		assertFalse(AfkEstimator.estimate(in).hasEta());
-		assertTrue(AfkEstimator.estimate(in).hasWork());
+		assertTrue(waiting.hasWork());
 
 		in = afkWithTwoCrew();
 		in.stalled = true;
@@ -195,6 +207,7 @@ public class AfkEstimatorTest
 	public void thePlayerAloneIsLimitedByInventoryOrTheWreck()
 	{
 		AfkEstimator.Inputs in = afkWithTwoCrew();
+		in.crewOnHooks = false;
 		in.crewExpectedPerTick = 0;
 		in.playerAtHook = true;
 		in.playerRolling = true;
@@ -204,6 +217,16 @@ public class AfkEstimatorTest
 		AfkEstimate estimate = AfkEstimator.estimate(in);
 		assertEquals(State.INVENTORY_FILLS_FIRST, estimate.getState());
 		assertEquals(48_000, estimate.getEtaMillis());
+
+		// Standing at the hook without working it, with a wreck up, is the player's problem to fix.
+		in.playerRolling = false;
+		assertEquals(State.PLAYER_HOOK_IDLE, AfkEstimator.estimate(in).getState());
+		in.inventoryFull = true;
+		in.freeInventorySlots = 0;
+		assertEquals(State.INVENTORY_FULL, AfkEstimator.estimate(in).getState());
+		in.playerRolling = true;
+		in.inventoryFull = false;
+		in.freeInventorySlots = 10;
 
 		in.wreckWindowMillis = 30_000;
 		estimate = AfkEstimator.estimate(in);
@@ -223,7 +246,6 @@ public class AfkEstimatorTest
 		AfkEstimator.Inputs in = afkWithTwoCrew();
 		in.availability = 0;
 		in.wreckWindowMillis = 60_000;
-		in.expectedWaitMillis = -1;
 		AfkEstimate estimate = AfkEstimator.estimate(in);
 		assertEquals(State.WAITING_FOR_WRECK, estimate.getState());
 		assertFalse(estimate.hasEta());

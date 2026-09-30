@@ -9,6 +9,7 @@ import com.afksalvaging.AfkEstimate.State;
 import com.afksalvaging.AfkSession.Notice;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ public class AfkSessionTest
 	private static final WorldPoint HOOK_A = new WorldPoint(1800, 4000, 0);
 	private static final WorldPoint HOOK_B = new WorldPoint(1800, 4004, 0);
 	private static final WorldPoint PLAYER = new WorldPoint(1801, 4001, 0);
+	private static final WorldPoint BOAT = new WorldPoint(1799, 4002, 0);
 	private static final WorldPoint WRECK = new WorldPoint(1806, 4002, 0);
 	private static final int SALVAGING = AnimationID.SAILING_HUMAN_SALVAGE_HOOK_KANDARIN_3X8_DROP01;
 	private static final int SORTING = AnimationID.HUMAN_SAILING_SALVAGE01_LARGE01_INTERACT01;
@@ -65,6 +67,7 @@ public class AfkSessionTest
 	private int level = 99;
 	private boolean interfaceOpen;
 	private WorldPoint playerPoint = PLAYER;
+	private WorldPoint boatPoint = BOAT;
 	private final List<Notice> notices = new ArrayList<>();
 
 	@Before
@@ -77,6 +80,8 @@ public class AfkSessionTest
 		session.holdCount(200, tick);
 		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK, now);
 		session.settings().salvagingWorld = true;
+		// The plugin reads the inventory once at login so later changes have a baseline.
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
 	}
 
 	private void twoCrewOnHooks()
@@ -102,6 +107,7 @@ public class AfkSessionTest
 		in.hooks = Arrays.asList(
 			new AfkSession.HookInput(HOOK_A, SalvagingHookTier.DRAGON, false),
 			new AfkSession.HookInput(HOOK_B, SalvagingHookTier.DRAGON, true));
+		in.boatPoint = boatPoint;
 		in.playerPoint = playerPoint;
 		in.cargoInterfaceOpen = interfaceOpen;
 		notices.addAll(session.tick(in));
@@ -207,18 +213,72 @@ public class AfkSessionTest
 		ticks(3);
 		assertEquals(State.HOLD_FULL_UNCONFIRMED, session.view().estimate.getState());
 		assertEquals(1, count(Notice.HOLD_FULL));
-		// The crew do not stop, so the hold cannot really be full.
+		// One more could be a race with the count.
 		session.crewLine("Jolly Jim", tick);
 		ticks(3);
 		assertEquals(State.HOLD_FULL_UNCONFIRMED, session.view().estimate.getState());
+		// Two mean the tally was high: it is held just under capacity and the timer says so.
 		session.crewLine("Jolly Jim", tick);
 		ticks(3);
 		assertEquals(239, session.monitor().getUsed());
+		assertEquals(State.HOLD_DRIFTED, session.view().estimate.getState());
+		// However much more arrives, it does not announce full again on its own.
+		for (int i = 0; i < 5; i++)
+		{
+			session.crewLine("Jolly Jim", tick);
+			ticks(3);
+		}
+		assertEquals(239, session.monitor().getUsed());
+		assertEquals(State.HOLD_DRIFTED, session.view().estimate.getState());
+		assertEquals(1, count(Notice.HOLD_FULL));
+		// A real count puts things right.
+		session.holdCount(236, tick);
+		ticks(1);
 		assertEquals(State.COUNTING_DOWN, session.view().estimate.getState());
-		// Reaching the top again alerts again.
+		// And the game's own word is final.
+		session.fullLine();
+		ticks(1);
+		assertEquals(State.HOLD_FULL, session.view().estimate.getState());
+		assertEquals(2, count(Notice.HOLD_FULL));
+	}
+
+	@Test
+	public void salvageHookedBeforeTheGameSaidFullIsNotAddedAgain()
+	{
+		twoCrewOnHooks();
+		session.holdCount(238, tick);
+		ticks(6);
+		// The crewmate's line and the "full" message arrive together, and the player opens the hold
+		// in the same tick: the delayed crew event must not push the fresh count back up.
+		session.crewLine("Jolly Jim", tick);
+		session.fullLine();
+		session.holdCount(239, tick);
+		ticks(3);
+		assertEquals(239, session.monitor().getUsed());
+		assertEquals(State.COUNTING_DOWN, session.view().estimate.getState());
+		assertEquals(0, count(Notice.HOLD_FULL));
+	}
+
+	@Test
+	public void theEarlyWarningFiresAtTheChosenMargin()
+	{
+		twoCrewOnHooks();
+		session.settings().warnSlotsRemaining = 2;
+		session.holdCount(237, tick);
+		ticks(6);
+		assertEquals(0, count(Notice.HOLD_NEARLY_FULL));
 		session.crewLine("Jolly Jim", tick);
 		ticks(3);
-		assertEquals(2, count(Notice.HOLD_FULL));
+		assertEquals(238, session.monitor().getUsed());
+		assertEquals(1, count(Notice.HOLD_NEARLY_FULL));
+		assertEquals("Your cargo hold is nearly full (238/240).", session.holdMessage(Notice.HOLD_NEARLY_FULL));
+		session.crewLine("Jolly Jim", tick);
+		ticks(3);
+		assertEquals(1, count(Notice.HOLD_NEARLY_FULL));
+		assertEquals(0, count(Notice.HOLD_FULL));
+		session.crewLine("Jolly Jim", tick);
+		ticks(3);
+		assertEquals(1, count(Notice.HOLD_FULL));
 	}
 
 	@Test
@@ -438,12 +498,27 @@ public class AfkSessionTest
 		session.settings().graceMillis = 3_000;
 		for (int i = 0; i < 40; i++)
 		{
-			playerPoint = new WorldPoint(1801 + i, 4001, 0);
+			boatPoint = new WorldPoint(1799 + i, 4002, 0);
 			tick();
 		}
 		assertEquals(0, count(Notice.HOOK_EMPTY));
-		playerPoint = PLAYER;
+		boatPoint = BOAT;
 		ticks(AfkSession.PARKED_TICKS + 6);
+		assertEquals(1, count(Notice.HOOK_EMPTY));
+	}
+
+	@Test
+	public void walkingTheDeckIsNotMovingTheBoat()
+	{
+		session.roster().setCrewmate(0, JENKINS);
+		session.roster().setPosition(0, CrewAssignment.HOOK_SLOOP_1);
+		session.roster().setCrewmate(1, JOLLY);
+		session.settings().graceMillis = 3_000;
+		for (int i = 0; i < 12; i++)
+		{
+			playerPoint = new WorldPoint(1801, 4001 + (i % 4), 0);
+			tick();
+		}
 		assertEquals(1, count(Notice.HOOK_EMPTY));
 	}
 
@@ -484,11 +559,11 @@ public class AfkSessionTest
 	{
 		twoCrewOnHooks();
 		ticks(6);
-		session.hazardLine(playerPoint);
+		session.hazardLine(boatPoint);
 		assertEquals(State.HAZARDOUS, tick().estimate.getState());
-		playerPoint = new WorldPoint(1810, 4001, 0);
+		boatPoint = new WorldPoint(1810, 4002, 0);
 		ticks(1);
-		playerPoint = PLAYER;
+		boatPoint = BOAT;
 		assertEquals(State.COUNTING_DOWN, ticks(AfkSession.PARKED_TICKS + 1).estimate.getState());
 	}
 
@@ -503,5 +578,109 @@ public class AfkSessionTest
 		AfkSession.View view = ticks(2);
 		assertEquals(State.NOT_SAILING, view.estimate.getState());
 		assertFalse(session.monitor().isReportedFullByGame());
+	}
+
+	@Test
+	public void crewSpeechOnSomeoneElsesBoatIsNotCounted()
+	{
+		twoCrewOnHooks();
+		ownBoat = false;
+		ticks(6);
+		session.crewLine("Jolly Jim", tick);
+		session.sailingXp(80, tick);
+		session.ghostLine(tick);
+		session.sailingXp(80, tick);
+		ticks(4);
+		assertEquals(200, session.monitor().getUsed());
+		assertEquals(0, session.rate().lifetimeEvents());
+		// Back on our own boat the same speech counts.
+		ownBoat = true;
+		ticks(2);
+		session.crewLine("Jolly Jim", tick);
+		ticks(4);
+		assertEquals(201, session.monitor().getUsed());
+	}
+
+	@Test
+	public void hoppingWorldsKeepsTheHoldAndForgetsTheWrecks()
+	{
+		twoCrewOnHooks();
+		ticks(10);
+		assertEquals(State.COUNTING_DOWN, session.view().estimate.getState());
+		session.worldHopped();
+		AfkSession.View view = ticks(2);
+		assertEquals(State.WAITING_FOR_WRECK, view.estimate.getState());
+		assertEquals(200, session.monitor().getUsed());
+		assertEquals(2, view.crewOnHooks.size());
+		assertEquals(0, view.wrecksUp);
+		// The new world's wreck is seen and things carry on.
+		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK, now);
+		view = ticks(AfkSession.PARKED_TICKS + 1);
+		assertEquals(State.COUNTING_DOWN, view.estimate.getState());
+	}
+
+	@Test
+	public void aHoldClickOnlyExplainsAnInventoryChangeInItsOwnDirection()
+	{
+		twoCrewOnHooks();
+		ticks(6);
+		session.inventoryChanged(5, 5, Collections.singleton(ShipwreckType.MERCHANT), tick);
+		ticks(1);
+		// Not hooked by the player, so not counted towards the hold.
+		assertEquals(0, session.getHookedInInventory());
+
+		// A withdraw click followed by the inventory shrinking is not a withdrawal.
+		session.holdActionClicked(true);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(AfkSession.HOLD_ACTION_TICKS + 1);
+		assertEquals(200, session.monitor().getUsed());
+
+		// A deposit click the player walked away from changes nothing either.
+		session.inventoryChanged(5, 5, Collections.singleton(ShipwreckType.MERCHANT), tick);
+		session.holdActionClicked(false);
+		session.holdActionCancelled();
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(2);
+		assertEquals(200, session.monitor().getUsed());
+
+		// The walk to the hold takes a few ticks; the deposit is still recognised when it lands.
+		session.inventoryChanged(5, 5, Collections.singleton(ShipwreckType.MERCHANT), tick);
+		session.holdActionClicked(false);
+		ticks(AfkSession.HOLD_ACTION_TICKS - 2);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(205, session.monitor().getUsed());
+	}
+
+	@Test
+	public void aStallKeepsTheLastCountdownUp()
+	{
+		twoCrewOnHooks();
+		ticks(10);
+		long shown = session.view().countdownMillis;
+		assertTrue(shown > 0);
+		// Long enough with nothing arriving that the crew cannot really be salvaging. The figure
+		// grew as the correction learned they were slow; now it is held rather than blanked.
+		ticks(320);
+		assertEquals(State.STALLED, session.view().estimate.getState());
+		long held = session.view().countdownMillis;
+		assertTrue(held > shown);
+		ticks(20);
+		assertEquals(State.STALLED, session.view().estimate.getState());
+		assertEquals(held, session.view().countdownMillis);
+		// The first piece to arrive ends the stall.
+		session.crewLine("Jolly Jim", tick);
+		ticks(3);
+		assertEquals(State.COUNTING_DOWN, session.view().estimate.getState());
+	}
+
+	@Test
+	public void idleLogoutComesFromTheClientsIdleCounters()
+	{
+		assertEquals(-1, AfkSession.idleLogoutMillis(0, 10, 10));
+		assertEquals(-1, AfkSession.idleLogoutMillis(-1, 10, 10));
+		// 1000 client ticks of 20 ms, the keyboard idle 200 of them and the mouse 500: the keyboard counts.
+		assertEquals(16_000, AfkSession.idleLogoutMillis(1000, 500, 200));
+		assertEquals(0, AfkSession.idleLogoutMillis(100, 200, 300));
 	}
 }

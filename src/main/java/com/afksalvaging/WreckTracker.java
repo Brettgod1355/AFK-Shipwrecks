@@ -107,7 +107,6 @@ public final class WreckTracker
 	private final DecayingSum uptime = new DecayingSum(AVAILABILITY_TAU_MILLIS);
 	private final DecayingSum elapsed = new DecayingSum(AVAILABILITY_TAU_MILLIS);
 	private long lastSinkAt;
-	private ShipwreckType lastSinkType;
 
 	/**
 	 * Notes a wreck object in view, whether newly spawned, found by scanning the scene, or replayed
@@ -143,7 +142,6 @@ public final class WreckTracker
 			site.worked = false;
 			site.workedSince = 0;
 			lastSinkAt = now;
-			lastSinkType = type;
 		}
 		site.active = activeNow;
 		site.present = true;
@@ -317,21 +315,6 @@ public final class WreckTracker
 		return lastSinkAt;
 	}
 
-	/**
-	 * When a wreck sinks another rises somewhere in the area, and on a busy world the others are all
-	 * being worked, so the next rise near us comes within about one lifetime of the last sink.
-	 *
-	 * @return milliseconds until then, or -1 when no sink has been seen
-	 */
-	public long nextRiseWithin(long now)
-	{
-		if (lastSinkAt <= 0 || lastSinkType == null)
-		{
-			return -1;
-		}
-		return Math.max(0, lastSinkAt + lastSinkType.getLifetimeSeconds() * 1000L - now);
-	}
-
 	/** Records whether a usable wreck was in reach over the last {@code dtMillis} of time that mattered. */
 	public void recordAvailability(boolean available, long dtMillis, long now)
 	{
@@ -383,6 +366,5 @@ public final class WreckTracker
 		uptime.reset();
 		elapsed.reset();
 		lastSinkAt = 0;
-		lastSinkType = null;
 	}
 }

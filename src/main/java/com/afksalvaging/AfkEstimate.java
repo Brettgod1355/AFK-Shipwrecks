@@ -20,6 +20,8 @@ public final class AfkEstimate
 		HOLD_FULL,
 		/** The running tally says the hold is full but nothing has confirmed it. */
 		HOLD_FULL_UNCONFIRMED,
+		/** The tally was proved too high and cannot be trusted until the hold is opened. */
+		HOLD_DRIFTED,
 		/** No crewmate on a hook and the player is not at one. */
 		NOBODY_SALVAGING,
 		/** The game refused to salvage here. */
@@ -35,7 +37,11 @@ public final class AfkEstimate
 		/** Only the player is salvaging and their inventory fills before the hold would. */
 		INVENTORY_FILLS_FIRST,
 		/** Only the player is salvaging and the wreck sinks before either fills. */
-		WRECK_SINKS_FIRST
+		WRECK_SINKS_FIRST,
+		/** Only the player could salvage and their inventory is full. */
+		INVENTORY_FULL,
+		/** Only the player could salvage; they stand at the hook but are not working it while a wreck is up. */
+		PLAYER_HOOK_IDLE
 	}
 
 	private final State state;
