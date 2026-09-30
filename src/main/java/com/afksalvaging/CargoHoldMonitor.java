@@ -3,7 +3,7 @@
  * Copyright (c) 2026, Brettgod1355 <github.com/Brettgod1355>
  * See LICENSE for redistribution conditions and disclaimer.
  */
-package com.cargofull;
+package com.afksalvaging;
 
 import net.runelite.api.Item;
 
@@ -23,10 +23,14 @@ public final class CargoHoldMonitor
 		FULL
 	}
 
+	/** Crew salvage arriving while the tally says full before the tally is pulled back by that many. */
+	public static final int OVERCOUNT_EVIDENCE = 2;
+
 	private int used = CargoHoldCapacity.UNKNOWN;
 	private int capacity = CargoHoldCapacity.UNKNOWN;
 	private boolean estimate;
 	private boolean reportedFullByGame;
+	private int overcountEvidence;
 	private Level alerted = Level.OK;
 	private long lastAlertAt;
 
@@ -54,6 +58,7 @@ public final class CargoHoldMonitor
 		this.used = used < 0 ? CargoHoldCapacity.UNKNOWN : used;
 		estimate = false;
 		reportedFullByGame = false;
+		overcountEvidence = 0;
 	}
 
 	/** Restores a remembered count that may be out of date, for example after logging in. */
@@ -62,6 +67,7 @@ public final class CargoHoldMonitor
 		this.used = used < 0 ? CargoHoldCapacity.UNKNOWN : used;
 		estimate = true;
 		reportedFullByGame = false;
+		overcountEvidence = 0;
 	}
 
 	/**
@@ -83,7 +89,52 @@ public final class CargoHoldMonitor
 		{
 			reportedFullByGame = false;
 		}
+		if (delta < 0)
+		{
+			overcountEvidence = 0;
+		}
 		return true;
+	}
+
+	/**
+	 * A crewmate hooked salvage while the tally already said the hold was full. Crew stop when the
+	 * hold is really full, so the tally was too high. One such event might be a race with the count;
+	 * after {@link #OVERCOUNT_EVIDENCE} of them the tally is pulled back by that many and the alert
+	 * re-armed, so a drifted count cannot leave the timer stuck at "full" for the rest of the trip.
+	 *
+	 * @return true when the tally was corrected
+	 */
+	public boolean crewSalvagedWhileFull()
+	{
+		if (!isFullByEstimate())
+		{
+			return false;
+		}
+		overcountEvidence++;
+		if (overcountEvidence < OVERCOUNT_EVIDENCE)
+		{
+			return false;
+		}
+		used = Math.max(0, capacity - overcountEvidence);
+		estimate = true;
+		overcountEvidence = 0;
+		return true;
+	}
+
+	/** Whether the hold reads full only because of the running tally, not a real count or the game saying so. */
+	public boolean isFullByEstimate()
+	{
+		return estimate && !reportedFullByGame && hasCount() && used >= capacity;
+	}
+
+	/** Whether the hold is known full: the game said so, or an exact count reached the capacity. */
+	public boolean isConfirmedFull()
+	{
+		if (reportedFullByGame)
+		{
+			return true;
+		}
+		return !estimate && hasCount() && used >= capacity;
 	}
 
 	public void setCapacity(int capacity)
@@ -221,6 +272,7 @@ public final class CargoHoldMonitor
 		capacity = CargoHoldCapacity.UNKNOWN;
 		estimate = false;
 		reportedFullByGame = false;
+		overcountEvidence = 0;
 		alerted = Level.OK;
 		lastAlertAt = 0;
 	}
