@@ -284,7 +284,9 @@ public class AfkSalvagingOverlay extends OverlayPanel
 				lines.add(new Line("Hold full in", approx + Durations.coarse(remaining), textColour));
 				if (config.showClockTime() && remaining >= 0)
 				{
-					lines.add(new Line("", "at " + Durations.clockAfter(System.currentTimeMillis(), remaining, ZoneId.systemDefault()), dim));
+					boolean twelveHour = config.clockFormat() == AfkSalvagingConfig.ClockFormat.TWELVE_HOUR;
+					lines.add(new Line("", "at " + Durations.clockAfter(System.currentTimeMillis(), remaining,
+						ZoneId.systemDefault(), twelveHour), dim));
 				}
 				if (view.idleLogoutMillis >= 0 && remaining > view.idleLogoutMillis && !view.idleWarning)
 				{

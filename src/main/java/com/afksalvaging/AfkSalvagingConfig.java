@@ -98,13 +98,44 @@ public interface AfkSalvagingConfig extends Config
 		return true;
 	}
 
+	enum ClockFormat
+	{
+		TWELVE_HOUR("12-hour"),
+		TWENTY_FOUR_HOUR("24-hour");
+
+		private final String label;
+
+		ClockFormat(String label)
+		{
+			this.label = label;
+		}
+
+		@Override
+		public String toString()
+		{
+			return label;
+		}
+	}
+
+	@ConfigItem(
+		keyName = "clockFormat",
+		name = "Clock format",
+		description = "Show the time the hold will be full as 12-hour (6:25 PM) or 24-hour (18:25).",
+		section = TIMER,
+		position = 2
+	)
+	default ClockFormat clockFormat()
+	{
+		return ClockFormat.TWELVE_HOUR;
+	}
+
 	@ConfigItem(
 		keyName = "countHookedSalvage",
 		name = "Count salvage you hooked",
 		description = "Treat salvage you hooked yourself and have not yet deposited as bound for the hold. "
 			+ "Salvage you withdrew to sort is never counted.",
 		section = TIMER,
-		position = 2
+		position = 3
 	)
 	default boolean countHookedSalvage()
 	{
@@ -117,7 +148,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "World numbers to treat as salvaging worlds, where wrecks come back quickly because every site "
 			+ "is being worked. Worlds the world list labels as salvaging are always included.",
 		section = TIMER,
-		position = 3
+		position = 4
 	)
 	default String salvagingWorlds()
 	{
@@ -130,7 +161,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "When the crew have been waiting a while for a wreck on an ordinary world, mention that "
 			+ "salvaging worlds keep wrecks coming.",
 		section = TIMER,
-		position = 4
+		position = 5
 	)
 	default boolean worldTip()
 	{

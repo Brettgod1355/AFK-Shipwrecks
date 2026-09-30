@@ -13,7 +13,8 @@ import java.util.Locale;
 /** Formats the times the overlay shows. */
 public final class Durations
 {
-	private static final DateTimeFormatter CLOCK = DateTimeFormatter.ofPattern("HH:mm", Locale.ROOT);
+	private static final DateTimeFormatter CLOCK_24 = DateTimeFormatter.ofPattern("HH:mm", Locale.ROOT);
+	private static final DateTimeFormatter CLOCK_12 = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
 
 	private Durations()
 	{
@@ -109,9 +110,19 @@ public final class Durations
 		return rest > 0 ? String.format(Locale.ROOT, "%dh%02d", hours, rest) : hours + "h";
 	}
 
-	/** The local wall-clock time this many milliseconds after {@code now}, as {@code HH:mm}. */
+	/** The local wall-clock time this many milliseconds after {@code now}, as 24-hour {@code HH:mm}. */
 	public static String clockAfter(long now, long millis, ZoneId zone)
 	{
-		return CLOCK.format(Instant.ofEpochMilli(now + Math.max(0, millis)).atZone(zone));
+		return clockAfter(now, millis, zone, false);
+	}
+
+	/**
+	 * The local wall-clock time this many milliseconds after {@code now}: {@code 6:25 PM} when
+	 * {@code twelveHour}, otherwise {@code 18:25}.
+	 */
+	public static String clockAfter(long now, long millis, ZoneId zone, boolean twelveHour)
+	{
+		DateTimeFormatter format = twelveHour ? CLOCK_12 : CLOCK_24;
+		return format.format(Instant.ofEpochMilli(now + Math.max(0, millis)).atZone(zone));
 	}
 }

@@ -67,4 +67,16 @@ public class DurationsTest
 		assertEquals("13:00", Durations.clockAfter(noon, 3_600_000, ZoneOffset.UTC));
 		assertEquals("12:00", Durations.clockAfter(noon, -1, ZoneOffset.UTC));
 	}
+
+	@Test
+	public void clockTimeCanBeTwelveHour()
+	{
+		long midnight = 0;
+		long noon = 12 * 3_600_000L;
+		assertEquals("6:25 PM", Durations.clockAfter(noon, (6 * 60 + 25) * 60_000L, ZoneOffset.UTC, true));
+		assertEquals("18:25", Durations.clockAfter(noon, (6 * 60 + 25) * 60_000L, ZoneOffset.UTC, false));
+		assertEquals("12:00 PM", Durations.clockAfter(noon, 0, ZoneOffset.UTC, true));
+		assertEquals("12:30 AM", Durations.clockAfter(midnight, 30 * 60_000L, ZoneOffset.UTC, true));
+		assertEquals("9:05 AM", Durations.clockAfter(midnight, (9 * 60 + 5) * 60_000L, ZoneOffset.UTC, true));
+	}
 }

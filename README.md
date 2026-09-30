@@ -110,7 +110,7 @@ salvages have been seen. Other lines you may see:
 ## Settings
 
 **Timer**: show timer (turning it off hides the countdown lines; the status lines, such as waiting
-for a wreck, stay); show clock time; count salvage you hooked; salvaging worlds (default
+for a wreck, stay); show clock time; clock format (12-hour or 24-hour); count salvage you hooked; salvaging worlds (default
 `596, 597`); salvaging world tip.
 
 **Reminders**: four RuneLite notifications you can shape separately (hook empty with a crewmate
