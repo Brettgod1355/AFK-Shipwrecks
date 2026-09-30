@@ -281,7 +281,7 @@ public class AfkSalvagingOverlay extends OverlayPanel
 					lines.add(new Line("Hold", "full once you deposit your salvage", amber));
 					break;
 				}
-				lines.add(new Line("Hold full in", approx + Durations.coarse(remaining), textColour));
+				lines.add(new Line("Hold full in about", Durations.coarse(remaining), textColour));
 				if (config.showClockTime() && remaining >= 0)
 				{
 					boolean twelveHour = config.clockFormat() == AfkSalvagingConfig.ClockFormat.TWELVE_HOUR;

@@ -10,7 +10,7 @@ stopped, and the fact that your own hook does not restart itself.
 
 ## What it does
 
-- **Countdown to a full hold.** "Hold full in ~52 min", with the clock time if you like. It is
+- **Countdown to a full hold.** "Hold full in about 52 min", with the clock time if you like. It is
   built from the game's published salvage chances for your wreck, hooks and level, then corrected
   by what your crew actually bring in, so it shows a number from the first tick and gets better
   as it goes. Under ten minutes it counts in seconds.
@@ -85,8 +85,8 @@ A small panel at the top of the game while you are on your own boat and a wreck 
 (or whenever you are aboard, if you set "Show overlay" to always; alerts show either way):
 
 ```
-Hold full in        ~52 min
-                   at 14:32
+Hold full in about   52 min
+                  at 2:32 PM
 Cargo hold          188/240
 Hooks    Jenkins, Jolly Jim
 Wrecks   2 up (Merchant) · last sinks in ≤ 1:20
