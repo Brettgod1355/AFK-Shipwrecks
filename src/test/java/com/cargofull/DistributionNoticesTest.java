@@ -3,7 +3,7 @@
  * Copyright (c) 2026, Brettgod1355 <github.com/Brettgod1355>
  * See LICENSE for redistribution conditions and disclaimer.
  */
-package com.afksalvaging;
+package com.cargofull;
 
 import java.io.File;
 import java.io.InputStream;
