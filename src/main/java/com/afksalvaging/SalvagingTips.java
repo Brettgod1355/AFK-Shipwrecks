@@ -27,6 +27,12 @@ public final class SalvagingTips
 		"Map pans the world map while it is open. With it closed, press Map, then open the map and it jumps there.",
 		"Route asks the Shortest Path plugin to draw the way. The line above the list says if it is missing or "
 			+ "switched off.",
+		"The star pins a spot to the top of every list and to the Favourites filter; favourites are kept per "
+			+ "account. Auto marks one spot to be routed to by itself whenever you board your boat from a dock.",
+		"Sort: nearest first orders the spots by their distance from you, and the nearest dock block at the top "
+			+ "follows you about. The dropdowns are remembered between sessions.",
+		"Test alert fires the full-hold notification and banner so you can check your set-up without filling a "
+			+ "hold. Forget rates throws away what the timer learned about your crew's speed on each wreck.",
 		"The timer and counter need one real look at the hold: open the cargo hold once and they follow from there. "
 			+ "Opening it again at any time resyncs the tally.",
 		"Your crew salvage at your Sailing level, boosted or not. If a boost lapses below the wreck's level they "

@@ -109,6 +109,14 @@ public class AfkSalvagingPlugin extends Plugin
 	private static final String RATE_KEY_PREFIX = "rate.";
 	/** How often the learned rate is written out while salvaging. */
 	private static final long MEMORY_FLUSH_MILLIS = 5 * 60_000L;
+	/** RuneScape-profile config key for the spots pinned in the sidebar. */
+	private static final String FAVOURITES_KEY = "spots.favourites";
+	/** Ticks between updates of the sidebar's distances and session line. */
+	private static final int SIDEBAR_REFRESH_TICKS = 4;
+	/** Ticks after login before boarding counts as boarding: logging in aboard is not. */
+	private static final int BOARDING_SETTLE_TICKS = 3;
+	/** How long the banner shows for a test alert when the banner setting keeps it up indefinitely. */
+	private static final int TEST_BANNER_SECONDS = 10;
 	/** Ticks between fallback scans of the boat while no hook has been found. */
 	private static final int RESCAN_TICKS = 5;
 	private static final int[] CREW_SLOT_VARBITS = {
@@ -201,6 +209,11 @@ public class AfkSalvagingPlugin extends Plugin
 	private boolean loginPending = true;
 	/** Whether the full-hold shout for someone else's boat has been given this trip. */
 	private boolean otherBoatFullNotified;
+	/** Last tick's footing, to notice the player stepping from a dock onto their own boat. */
+	private boolean lastSailing;
+	private boolean lastOwnBoat;
+	private int ticksSinceLogin;
+	private long testAlertAt;
 
 	@Provides
 	AfkSalvagingConfig provideConfig(ConfigManager configManager)
@@ -290,6 +303,10 @@ public class AfkSalvagingPlugin extends Plugin
 	{
 		session.flushMemory();
 		reloadHold();
+		if (spotsPanel != null)
+		{
+			spotsPanel.setFavourites(loadFavourites());
+		}
 	}
 
 	@Subscribe
@@ -606,6 +623,18 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			give(notice, now);
 		}
+		if (in.ownBoat && !lastOwnBoat && !lastSailing && ticksSinceLogin > BOARDING_SETTLE_TICKS)
+		{
+			boarded();
+		}
+		lastOwnBoat = in.ownBoat;
+		lastSailing = sailing;
+		ticksSinceLogin++;
+		if (spotsPanel != null && tick % SIDEBAR_REFRESH_TICKS == 0)
+		{
+			spotsPanel.setPosition(in.playerPoint);
+			spotsPanel.setStats(statsLine());
+		}
 		if (session.monitor().isEstimate())
 		{
 			saveUsed();
@@ -685,6 +714,11 @@ public class AfkSalvagingPlugin extends Plugin
 		}
 		CargoHoldMonitor.Level level = session.monitor().level(config.warnSlotsRemaining());
 		int seconds = config.bannerSeconds();
+		if (level == CargoHoldMonitor.Level.OK && testAlertAt > 0
+			&& now - testAlertAt < (seconds > 0 ? seconds : TEST_BANNER_SECONDS) * 1000L)
+		{
+			return CargoHoldMonitor.Level.FULL;
+		}
 		if (level != CargoHoldMonitor.Level.OK && seconds > 0 && now - alertShownAt > seconds * 1000L)
 		{
 			return CargoHoldMonitor.Level.OK;
@@ -739,6 +773,10 @@ public class AfkSalvagingPlugin extends Plugin
 		reloadHold();
 		requestWorlds();
 		shareSailingLevel();
+		if (spotsPanel != null)
+		{
+			spotsPanel.setFavourites(loadFavourites());
+		}
 	}
 
 	// ---- Salvage spots: sidebar, world map markers, double spot boxes ----
@@ -750,6 +788,8 @@ public class AfkSalvagingPlugin extends Plugin
 		if (config.spotSidebar())
 		{
 			addSidebar();
+			spotsPanel.setDockShown(config.nearestDock());
+			spotsPanel.setAutoRoute(SpotList.spotNamed(config.autoRouteSpot()));
 		}
 		else
 		{
@@ -782,7 +822,73 @@ public class AfkSalvagingPlugin extends Plugin
 			{
 				clearSpotRoute();
 			}
+
+			@Override
+			public void showDockOnMap(Mooring dock)
+			{
+				showPointOnMap(dock.getPoint(), dock.getDisplayName() + " dock");
+			}
+
+			@Override
+			public void routeToDock(Mooring dock)
+			{
+				route(dock.getPoint(), dock.getDisplayName() + " dock", "Route sent to Shortest Path: ");
+			}
+
+			@Override
+			public void filterChanged(String filterKey)
+			{
+				configManager.setConfiguration(AfkSalvagingConfig.GROUP, "spotFilter", filterKey);
+			}
+
+			@Override
+			public void sortChanged(boolean nearestFirst)
+			{
+				configManager.setConfiguration(AfkSalvagingConfig.GROUP, "spotNearestFirst", nearestFirst);
+			}
+
+			@Override
+			public void favouriteChanged(SalvagingSpot spot, boolean favourite)
+			{
+				saveFavourite(spot, favourite);
+			}
+
+			@Override
+			public void autoRouteChanged(SalvagingSpot spot)
+			{
+				if (spot == null)
+				{
+					configManager.unsetConfiguration(AfkSalvagingConfig.GROUP, "autoRouteSpot");
+				}
+				else
+				{
+					configManager.setConfiguration(AfkSalvagingConfig.GROUP, "autoRouteSpot", spot.name());
+				}
+				setSpotStatus(spot == null ? "Auto route off." : "Auto route: " + spot.getSalvageName() + ", " + spot.getWhere()
+					+ ". It is sent to Shortest Path when you board your boat from a dock.", false);
+			}
+
+			@Override
+			public void testAlert()
+			{
+				sendTestAlert();
+			}
+
+			@Override
+			public void forgetLearnedRates()
+			{
+				clientThread.invokeLater(() ->
+				{
+					session.forgetLearnedRates();
+					setSpotStatus("Learned rates forgotten. The timer starts again from the published tables and "
+						+ "learns afresh as salvage comes in.", false);
+				});
+			}
 		});
+		spotsPanel.setChoices(config.spotFilter(), config.spotNearestFirst());
+		spotsPanel.setFavourites(loadFavourites());
+		spotsPanel.setAutoRoute(SpotList.spotNamed(config.autoRouteSpot()));
+		spotsPanel.setDockShown(config.nearestDock());
 		spotsPanel.setSailingLevel(sailingLevelForSpots());
 		spotsPanel.setPicked(mapPoints.getPicked());
 		String problem = ShortestPathPresence.check(pluginManager).problem();
@@ -830,20 +936,24 @@ public class AfkSalvagingPlugin extends Plugin
 	 */
 	private void showSpotOnMap(SalvagingSpot spot)
 	{
+		clientThread.invokeLater(() -> pickSpot(spot));
+		showPointOnMap(spot.getPoint(), spot.getSalvageName() + ", " + spot.getWhere());
+	}
+
+	private void showPointOnMap(WorldPoint point, String what)
+	{
 		clientThread.invokeLater(() ->
 		{
-			pickSpot(spot);
 			if (isWorldMapOpen())
 			{
 				pendingMapTarget = null;
-				client.getWorldMap().setWorldMapPositionTarget(spot.getPoint());
+				client.getWorldMap().setWorldMapPositionTarget(point);
 			}
 			else
 			{
-				pendingMapTarget = spot.getPoint();
+				pendingMapTarget = point;
 				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
-					"<col=" + TIP_COLOUR + ">Open the world map and it will jump to " + spot.getSalvageName()
-						+ ", " + spot.getWhere() + ".</col>", null);
+					"<col=" + TIP_COLOUR + ">Open the world map and it will jump to " + what + ".</col>", null);
 			}
 		});
 	}
@@ -855,26 +965,43 @@ public class AfkSalvagingPlugin extends Plugin
 	 */
 	private void routeToSpot(SalvagingSpot spot)
 	{
+		clientThread.invokeLater(() -> pickSpot(spot));
+		route(spot.getPoint(), spot.getSalvageName() + ", " + spot.getWhere(), "Route sent to Shortest Path: ");
+	}
+
+	/** Sends a route over the bus, or reports why it could not; the report starts with {@code sent}. */
+	private void route(WorldPoint point, String what, String sent)
+	{
 		clientThread.invokeLater(() ->
 		{
-			pickSpot(spot);
 			ShortestPathPresence presence = ShortestPathPresence.check(pluginManager);
 			String problem = presence.problem();
 			if (problem != null)
 			{
-				if (spotsPanel != null)
-				{
-					spotsPanel.setStatus(problem, true);
-				}
+				setSpotStatus(problem, true);
 				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=" + TIP_COLOUR + ">" + problem + "</col>", null);
 				return;
 			}
-			eventBus.post(ShortestPathMessages.routeTo(spot.getPoint()));
-			if (spotsPanel != null)
-			{
-				spotsPanel.setStatus("Route sent to Shortest Path: " + spot.getSalvageName() + ", " + spot.getWhere() + ".", false);
-			}
+			eventBus.post(ShortestPathMessages.routeTo(point));
+			setSpotStatus(sent + what + ".", false);
 		});
+	}
+
+	/** The player has just stepped from a dock onto their own boat: send the marked spot, if any. */
+	private void boarded()
+	{
+		SalvagingSpot spot = SpotList.spotNamed(config.autoRouteSpot());
+		if (spot == null || !config.autoRouteOnBoarding())
+		{
+			return;
+		}
+		pickSpot(spot);
+		route(spot.getPoint(), spot.getSalvageName() + ", " + spot.getWhere(), "Auto route sent to Shortest Path: ");
+		if (ShortestPathPresence.check(pluginManager).problem() == null)
+		{
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=" + TIP_COLOUR + ">Auto route: "
+				+ spot.getSalvageName() + ", " + spot.getWhere() + ".</col>", null);
+		}
 	}
 
 	private void clearSpotRoute()
@@ -882,11 +1009,77 @@ public class AfkSalvagingPlugin extends Plugin
 		clientThread.invokeLater(() ->
 		{
 			eventBus.post(ShortestPathMessages.clearRoute());
-			if (spotsPanel != null)
-			{
-				spotsPanel.setStatus(ShortestPathPresence.check(pluginManager).problem(), true);
-			}
+			setSpotStatus(ShortestPathPresence.check(pluginManager).problem(), true);
 		});
+	}
+
+	/** Fires the full-hold notification and banner so the player can check what they set up. */
+	private void sendTestAlert()
+	{
+		clientThread.invokeLater(() ->
+		{
+			testAlertAt = clock();
+			notifier.notify(config.notification(), "Test alert: this is the full cargo hold alert.");
+			int seconds = config.bannerSeconds() > 0 ? config.bannerSeconds() : TEST_BANNER_SECONDS;
+			setSpotStatus("Test alert sent" + (config.showBanner() ? ", with the banner for " + seconds + " s." : "."), false);
+		});
+	}
+
+	private void setSpotStatus(String text, boolean problem)
+	{
+		if (spotsPanel != null)
+		{
+			spotsPanel.setStatus(text, problem);
+		}
+	}
+
+	/** The sidebar's session line. */
+	private String statsLine()
+	{
+		AfkSession.Stats stats = session.stats();
+		if (stats.salvages == 0 && stats.sailingXp == 0 && stats.holdsFilled == 0 && stats.waitingMillis == 0)
+		{
+			return "This session: nothing salvaged yet.";
+		}
+		return String.format("This session: %,d salvage · %,d Sailing XP · %d hold%s filled · %s waiting for wrecks",
+			stats.salvages, stats.sailingXp, stats.holdsFilled, stats.holdsFilled == 1 ? "" : "s",
+			Durations.coarse(stats.waitingMillis));
+	}
+
+	private Set<SalvagingSpot> loadFavourites()
+	{
+		if (configManager.getRSProfileKey() == null)
+		{
+			return SpotList.decodeFavourites(null);
+		}
+		return SpotList.decodeFavourites(configManager.getRSProfileConfiguration(AfkSalvagingConfig.GROUP, FAVOURITES_KEY));
+	}
+
+	private void saveFavourite(SalvagingSpot spot, boolean favourite)
+	{
+		if (configManager.getRSProfileKey() == null)
+		{
+			setSpotStatus("Favourites are kept per account: log in and press the star again to keep it.", true);
+			return;
+		}
+		Set<SalvagingSpot> favourites = loadFavourites();
+		if (favourite)
+		{
+			favourites.add(spot);
+		}
+		else
+		{
+			favourites.remove(spot);
+		}
+		String encoded = SpotList.encodeFavourites(favourites);
+		if (encoded.isEmpty())
+		{
+			configManager.unsetRSProfileConfiguration(AfkSalvagingConfig.GROUP, FAVOURITES_KEY);
+		}
+		else
+		{
+			configManager.setRSProfileConfiguration(AfkSalvagingConfig.GROUP, FAVOURITES_KEY, encoded);
+		}
 	}
 
 	private void pickSpot(SalvagingSpot spot)
@@ -917,6 +1110,9 @@ public class AfkSalvagingPlugin extends Plugin
 		worldChecked = -1;
 		worldDirty = true;
 		loginPending = true;
+		lastSailing = false;
+		lastOwnBoat = false;
+		ticksSinceLogin = 0;
 	}
 
 	private void forgetBoat()
@@ -1508,6 +1704,15 @@ public class AfkSalvagingPlugin extends Plugin
 				return;
 			}
 			configManager.setRSProfileConfiguration(AfkSalvagingConfig.GROUP, RATE_KEY_PREFIX + wreck.name(), memory);
+		}
+
+		@Override
+		public void clear(ShipwreckType wreck)
+		{
+			if (configManager.getRSProfileKey() != null)
+			{
+				configManager.unsetRSProfileConfiguration(AfkSalvagingConfig.GROUP, RATE_KEY_PREFIX + wreck.name());
+			}
 		}
 	}
 }

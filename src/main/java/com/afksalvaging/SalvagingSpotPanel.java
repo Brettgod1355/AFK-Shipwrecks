@@ -8,9 +8,13 @@ package com.afksalvaging;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -19,20 +23,24 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
 
 /**
- * The sidebar: every salvaging hotspot, filtered by wreck, each with a button to show it on the
- * world map and one to route there with the Shortest Path plugin.
+ * The sidebar: every salvaging hotspot, filtered and sorted from two dropdowns, each with buttons
+ * to show it on the world map, route there with the Shortest Path plugin, pin it as a favourite
+ * and mark it for the automatic route when boarding. Above the list: the nearest dock with its
+ * own Map and Route, and the session totals. Below it: a test alert, forgetting the learned rates,
+ * and the tips.
  * <p>
- * Swing only. Anything that touches the game goes back through {@link Actions} so the plugin can
- * run it on the client thread.
+ * Swing only. Anything that touches the game or the settings goes back through {@link Actions} so
+ * the plugin can run it on the client thread.
  */
 public class SalvagingSpotPanel extends PluginPanel
 {
-	/** What the buttons do; the plugin provides it. */
+	/** What the buttons and dropdowns do; the plugin provides it. */
 	public interface Actions
 	{
 		void showOnMap(SalvagingSpot spot);
@@ -40,23 +48,60 @@ public class SalvagingSpotPanel extends PluginPanel
 		void routeTo(SalvagingSpot spot);
 
 		void clearRoute();
+
+		void showDockOnMap(Mooring dock);
+
+		void routeToDock(Mooring dock);
+
+		/** The dropdown changed; the key is one of the {@link SpotList} filters or a wreck name. */
+		void filterChanged(String filterKey);
+
+		void sortChanged(boolean nearestFirst);
+
+		void favouriteChanged(SalvagingSpot spot, boolean favourite);
+
+		/** The spot marked for the automatic route, or null for none. */
+		void autoRouteChanged(SalvagingSpot spot);
+
+		void testAlert();
+
+		void forgetLearnedRates();
 	}
 
 	private static final Color IN_LEVEL = new Color(70, 200, 110);
 	private static final Color BELOW_LEVEL = new Color(200, 110, 110);
-	private static final String ALL_WRECKS = "All wrecks";
-	private static final String MY_LEVEL = "Spots I can salvage";
+	private static final Color MARKED = new Color(255, 200, 60);
 	/** Text widths that wrap inside the panel: the top block, and a row with its own padding. */
 	private static final int TOP_TEXT_WIDTH = 190;
 	private static final int ROW_TEXT_WIDTH = 172;
+	private static final String[][] FILTERS = {
+		{SpotList.FILTER_ALL, "All wrecks"},
+		{SpotList.FILTER_MY_LEVEL, "Spots I can salvage"},
+		{SpotList.FILTER_FAVOURITES, "Favourites"},
+	};
 
 	private final Actions actions;
-	private final JComboBox<String> wreckFilter = new JComboBox<>();
+	private final JComboBox<String> filter = new JComboBox<>();
+	private final JComboBox<String> sort = new JComboBox<>();
 	private final JPanel list = new JPanel();
 	private final JLabel levelNote = new JLabel();
 	private final JLabel status = new JLabel();
+	private final JPanel dockBlock = new JPanel(new BorderLayout(0, 4));
+	private final JLabel dockLabel = new JLabel();
+	private final JLabel statsLabel = new JLabel();
+	private final List<String> filterKeys = new ArrayList<>();
+	private final Set<SalvagingSpot> favourites = EnumSet.noneOf(SalvagingSpot.class);
+	/** The distance label of each listed row, updated in place as the player moves. */
+	private final List<SalvagingSpot> shown = new ArrayList<>();
+	private final List<JLabel> shownDistance = new ArrayList<>();
 	private int sailingLevel;
 	private SalvagingSpot picked;
+	private SalvagingSpot autoRoute;
+	private Mooring dock;
+	private WorldPoint position;
+	private boolean dockShownSetting = true;
+	/** Set while the dropdowns are being put to a stored value, so that does not count as a choice. */
+	private boolean loading;
 
 	public SalvagingSpotPanel(Actions actions)
 	{
@@ -77,45 +122,79 @@ public class SalvagingSpotPanel extends PluginPanel
 		top.add(title);
 		top.add(Box.createVerticalStrut(6));
 
-		wreckFilter.addItem(ALL_WRECKS);
-		wreckFilter.addItem(MY_LEVEL);
+		for (String[] choice : FILTERS)
+		{
+			filterKeys.add(choice[0]);
+			filter.addItem(choice[1]);
+		}
 		for (ShipwreckType type : ShipwreckType.values())
 		{
-			wreckFilter.addItem(SalvagingSpot.salvageName(type) + "  (level " + type.getSailingLevel() + ")");
+			filterKeys.add(type.name());
+			filter.addItem(SalvagingSpot.salvageName(type) + "  (level " + type.getSailingLevel() + ")");
 		}
-		wreckFilter.setFont(FontManager.getRunescapeSmallFont());
-		wreckFilter.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
-		wreckFilter.addActionListener(e -> rebuild());
-		wreckFilter.setAlignmentX(LEFT_ALIGNMENT);
-		top.add(wreckFilter);
+		dropdown(filter, "Which spots to list.");
+		filter.addActionListener(e ->
+		{
+			rebuild();
+			if (!loading)
+			{
+				actions.filterChanged(filterKey());
+			}
+		});
+		top.add(filter);
+		top.add(Box.createVerticalStrut(4));
+
+		sort.addItem("Sort: by wreck");
+		sort.addItem("Sort: nearest first");
+		dropdown(sort, "Nearest first orders the list by the distance from where you are.");
+		sort.addActionListener(e ->
+		{
+			rebuild();
+			if (!loading)
+			{
+				actions.sortChanged(nearestFirst());
+			}
+		});
+		top.add(sort);
 		top.add(Box.createVerticalStrut(6));
 
-		levelNote.setFont(FontManager.getRunescapeSmallFont());
-		levelNote.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-		levelNote.setAlignmentX(LEFT_ALIGNMENT);
+		small(levelNote);
 		top.add(levelNote);
 		top.add(Box.createVerticalStrut(4));
 
-		JButton clear = new JButton("Clear route");
-		clear.setFont(FontManager.getRunescapeSmallFont());
-		clear.setToolTipText("Take down the Shortest Path route.");
+		JButton clear = button("Clear route", "Take down the Shortest Path route.");
 		clear.addActionListener(e -> actions.clearRoute());
-		clear.setAlignmentX(LEFT_ALIGNMENT);
 		top.add(clear);
 		top.add(Box.createVerticalStrut(4));
 
 		JLabel note = new JLabel(html("Map pans the world map while it is open; otherwise open it and it "
 			+ "jumps there. Route draws the way there with the Shortest Path plugin.", TOP_TEXT_WIDTH));
-		note.setFont(FontManager.getRunescapeSmallFont());
-		note.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-		note.setAlignmentX(LEFT_ALIGNMENT);
+		small(note);
 		top.add(note);
 		top.add(Box.createVerticalStrut(4));
 
-		status.setFont(FontManager.getRunescapeSmallFont());
-		status.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-		status.setAlignmentX(LEFT_ALIGNMENT);
+		small(status);
 		top.add(status);
+		top.add(Box.createVerticalStrut(6));
+
+		dockBlock.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		dockBlock.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
+		dockBlock.setAlignmentX(LEFT_ALIGNMENT);
+		dockBlock.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+		small(dockLabel);
+		dockLabel.setForeground(Color.WHITE);
+		dockBlock.add(dockLabel, BorderLayout.CENTER);
+		JButton dockMap = button("Map", "Show the nearest dock on the world map.");
+		dockMap.addActionListener(e -> withDock(actions::showDockOnMap));
+		JButton dockRoute = button("Route", "Ask the Shortest Path plugin to draw a route to the nearest dock.");
+		dockRoute.addActionListener(e -> withDock(actions::routeToDock));
+		dockBlock.add(buttons(dockMap, dockRoute), BorderLayout.SOUTH);
+		dockBlock.setVisible(false);
+		top.add(dockBlock);
+		top.add(Box.createVerticalStrut(6));
+
+		small(statsLabel);
+		top.add(statsLabel);
 
 		add(top, BorderLayout.NORTH);
 
@@ -123,26 +202,37 @@ public class SalvagingSpotPanel extends PluginPanel
 		list.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		add(list, BorderLayout.CENTER);
 
-		add(tipsBlock(), BorderLayout.SOUTH);
+		add(bottomBlock(), BorderLayout.SOUTH);
 
 		rebuild();
 	}
 
-	/** "Tips" at the bottom: closed by default, opens to the things worth knowing. */
-	private JPanel tipsBlock()
+	/** The tools and the tips at the bottom: the tips closed by default. */
+	private JPanel bottomBlock()
 	{
-		JPanel block = new JPanel(new BorderLayout(0, 4));
+		JPanel block = new JPanel();
+		block.setLayout(new BoxLayout(block, BoxLayout.Y_AXIS));
 		block.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		block.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
 
+		JButton test = button("Test alert", "Send the full-hold notification now, with the banner, so you can check "
+			+ "the sound and popup you set up.");
+		test.addActionListener(e -> actions.testAlert());
+		JButton forget = button("Forget rates", "Throw away what the timer has learned about how fast your "
+			+ "crew salvage each wreck. It starts again from the published tables.");
+		forget.addActionListener(e -> actions.forgetLearnedRates());
+		JPanel tools = buttons(test, forget);
+		tools.setAlignmentX(LEFT_ALIGNMENT);
+		tools.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
+		block.add(tools);
+		block.add(Box.createVerticalStrut(6));
+
 		JLabel body = new JLabel(SalvagingTips.html(TOP_TEXT_WIDTH));
-		body.setFont(FontManager.getRunescapeSmallFont());
-		body.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		small(body);
 		body.setVisible(false);
 
-		JButton toggle = new JButton("Show tips");
-		toggle.setFont(FontManager.getRunescapeSmallFont());
-		toggle.setToolTipText("How the boxes and the buttons work.");
+		JButton toggle = button("Show tips", "How the boxes and the buttons work.");
+		toggle.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
 		toggle.addActionListener(e ->
 		{
 			body.setVisible(!body.isVisible());
@@ -150,13 +240,15 @@ public class SalvagingSpotPanel extends PluginPanel
 			block.revalidate();
 			block.repaint();
 		});
-
-		block.add(toggle, BorderLayout.NORTH);
-		block.add(body, BorderLayout.CENTER);
+		block.add(toggle);
+		block.add(Box.createVerticalStrut(4));
+		block.add(body);
 		return block;
 	}
 
-	/** Recolours the levels for the player's Sailing level. Safe to call from any thread. */
+	// ---- What the plugin tells the panel; all safe to call from any thread ----
+
+	/** Recolours the levels for the player's Sailing level. */
 	public void setSailingLevel(int level)
 	{
 		SwingUtilities.invokeLater(() ->
@@ -171,7 +263,7 @@ public class SalvagingSpotPanel extends PluginPanel
 
 	/**
 	 * Shows what happened after a button press, or why it could not: in red for a problem such as
-	 * Shortest Path not being installed. Null clears it. Safe to call from any thread.
+	 * Shortest Path not being installed. Null clears it.
 	 */
 	public void setStatus(String text, boolean problem)
 	{
@@ -182,7 +274,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		});
 	}
 
-	/** Highlights the spot last sent to the map or routed to. Safe to call from any thread. */
+	/** Highlights the spot last sent to the map or routed to. */
 	public void setPicked(SalvagingSpot spot)
 	{
 		SwingUtilities.invokeLater(() ->
@@ -195,42 +287,180 @@ public class SalvagingSpotPanel extends PluginPanel
 		});
 	}
 
-	/** The wreck kind picked in the dropdown, or null for "all" and "spots I can salvage". */
-	private ShipwreckType selectedWreck()
+	/** Puts the dropdowns to the remembered choices without reporting them back as new choices. */
+	public void setChoices(String filterKey, boolean nearestFirst)
 	{
-		int index = wreckFilter.getSelectedIndex();
-		return index <= 1 ? null : ShipwreckType.values()[index - 2];
+		SwingUtilities.invokeLater(() ->
+		{
+			loading = true;
+			try
+			{
+				int index = filterKeys.indexOf(SpotList.validFilter(filterKey));
+				filter.setSelectedIndex(Math.max(0, index));
+				sort.setSelectedIndex(nearestFirst ? 1 : 0);
+			}
+			finally
+			{
+				loading = false;
+			}
+		});
 	}
 
-	private boolean onlyMyLevel()
+	public void setFavourites(Set<SalvagingSpot> spots)
 	{
-		return wreckFilter.getSelectedIndex() == 1;
+		SwingUtilities.invokeLater(() ->
+		{
+			favourites.clear();
+			favourites.addAll(spots);
+			rebuild();
+		});
+	}
+
+	/** The spot marked for the automatic route, or null. */
+	public void setAutoRoute(SalvagingSpot spot)
+	{
+		SwingUtilities.invokeLater(() ->
+		{
+			if (spot != autoRoute)
+			{
+				autoRoute = spot;
+				rebuild();
+			}
+		});
+	}
+
+	/**
+	 * Where the player is in the top-level world, or null when unknown. Distances are updated in
+	 * place; the list is only rebuilt when the order changes.
+	 */
+	public void setPosition(WorldPoint point)
+	{
+		SwingUtilities.invokeLater(() ->
+		{
+			position = point;
+			Mooring nearest = Mooring.nearest(point);
+			if (nearest != dock)
+			{
+				dock = nearest;
+			}
+			refreshDock();
+			if (nearestFirst() && !arranged().equals(shown))
+			{
+				rebuild();
+			}
+			else
+			{
+				refreshDistances();
+			}
+		});
+	}
+
+	/** Whether the nearest dock block is shown at all (a setting). */
+	public void setDockShown(boolean shown)
+	{
+		SwingUtilities.invokeLater(() ->
+		{
+			dockShownSetting = shown;
+			dockBlock.setVisible(shown && dock != null && position != null);
+			revalidate();
+		});
+	}
+
+	/** The session line, already worded; empty hides it. */
+	public void setStats(String text)
+	{
+		SwingUtilities.invokeLater(() -> statsLabel.setText(text == null || text.isEmpty() ? "" : html(text, TOP_TEXT_WIDTH)));
+	}
+
+	// ---- Internals ----
+
+	private String filterKey()
+	{
+		int index = filter.getSelectedIndex();
+		return index < 0 ? SpotList.FILTER_ALL : filterKeys.get(index);
+	}
+
+	private boolean nearestFirst()
+	{
+		return sort.getSelectedIndex() == 1;
+	}
+
+	private List<SalvagingSpot> arranged()
+	{
+		return SpotList.arrange(filterKey(), sailingLevel, favourites, nearestFirst(), position);
+	}
+
+	private void withDock(Consumer<Mooring> action)
+	{
+		if (dock != null)
+		{
+			action.accept(dock);
+		}
+	}
+
+	private void refreshDock()
+	{
+		if (dock == null || position == null)
+		{
+			dockLabel.setText("");
+			return;
+		}
+		dockLabel.setText(html("<b>Nearest dock:</b> " + dock.getDisplayName() + "<br>" + tiles(dock.tilesFrom(position))
+			+ " from you", ROW_TEXT_WIDTH));
+		if (!dockBlock.isVisible() && dockShownSetting)
+		{
+			dockBlock.setVisible(true);
+			revalidate();
+		}
+	}
+
+	private void refreshDistances()
+	{
+		for (int i = 0; i < shown.size(); i++)
+		{
+			shownDistance.get(i).setText(distanceText(shown.get(i)));
+		}
+	}
+
+	private String distanceText(SalvagingSpot spot)
+	{
+		return position == null ? "" : tiles(Mooring.distance(position, spot.getPoint())) + " from you";
+	}
+
+	private static String tiles(int tiles)
+	{
+		return String.format("%,d tiles", tiles);
 	}
 
 	private void rebuild()
 	{
 		list.removeAll();
+		shown.clear();
+		shownDistance.clear();
 		levelNote.setText(sailingLevel > 0 ? "Your Sailing level: " + sailingLevel : "Log in to see which spots you can salvage.");
-		List<SalvagingSpot> spots = SalvagingSpot.forWreck(selectedWreck());
-		int shown = 0;
-		for (SalvagingSpot spot : spots)
+		for (SalvagingSpot spot : arranged())
 		{
-			if (onlyMyLevel() && sailingLevel < spot.getSailingLevel())
-			{
-				continue;
-			}
 			list.add(row(spot));
 			list.add(Box.createVerticalStrut(6));
-			shown++;
+			shown.add(spot);
 		}
-		if (shown == 0)
+		if (shown.isEmpty())
 		{
-			JLabel none = new JLabel(html(sailingLevel > 0
-				? "No spot is within your level yet. Small salvage opens at level 15."
-				: "Log in, and the spots within your level are listed here.", TOP_TEXT_WIDTH));
-			none.setFont(FontManager.getRunescapeSmallFont());
-			none.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-			none.setAlignmentX(LEFT_ALIGNMENT);
+			String why;
+			if (SpotList.FILTER_FAVOURITES.equals(filterKey()))
+			{
+				why = "No favourites yet. Press the star on a spot to pin it here and to the top of every list.";
+			}
+			else if (sailingLevel > 0)
+			{
+				why = "No spot is within your level yet. Small salvage opens at level 15.";
+			}
+			else
+			{
+				why = "Log in, and the spots within your level are listed here.";
+			}
+			JLabel none = new JLabel(html(why, TOP_TEXT_WIDTH));
+			small(none);
 			list.add(none);
 		}
 		list.revalidate();
@@ -250,11 +480,12 @@ public class SalvagingSpotPanel extends PluginPanel
 	private JPanel row(SalvagingSpot spot)
 	{
 		boolean canSalvage = sailingLevel >= spot.getSailingLevel();
+		boolean favourite = favourites.contains(spot);
 		JPanel row = new JPanel(new BorderLayout(0, 4));
 		row.setBackground(spot == picked ? ColorScheme.DARKER_GRAY_HOVER_COLOR : ColorScheme.DARKER_GRAY_COLOR);
 		row.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
 
-		JLabel name = new JLabel(spot.getSalvageName());
+		JLabel name = new JLabel((favourite ? "★ " : "") + spot.getSalvageName());
 		name.setFont(FontManager.getRunescapeBoldFont());
 		name.setForeground(Color.WHITE);
 
@@ -269,37 +500,106 @@ public class SalvagingSpotPanel extends PluginPanel
 		heading.add(level, BorderLayout.EAST);
 
 		JLabel where = new JLabel(html(spot.getWhere(), ROW_TEXT_WIDTH));
-		where.setFont(FontManager.getRunescapeSmallFont());
-		where.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-		where.setAlignmentX(LEFT_ALIGNMENT);
+		small(where);
+
+		JLabel distance = new JLabel(distanceText(spot));
+		small(distance);
+		shownDistance.add(distance);
 
 		JPanel text = new JPanel();
 		text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
 		text.setOpaque(false);
 		text.add(heading);
 		text.add(where);
+		text.add(distance);
+		if (spot == autoRoute)
+		{
+			JLabel auto = new JLabel("Auto route when you board");
+			small(auto);
+			auto.setForeground(MARKED);
+			text.add(auto);
+		}
 
-		JButton map = new JButton("Map");
-		map.setFont(FontManager.getRunescapeSmallFont());
-		map.setToolTipText("Show this spot on the world map.");
+		JButton map = button("Map", "Show this spot on the world map.");
 		map.addActionListener(e -> actions.showOnMap(spot));
-
-		JButton route = new JButton("Route");
-		route.setFont(FontManager.getRunescapeSmallFont());
-		route.setToolTipText("Ask the Shortest Path plugin to draw a route here.");
+		JButton route = button("Route", "Ask the Shortest Path plugin to draw a route here.");
 		route.addActionListener(e -> actions.routeTo(spot));
+		JButton star = button(favourite ? "★" : "☆", favourite ? "Unpin this spot." : "Pin this spot to the top of every list.");
+		if (favourite)
+		{
+			star.setForeground(MARKED);
+		}
+		star.addActionListener(e ->
+		{
+			boolean now = !favourites.contains(spot);
+			if (now)
+			{
+				favourites.add(spot);
+			}
+			else
+			{
+				favourites.remove(spot);
+			}
+			rebuild();
+			actions.favouriteChanged(spot, now);
+		});
+		JButton auto = button("Auto", spot == autoRoute ? "Stop routing here automatically when you board."
+			: "Route here automatically whenever you board your boat from a dock. Only one spot can be marked.");
+		if (spot == autoRoute)
+		{
+			auto.setForeground(MARKED);
+		}
+		auto.addActionListener(e ->
+		{
+			autoRoute = spot == autoRoute ? null : spot;
+			rebuild();
+			actions.autoRouteChanged(autoRoute);
+		});
 
-		JPanel buttons = new JPanel(new GridLayout(1, 2, 6, 0));
+		JPanel buttons = new JPanel(new GridLayout(1, 4, 4, 0));
 		buttons.setOpaque(false);
 		buttons.add(map);
 		buttons.add(route);
-
-		JPanel buttonsRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-		buttonsRow.setOpaque(false);
-		buttonsRow.add(buttons);
+		buttons.add(star);
+		buttons.add(auto);
 
 		row.add(text, BorderLayout.CENTER);
-		row.add(buttonsRow, BorderLayout.SOUTH);
+		row.add(buttons, BorderLayout.SOUTH);
 		return row;
+	}
+
+	private static JPanel buttons(JButton left, JButton right)
+	{
+		JPanel buttons = new JPanel(new GridLayout(1, 2, 6, 0));
+		buttons.setOpaque(false);
+		buttons.add(left);
+		buttons.add(right);
+		return buttons;
+	}
+
+	private static JButton button(String text, String tooltip)
+	{
+		JButton button = new JButton(text);
+		button.setFont(FontManager.getRunescapeSmallFont());
+		// The look and feel pads buttons for a wide panel; four across a row need less.
+		button.setMargin(new Insets(2, 4, 2, 4));
+		button.setToolTipText(tooltip);
+		button.setAlignmentX(LEFT_ALIGNMENT);
+		return button;
+	}
+
+	private static void small(JLabel label)
+	{
+		label.setFont(FontManager.getRunescapeSmallFont());
+		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		label.setAlignmentX(LEFT_ALIGNMENT);
+	}
+
+	private static void dropdown(JComboBox<String> box, String tooltip)
+	{
+		box.setFont(FontManager.getRunescapeSmallFont());
+		box.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
+		box.setAlignmentX(LEFT_ALIGNMENT);
+		box.setToolTipText(tooltip);
 	}
 }

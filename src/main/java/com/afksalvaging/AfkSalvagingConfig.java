@@ -517,4 +517,65 @@ public interface AfkSalvagingConfig extends Config
 	{
 		return true;
 	}
+
+	@ConfigItem(
+		keyName = "nearestDock",
+		name = "Show nearest dock",
+		description = "Name the dock nearest to you at the top of the sidebar, with buttons to show it on the world map "
+			+ "and to route there with the Shortest Path plugin.",
+		section = SPOTS,
+		position = 8
+	)
+	default boolean nearestDock()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "autoRouteOnBoarding",
+		name = "Auto route when boarding",
+		description = "When you board your boat from a dock, hand the spot marked Auto in the sidebar to the Shortest "
+			+ "Path plugin so the route is drawn without pressing anything. Only one spot can be marked.",
+		section = SPOTS,
+		position = 9
+	)
+	default boolean autoRouteOnBoarding()
+	{
+		return true;
+	}
+
+	// ---- Remembered sidebar choices; set from the sidebar, not shown in the settings ----
+
+	@ConfigItem(
+		keyName = "spotFilter",
+		name = "",
+		description = "",
+		hidden = true
+	)
+	default String spotFilter()
+	{
+		return SpotList.FILTER_ALL;
+	}
+
+	@ConfigItem(
+		keyName = "spotNearestFirst",
+		name = "",
+		description = "",
+		hidden = true
+	)
+	default boolean spotNearestFirst()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "autoRouteSpot",
+		name = "",
+		description = "",
+		hidden = true
+	)
+	default String autoRouteSpot()
+	{
+		return "";
+	}
 }

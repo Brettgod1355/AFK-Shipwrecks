@@ -57,6 +57,12 @@ public class AfkSessionTest
 		{
 			memory.put(wreck, value);
 		}
+
+		@Override
+		public void clear(ShipwreckType wreck)
+		{
+			memory.remove(wreck);
+		}
 	});
 
 	private int tick;
@@ -520,6 +526,15 @@ public class AfkSessionTest
 			tick();
 		}
 		assertEquals(1, count(Notice.HOOK_EMPTY));
+	}
+
+	@Test
+	public void forgettingTheLearnedRatesClearsTheStoreAndTheModel()
+	{
+		memory.put(ShipwreckType.BARRACUDA, "0.8000");
+		memory.put(ShipwreckType.SMALL, "1.2000");
+		session.forgetLearnedRates();
+		assertTrue(memory.isEmpty());
 	}
 
 	@Test

@@ -52,6 +52,30 @@ public final class AfkSession
 		String load(ShipwreckType wreck);
 
 		void save(ShipwreckType wreck, String memory);
+
+		/** Forgets what was remembered for a wreck. */
+		void clear(ShipwreckType wreck);
+	}
+
+	/** Running totals since the client started, for the sidebar. Logging out does not clear them. */
+	public static final class Stats
+	{
+		/** Salvage hooked aboard the player's own boat, by crew and player. */
+		public int salvages;
+		/** Sailing XP earned aboard, salvaging and sorting alike. */
+		public long sailingXp;
+		/** Times the hold was confirmed full. */
+		public int holdsFilled;
+		/** Time spent with no wreck up to salvage. */
+		public long waitingMillis;
+
+		public void reset()
+		{
+			salvages = 0;
+			sailingXp = 0;
+			holdsFilled = 0;
+			waitingMillis = 0;
+		}
 	}
 
 	/** Player choices the session needs. */
@@ -155,6 +179,9 @@ public final class AfkSession
 
 	private final Settings settings = new Settings();
 	private final View view = new View();
+	private final Stats stats = new Stats();
+	private boolean wasConfirmedFull;
+	private long lastTickNow = -1;
 
 	private int tick;
 	private long now;
@@ -191,6 +218,27 @@ public final class AfkSession
 	public Settings settings()
 	{
 		return settings;
+	}
+
+	public Stats stats()
+	{
+		return stats;
+	}
+
+	/**
+	 * Throws away the learned rate correction for every wreck, in memory and in the store, so the
+	 * timer starts again from the published tables.
+	 */
+	public void forgetLearnedRates()
+	{
+		rate = new SalvageRateModel();
+		if (memory != null)
+		{
+			for (ShipwreckType type : ShipwreckType.values())
+			{
+				memory.clear(type);
+			}
+		}
 	}
 
 	public CargoHoldMonitor monitor()
@@ -306,6 +354,7 @@ public final class AfkSession
 		}
 		context.sortingXp = sorting;
 		events.sailingXp(delta, tick, context);
+		stats.sailingXp += delta;
 	}
 
 	/** The player used the crystal extractor, whose XP must not be read as salvage. */
@@ -459,6 +508,8 @@ public final class AfkSession
 		worldTipGiven = false;
 		boostDropNotified = false;
 		lastAvailabilityAt = Long.MIN_VALUE;
+		wasConfirmedFull = false;
+		lastTickNow = -1;
 	}
 
 	/** Writes the learned rate correction to memory. */
@@ -604,6 +655,7 @@ public final class AfkSession
 				continue;
 			}
 			rate.recordSalvage();
+			stats.salvages++;
 			if (event.getSource() != SalvageEvents.Source.CREW || event.getTick() <= fullLineTick)
 			{
 				// The player's own salvage goes to their inventory; salvage hooked before the game said
@@ -635,6 +687,11 @@ public final class AfkSession
 			}
 		}
 		confirmedFull = monitor.isConfirmedFull();
+		if (confirmedFull && !wasConfirmedFull)
+		{
+			stats.holdsFilled++;
+		}
+		wasConfirmedFull = confirmedFull;
 
 		if (aboard && parked && !confirmedFull && (crewOnHooks || playerAtHook))
 		{
@@ -691,11 +748,16 @@ public final class AfkSession
 			{
 				waitingSince = now;
 			}
+			else if (lastTickNow >= 0 && now > lastTickNow)
+			{
+				stats.waitingMillis += now - lastTickNow;
+			}
 		}
 		else
 		{
 			waitingSince = -1;
 		}
+		lastTickNow = now;
 
 		// Alerts.
 		CargoHoldMonitor.Level alert = monitor.poll(now, settings.warnSlotsRemaining, settings.repeatFullMillis);

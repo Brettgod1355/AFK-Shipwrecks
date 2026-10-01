@@ -14,8 +14,9 @@ are referenced from the RuneLite API's `net.runelite.api.gameval` classes at com
 ## Data taken from RuneLite's World Map plugin (BSD 2-Clause)
 
 The salvaging hotspot list in `SalvagingSpot.java` (29 world points and the eight salvage names)
-is taken from RuneLite's own World Map plugin, and the port names and coordinates used to describe
-where each spot is were taken from the same plugin's mooring list. Both are in
+is taken from RuneLite's own World Map plugin, and the mooring list in `Mooring.java` (61 dock
+names and world points, also used to describe where each spot is) is taken from the same plugin.
+Both are in
 [runelite/runelite](https://github.com/runelite/runelite), `runelite-client`, version 1.13.1,
 `net/runelite/client/plugins/worldmap/`:
 

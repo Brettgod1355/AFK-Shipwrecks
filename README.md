@@ -37,11 +37,19 @@ stopped, and the fact that your own hook does not restart itself.
 - **Idle logout.** If the hold will take longer to fill than you have left before the game logs
   you out for idling, it shows that too. It cannot press a key for you.
 - **Knows where the wrecks are.** A sidebar panel lists all 29 salvaging hotspots, filtered by
-  wreck or down to the ones your level allows, with the Sailing level each needs and where it sits
-  from the nearest port, and a Tips button at the bottom that explains the boxes, the buttons and
-  the rest of this README in short. Every one has
-  a Map button, which centres the world map on it, and a Route button, which hands it to the
-  Shortest Path plugin to draw the way there. Without that plugin it tells you to install it.
+  wreck, down to the ones your level allows, or to your favourites, sorted by wreck or nearest to
+  you first, with the Sailing level each needs, where it sits from the nearest port and how far it
+  is from you. Every one has a Map button, which centres the world map on it, a Route button,
+  which hands it to the Shortest Path plugin to draw the way there (without that plugin it tells
+  you to install it), a star to pin it to the top, and Auto, which marks it as the one spot to
+  route to by itself whenever you board your boat from a dock. The dropdowns are remembered.
+- **Knows where the docks are.** The nearest dock to you is named at the top of the sidebar with
+  its distance and its own Map and Route buttons.
+- **A session line and two tools.** How much has been salvaged, the Sailing XP, holds filled and
+  time spent waiting for wrecks since the client started; a Test alert button that fires the
+  full-hold notification and banner so you can check your set-up; and Forget rates, which
+  throws away what the timer has learned about your crew's speed. A Tips button at the bottom
+  explains the boxes, the buttons and the rest of this README in short.
 - **Marks them on the world map.** Hover a marker and it tells you which salvage, what level, and
   where. Green means you have the level.
 - **Boxes on the water that say where to park.** A yellow box around each wreck for where a hook
@@ -100,7 +108,9 @@ the hooks line, the wrecks line and text size.
 **Salvage spots**: show the sidebar; mark spots on the world map; wreck reach boxes and their
 colour (yellow); double spot boxes (off, only pairs of wrecks that are both up, or every pair of
 sites in view with the sunk ones dimmer), their colour (green) and the colour they change to once
-you are parked (white); and whether to label the double spot boxes.
+you are parked (white); whether to label the double spot boxes; show the nearest dock; and auto
+route when boarding (the spot itself is marked in the sidebar). Favourites are kept per account;
+the dropdown choices and the Auto spot are kept with the plugin's settings.
 
 ## Salvage spots and double spots
 
@@ -112,7 +122,11 @@ help anyone. The world map can only be moved while it is open and nothing lets a
 for you, so if you press Map with the map closed the plugin remembers the spot and jumps to it the
 moment you open the map yourself. Route posts the spot to the Shortest Path plugin over RuneLite's
 plugin message bus. If Shortest Path is not installed, or is installed but switched off, the sidebar
-says so in red and the same line appears in your chat, with what to do about it.
+says so in red and the same line appears in your chat, with what to do about it. With a spot
+marked Auto, stepping from a dock onto your own boat sends that spot to Shortest Path by itself and
+says so in chat; logging in aboard, hopping worlds and leaving the boat at sea do not count as
+boarding. The nearest dock is the nearest of the same moorings the World Map plugin draws, measured
+as the crow flies from where you stand.
 
 The boxes are worked out, not looked up. A hook works any wreck within its reach, and reach is
 measured as a square around the wreck: that square is the yellow box. Where two yellow boxes
