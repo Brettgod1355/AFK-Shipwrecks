@@ -359,6 +359,20 @@ public final class WreckTracker
 		return sites.size();
 	}
 
+	/** The sites in view right now, wrecks up or sunk, in no particular order. */
+	public List<Site> presentSites()
+	{
+		List<Site> list = new ArrayList<>();
+		for (Site site : sites.values())
+		{
+			if (site.present)
+			{
+				list.add(site);
+			}
+		}
+		return list;
+	}
+
 	/** Forgets all sites and history, for example after a world hop. */
 	public void clear()
 	{

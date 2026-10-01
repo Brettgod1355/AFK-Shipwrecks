@@ -63,6 +63,13 @@ public interface AfkSalvagingConfig extends Config
 	)
 	String OVERLAY = "overlay";
 
+	@ConfigSection(
+		name = "Salvage spots",
+		description = "The sidebar list of hotspots, their markers on the world map and the double salvage spot boxes",
+		position = 6
+	)
+	String SPOTS = "spots";
+
 	// ---- Timer ----
 
 	@ConfigItem(
@@ -386,5 +393,71 @@ public interface AfkSalvagingConfig extends Config
 	default int overlayScale()
 	{
 		return 100;
+	}
+
+	// ---- Salvage spots ----
+
+	@ConfigItem(
+		keyName = "spotSidebar",
+		name = "Show sidebar",
+		description = "Add a sidebar panel listing every salvaging hotspot, with buttons to show it on the world map "
+			+ "and to route there with the Shortest Path plugin.",
+		section = SPOTS,
+		position = 0
+	)
+	default boolean spotSidebar()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "spotMapMarkers",
+		name = "Mark spots on world map",
+		description = "Put a marker on every salvaging hotspot on the world map. Hovering it names the salvage, "
+			+ "the Sailing level it needs and where it is. Green means you have the level.",
+		section = SPOTS,
+		position = 1
+	)
+	default boolean spotMapMarkers()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "doubleSpotMode",
+		name = "Double salvage spots",
+		description = "Box the water where one hook reaches two wrecks at once, so you know where to park. "
+			+ "Active wrecks: only pairs that are both up. All sites: every pair in view, sunk ones dimmer.",
+		section = SPOTS,
+		position = 2
+	)
+	default DoubleSpotMode doubleSpotMode()
+	{
+		return DoubleSpotMode.ACTIVE_WRECKS;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "doubleSpotColor",
+		name = "Double spot colour",
+		description = "Outline colour of the double salvage spot boxes. The fill is a fainter version of it.",
+		section = SPOTS,
+		position = 3
+	)
+	default Color doubleSpotColor()
+	{
+		return new Color(60, 200, 255, 200);
+	}
+
+	@ConfigItem(
+		keyName = "doubleSpotLabels",
+		name = "Label double spots",
+		description = "Write which two wrecks a box covers, for example \"Barracuda + Small\".",
+		section = SPOTS,
+		position = 4
+	)
+	default boolean doubleSpotLabels()
+	{
+		return true;
 	}
 }

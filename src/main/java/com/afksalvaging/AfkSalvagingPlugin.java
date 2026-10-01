@@ -60,13 +60,18 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.Notification;
 import net.runelite.client.config.NotificationSound;
 import net.runelite.client.config.RuneLiteConfig;
+import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.events.RuneScapeProfileChanged;
 import net.runelite.client.events.WorldsFetch;
 import net.runelite.client.game.WorldService;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.ui.ClientToolbar;
+import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.Text;
 import net.runelite.http.api.worlds.World;
 import net.runelite.http.api.worlds.WorldResult;
@@ -149,6 +154,26 @@ public class AfkSalvagingPlugin extends Plugin
 	@Inject
 	private AfkSalvagingConfig config;
 
+	@Inject
+	private EventBus eventBus;
+
+	@Inject
+	private ClientToolbar clientToolbar;
+
+	@Inject
+	private DoubleSpotOverlay doubleSpotOverlay;
+
+	@Inject
+	private SalvagingSpotMapPoints mapPoints;
+
+	/** The sidebar entry and its panel, present while the setting is on. */
+	private NavigationButton spotsButton;
+	private SalvagingSpotPanel spotsPanel;
+	/** A spot to centre the world map on once it has opened, or null. */
+	private WorldPoint pendingMapTarget;
+	/** Ticks to wait after the world map opens before it will take a position. */
+	private int mapFocusTicks;
+
 	private final AfkSession session = new AfkSession(new ProfileMemory());
 	/** Cargo hold object id seen in each boat's world view. */
 	private final Map<Integer, Integer> cargoHoldByWorldView = new HashMap<>();
@@ -184,6 +209,8 @@ public class AfkSalvagingPlugin extends Plugin
 	{
 		clearState();
 		overlayManager.add(overlay);
+		overlayManager.add(doubleSpotOverlay);
+		applySpotSettings();
 		clientThread.invokeLater(() ->
 		{
 			if (client.getGameState() == GameState.LOGGED_IN)
@@ -197,8 +224,21 @@ public class AfkSalvagingPlugin extends Plugin
 	protected void shutDown()
 	{
 		overlayManager.remove(overlay);
+		overlayManager.remove(doubleSpotOverlay);
+		mapPoints.setShown(false);
+		removeSidebar();
+		pendingMapTarget = null;
 		session.flushMemory();
 		clearState();
+	}
+
+	@Subscribe
+	public void onConfigChanged(ConfigChanged event)
+	{
+		if (AfkSalvagingConfig.GROUP.equals(event.getGroup()))
+		{
+			applySpotSettings();
+		}
 	}
 
 	@Subscribe
@@ -417,6 +457,11 @@ public class AfkSalvagingPlugin extends Plugin
 			// The interface script fills in the numbers after the interface opens.
 			readInterfaceNextTick = true;
 		}
+		else if (event.getGroupId() == InterfaceID.WORLDMAP && pendingMapTarget != null)
+		{
+			// The map takes a position only once its own script has laid it out, a tick or two later.
+			mapFocusTicks = 2;
+		}
 	}
 
 	@Subscribe
@@ -464,6 +509,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			session.sailingXp(delta, client.getTickCount());
 		}
+		shareSailingLevel();
 	}
 
 	@Subscribe
@@ -500,6 +546,15 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			readInterfaceNextTick = false;
 			readCargoInterface();
+		}
+		if (mapFocusTicks > 0 && --mapFocusTicks == 0 && pendingMapTarget != null)
+		{
+			WorldPoint target = pendingMapTarget;
+			pendingMapTarget = null;
+			if (isWorldMapOpen())
+			{
+				client.getWorldMap().setWorldMapPositionTarget(target);
+			}
 		}
 		refreshWorld();
 		refreshCapacity();
@@ -658,6 +713,141 @@ public class AfkSalvagingPlugin extends Plugin
 		}
 		reloadHold();
 		requestWorlds();
+		shareSailingLevel();
+	}
+
+	// ---- Salvage spots: sidebar, world map markers, double spot boxes ----
+
+	/** Brings the sidebar and the map markers in line with the settings. */
+	private void applySpotSettings()
+	{
+		mapPoints.setShown(config.spotMapMarkers());
+		if (config.spotSidebar())
+		{
+			addSidebar();
+		}
+		else
+		{
+			removeSidebar();
+		}
+	}
+
+	private void addSidebar()
+	{
+		if (spotsButton != null)
+		{
+			return;
+		}
+		spotsPanel = new SalvagingSpotPanel(new SalvagingSpotPanel.Actions()
+		{
+			@Override
+			public void showOnMap(SalvagingSpot spot)
+			{
+				showSpotOnMap(spot);
+			}
+
+			@Override
+			public void routeTo(SalvagingSpot spot)
+			{
+				routeToSpot(spot);
+			}
+
+			@Override
+			public void clearRoute()
+			{
+				clearSpotRoute();
+			}
+		});
+		spotsPanel.setSailingLevel(sailingLevelForSpots());
+		spotsPanel.setPicked(mapPoints.getPicked());
+		spotsButton = NavigationButton.builder()
+			.tooltip("Salvaging spots")
+			.icon(ImageUtil.loadImageResource(getClass(), "spots_icon.png"))
+			.priority(7)
+			.panel(spotsPanel)
+			.build();
+		clientToolbar.addNavigation(spotsButton);
+	}
+
+	private void removeSidebar()
+	{
+		if (spotsButton != null)
+		{
+			clientToolbar.removeNavigation(spotsButton);
+			spotsButton = null;
+			spotsPanel = null;
+		}
+	}
+
+	/** Tells the sidebar and the map markers what level the player salvages at. */
+	private void shareSailingLevel()
+	{
+		int level = sailingLevelForSpots();
+		mapPoints.setSailingLevel(level);
+		if (spotsPanel != null)
+		{
+			spotsPanel.setSailingLevel(level);
+		}
+	}
+
+	/** The level that decides which wrecks can be salvaged: the boosted one, as the crew use it. */
+	private int sailingLevelForSpots()
+	{
+		return client.getGameState() == GameState.LOGGED_IN ? client.getBoostedSkillLevel(Skill.SAILING) : 0;
+	}
+
+	/**
+	 * Centres the world map on a spot. The map can only be moved while it is open, and nothing in
+	 * the API opens it for the player, so when it is closed the spot is kept until they open it.
+	 * Called from the sidebar, so the work moves to the client thread.
+	 */
+	private void showSpotOnMap(SalvagingSpot spot)
+	{
+		clientThread.invokeLater(() ->
+		{
+			pickSpot(spot);
+			if (isWorldMapOpen())
+			{
+				pendingMapTarget = null;
+				client.getWorldMap().setWorldMapPositionTarget(spot.getPoint());
+			}
+			else
+			{
+				pendingMapTarget = spot.getPoint();
+				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
+					"<col=" + TIP_COLOUR + ">Open the world map and it will jump to " + spot.getSalvageName()
+						+ ", " + spot.getWhere() + ".</col>", null);
+			}
+		});
+	}
+
+	/** Hands the spot to the Shortest Path plugin, if it is installed, over the event bus. */
+	private void routeToSpot(SalvagingSpot spot)
+	{
+		clientThread.invokeLater(() ->
+		{
+			pickSpot(spot);
+			eventBus.post(ShortestPathMessages.routeTo(spot.getPoint()));
+		});
+	}
+
+	private void clearSpotRoute()
+	{
+		clientThread.invokeLater(() -> eventBus.post(ShortestPathMessages.clearRoute()));
+	}
+
+	private void pickSpot(SalvagingSpot spot)
+	{
+		mapPoints.setPicked(spot);
+		if (spotsPanel != null)
+		{
+			spotsPanel.setPicked(spot);
+		}
+	}
+
+	private boolean isWorldMapOpen()
+	{
+		return client.getWidget(InterfaceID.Worldmap.MAP_CONTAINER) != null;
 	}
 
 	private void clearState()

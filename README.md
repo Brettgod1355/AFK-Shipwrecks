@@ -36,9 +36,18 @@ stopped, and the fact that your own hook does not restart itself.
   plus a big red banner and an optional early warning and repeat. As before.
 - **Idle logout.** If the hold will take longer to fill than you have left before the game logs
   you out for idling, it shows that too. It cannot press a key for you.
+- **Knows where the wrecks are.** A sidebar panel lists all 29 salvaging hotspots, filtered by
+  wreck, with the Sailing level each needs and where it sits from the nearest port. Every one has
+  a Map button, which centres the world map on it, and a Route button, which hands it to the
+  Shortest Path plugin to draw the way there.
+- **Marks them on the world map.** Hover a marker and it tells you which salvage, what level, and
+  where. Green means you have the level.
+- **Double salvage spots.** Boxes on the water where one hook reaches two wrecks at once, so you
+  know where to park. Read the section below before trusting them to the tile.
 
 Everything comes from game state your client already has. No web requests other than RuneLite's
-own world list, no accounts, nothing sent anywhere, and it never clicks anything for you.
+own world list, no accounts, nothing sent anywhere, and it never clicks anything for you. It does
+not need any other plugin; Shortest Path is optional and only used if you press Route.
 
 ## The overlay
 
@@ -81,6 +90,30 @@ it) and how often to repeat.
 **Cargo full** and **Early warning**: as before. **Banner**: as before, plus a colour for the
 reminder banner. **Overlay**: the cargo counter, the hooks line, the wrecks line and text size.
 
+**Salvage spots**: show the sidebar; mark spots on the world map; double salvage spots (off, only
+pairs of wrecks that are both up, or every pair of sites in view with the sunk ones dimmer); the
+box colour; and whether to write which two wrecks a box covers.
+
+## Salvage spots and double spots
+
+The sidebar and the map markers use the same list of hotspots RuneLite's own World Map plugin
+draws its salvaging icons from, so they agree with the icons already on your map. Each spot is
+described from the nearest port by sailing distance, for example "Barracuda salvage, 25 tiles
+south-west of Ruins of Unkah", because six Barracuda spots called "Barracuda salvage" would not
+help anyone. The world map can only be moved while it is open and nothing lets a plugin open it
+for you, so if you press Map with the map closed the plugin remembers the spot and jumps to it the
+moment you open the map yourself. Route posts the spot to the Shortest Path plugin over RuneLite's
+plugin message bus; if you do not have Shortest Path installed, nothing happens.
+
+Double salvage spots are worked out, not looked up. A hook works any wreck within its reach, and
+reach is measured as a square around the wreck, so where two of those squares overlap a hook parked
+there works both wrecks. The plugin draws that overlap as a box, labelled with the two wrecks, for
+every pair of wreck sites in view. The honest caveat: the reach is taken as 8 tiles from other
+plugins' observations and has not been confirmed from the game's own code, so a box edge may be a
+tile off. If your hook sits in a box and only one wreck is being worked, tell me and I will fix
+the number. With "All sites" the boxes also appear around sunk wrecks, since the next wreck rises
+on the same tile, so you can park before it does.
+
 ## What it can and cannot know
 
 Here is the honest version, because a countdown invites more trust than a counter.
@@ -111,9 +144,10 @@ Here is the honest version, because a countdown invites more trust than a counte
 8. **Fully AFK still means touching the client** before the game's idle logout. The overlay
    warns when the hold will outlast it.
 9. **Things that need confirming in game.** The player animations for salvaging and sorting, the
-   crew assignment values for the two sloop hooks, and the hook's reach (taken as 8 tiles) come from
-   other plugins' observations and the wiki rather than from the game's code. If you find a case
-   where the plugin is consistently wrong, tell me what you were doing and I'll chase it.
+   crew assignment values for the two sloop hooks, and the hook's reach (taken as 8 tiles, which the
+   double salvage spot boxes also rest on) come from other plugins' observations and the wiki rather
+   than from the game's code. If you find a case where the plugin is consistently wrong, tell me what
+   you were doing and I'll chase it.
 
 ## Install
 
