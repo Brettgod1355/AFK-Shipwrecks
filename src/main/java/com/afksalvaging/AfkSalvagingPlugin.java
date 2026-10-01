@@ -68,6 +68,7 @@ import net.runelite.client.events.WorldsFetch;
 import net.runelite.client.game.WorldService;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -159,6 +160,9 @@ public class AfkSalvagingPlugin extends Plugin
 
 	@Inject
 	private ClientToolbar clientToolbar;
+
+	@Inject
+	private PluginManager pluginManager;
 
 	@Inject
 	private DoubleSpotOverlay doubleSpotOverlay;
@@ -760,6 +764,8 @@ public class AfkSalvagingPlugin extends Plugin
 		});
 		spotsPanel.setSailingLevel(sailingLevelForSpots());
 		spotsPanel.setPicked(mapPoints.getPicked());
+		String problem = ShortestPathPresence.check(pluginManager).problem();
+		spotsPanel.setStatus(problem, problem != null);
 		spotsButton = NavigationButton.builder()
 			.tooltip("Salvaging spots")
 			.icon(ImageUtil.loadImageResource(getClass(), "spots_icon.png"))
@@ -821,19 +827,45 @@ public class AfkSalvagingPlugin extends Plugin
 		});
 	}
 
-	/** Hands the spot to the Shortest Path plugin, if it is installed, over the event bus. */
+	/**
+	 * Hands the spot to the Shortest Path plugin over the event bus. The bus gives no reply, so the
+	 * plugin list is checked first and a missing or switched-off Shortest Path is reported in the
+	 * sidebar and in chat instead of silently doing nothing.
+	 */
 	private void routeToSpot(SalvagingSpot spot)
 	{
 		clientThread.invokeLater(() ->
 		{
 			pickSpot(spot);
+			ShortestPathPresence presence = ShortestPathPresence.check(pluginManager);
+			String problem = presence.problem();
+			if (problem != null)
+			{
+				if (spotsPanel != null)
+				{
+					spotsPanel.setStatus(problem, true);
+				}
+				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=" + TIP_COLOUR + ">" + problem + "</col>", null);
+				return;
+			}
 			eventBus.post(ShortestPathMessages.routeTo(spot.getPoint()));
+			if (spotsPanel != null)
+			{
+				spotsPanel.setStatus("Route sent to Shortest Path: " + spot.getSalvageName() + ", " + spot.getWhere() + ".", false);
+			}
 		});
 	}
 
 	private void clearSpotRoute()
 	{
-		clientThread.invokeLater(() -> eventBus.post(ShortestPathMessages.clearRoute()));
+		clientThread.invokeLater(() ->
+		{
+			eventBus.post(ShortestPathMessages.clearRoute());
+			if (spotsPanel != null)
+			{
+				spotsPanel.setStatus(ShortestPathPresence.check(pluginManager).problem(), true);
+			}
+		});
 	}
 
 	private void pickSpot(SalvagingSpot spot)

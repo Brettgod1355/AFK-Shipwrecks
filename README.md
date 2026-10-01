@@ -39,7 +39,7 @@ stopped, and the fact that your own hook does not restart itself.
 - **Knows where the wrecks are.** A sidebar panel lists all 29 salvaging hotspots, filtered by
   wreck, with the Sailing level each needs and where it sits from the nearest port. Every one has
   a Map button, which centres the world map on it, and a Route button, which hands it to the
-  Shortest Path plugin to draw the way there.
+  Shortest Path plugin to draw the way there. Without that plugin it tells you to install it.
 - **Marks them on the world map.** Hover a marker and it tells you which salvage, what level, and
   where. Green means you have the level.
 - **Double salvage spots.** Boxes on the water where one hook reaches two wrecks at once, so you
@@ -103,7 +103,8 @@ south-west of Ruins of Unkah", because six Barracuda spots called "Barracuda sal
 help anyone. The world map can only be moved while it is open and nothing lets a plugin open it
 for you, so if you press Map with the map closed the plugin remembers the spot and jumps to it the
 moment you open the map yourself. Route posts the spot to the Shortest Path plugin over RuneLite's
-plugin message bus; if you do not have Shortest Path installed, nothing happens.
+plugin message bus. If Shortest Path is not installed, or is installed but switched off, the sidebar
+says so in red and the same line appears in your chat, with what to do about it.
 
 Double salvage spots are worked out, not looked up. A hook works any wreck within its reach, and
 reach is measured as a square around the wreck, so where two of those squares overlap a hook parked

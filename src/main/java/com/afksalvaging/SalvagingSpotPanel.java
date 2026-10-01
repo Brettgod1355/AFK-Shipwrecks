@@ -50,6 +50,7 @@ public class SalvagingSpotPanel extends PluginPanel
 	private final JComboBox<String> wreckFilter = new JComboBox<>();
 	private final JPanel list = new JPanel();
 	private final JLabel levelNote = new JLabel();
+	private final JLabel status = new JLabel();
 	private int sailingLevel;
 	private SalvagingSpot picked;
 
@@ -95,11 +96,16 @@ public class SalvagingSpotPanel extends PluginPanel
 		top.add(clear);
 		top.add(Box.createVerticalStrut(4));
 
-		JLabel note = new JLabel("<html>Route needs the Shortest Path plugin from the Plugin Hub. "
-			+ "Map pans the world map while it is open; otherwise open it and it jumps there.</html>");
+		JLabel note = new JLabel("<html>Map pans the world map while it is open; otherwise open it and it "
+			+ "jumps there. Route draws the way there with the Shortest Path plugin.</html>");
 		note.setFont(FontManager.getRunescapeSmallFont());
 		note.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		top.add(note);
+		top.add(Box.createVerticalStrut(4));
+
+		status.setFont(FontManager.getRunescapeSmallFont());
+		status.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		top.add(status);
 
 		add(top, BorderLayout.NORTH);
 
@@ -120,6 +126,19 @@ public class SalvagingSpotPanel extends PluginPanel
 				sailingLevel = level;
 				rebuild();
 			}
+		});
+	}
+
+	/**
+	 * Shows what happened after a button press, or why it could not: in red for a problem such as
+	 * Shortest Path not being installed. Null clears it. Safe to call from any thread.
+	 */
+	public void setStatus(String text, boolean problem)
+	{
+		SwingUtilities.invokeLater(() ->
+		{
+			status.setText(text == null ? "" : "<html>" + text + "</html>");
+			status.setForeground(problem ? BELOW_LEVEL : IN_LEVEL);
 		});
 	}
 
