@@ -83,6 +83,11 @@ public class AfkSalvagingOverlay extends OverlayPanel
 		CargoHoldMonitor.Level holdBanner = plugin.bannerLevel(now);
 		HookWatch.Reason reminder = holdBanner == CargoHoldMonitor.Level.OK ? plugin.reminderBanner(now) : null;
 		boolean aboardOwnBoat = view.estimate.getState() != AfkEstimate.State.NOT_SAILING;
+		if (aboardOwnBoat && config.overlayWhen() == OverlayWhen.NEAR_WRECKS)
+		{
+			// A salvaging spot, as far as the client can tell, is anywhere a wreck site is in view.
+			aboardOwnBoat = view.wrecksUp > 0 || view.higherWrecksUp > 0 || !session.wrecks().presentSites().isEmpty();
+		}
 		List<Line> lines = new ArrayList<>();
 		if (aboardOwnBoat)
 		{

@@ -113,7 +113,36 @@ public class SalvagingSpotPanel extends PluginPanel
 		list.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		add(list, BorderLayout.CENTER);
 
+		add(tipsBlock(), BorderLayout.SOUTH);
+
 		rebuild();
+	}
+
+	/** "Tips" at the bottom: closed by default, opens to the things worth knowing. */
+	private JPanel tipsBlock()
+	{
+		JPanel block = new JPanel(new BorderLayout(0, 4));
+		block.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		block.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
+
+		JLabel body = new JLabel(SalvagingTips.html());
+		body.setFont(FontManager.getRunescapeSmallFont());
+		body.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		body.setVisible(false);
+
+		JButton toggle = new JButton("Tips: how the boxes and buttons work");
+		toggle.setFont(FontManager.getRunescapeSmallFont());
+		toggle.setToolTipText("Show or hide the tips.");
+		toggle.addActionListener(e ->
+		{
+			body.setVisible(!body.isVisible());
+			block.revalidate();
+			block.repaint();
+		});
+
+		block.add(toggle, BorderLayout.NORTH);
+		block.add(body, BorderLayout.CENTER);
+		return block;
 	}
 
 	/** Recolours the levels for the player's Sailing level. Safe to call from any thread. */

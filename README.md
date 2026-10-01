@@ -37,7 +37,8 @@ stopped, and the fact that your own hook does not restart itself.
 - **Idle logout.** If the hold will take longer to fill than you have left before the game logs
   you out for idling, it shows that too. It cannot press a key for you.
 - **Knows where the wrecks are.** A sidebar panel lists all 29 salvaging hotspots, filtered by
-  wreck, with the Sailing level each needs and where it sits from the nearest port. Every one has
+  wreck, with the Sailing level each needs and where it sits from the nearest port, and a Tips
+  button at the bottom that explains the boxes, the buttons and the rest of this README in short. Every one has
   a Map button, which centres the world map on it, and a Route button, which hands it to the
   Shortest Path plugin to draw the way there. Without that plugin it tells you to install it.
 - **Marks them on the world map.** Hover a marker and it tells you which salvage, what level, and
@@ -53,7 +54,8 @@ not need any other plugin; Shortest Path is optional and only used if you press 
 
 ## The overlay
 
-A small panel at the top of the game while you are on your own boat:
+A small panel at the top of the game while you are on your own boat and a wreck site is in view
+(or whenever you are aboard, if you set "Show overlay" to always; alerts show either way):
 
 ```
 Hold full in        ~52 min
@@ -90,7 +92,8 @@ first reminder (15 s by default; using the hold buys a little more, settling in 
 it) and how often to repeat.
 
 **Cargo full** and **Early warning**: as before. **Banner**: as before, plus a colour for the
-reminder banner. **Overlay**: the cargo counter, the hooks line, the wrecks line and text size.
+reminder banner. **Overlay**: when to show it (near wrecks, or always aboard), the cargo counter,
+the hooks line, the wrecks line and text size.
 
 **Salvage spots**: show the sidebar; mark spots on the world map; wreck reach boxes and their
 colour (yellow); double spot boxes (off, only pairs of wrecks that are both up, or every pair of

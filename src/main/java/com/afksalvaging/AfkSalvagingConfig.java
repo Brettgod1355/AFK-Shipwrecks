@@ -347,6 +347,20 @@ public interface AfkSalvagingConfig extends Config
 	// ---- Overlay ----
 
 	@ConfigItem(
+		keyName = "overlayWhen",
+		name = "Show overlay",
+		description = "Near wrecks: the timer, counter, hooks and wrecks lines show only while a wreck site is in view, "
+			+ "so sailing from port to port stays clear. Always aboard: show them whenever you are on your boat. "
+			+ "Alerts and banners show either way.",
+		section = OVERLAY,
+		position = -1
+	)
+	default OverlayWhen overlayWhen()
+	{
+		return OverlayWhen.NEAR_WRECKS;
+	}
+
+	@ConfigItem(
 		keyName = "showCounter",
 		name = "Show cargo counter",
 		description = "Show used and total cargo slots while you are on your boat.",
