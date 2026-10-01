@@ -37,6 +37,18 @@ public class DoubleSpotTest
 	}
 
 	@Test
+	public void aWreckWithItselfGivesItsWholeReachSquare()
+	{
+		DoubleSpot.Box box = DoubleSpot.reachOverlap(new WorldPoint(100, 100, 0), new WorldPoint(100, 100, 0), REACH);
+		assertNotNull(box);
+		assertEquals("(92,92)-(108,108)", box.toString());
+		assertEquals(17, box.width());
+		assertEquals(17, box.height());
+		assertTrue(box.contains(new WorldPoint(108, 92, 0)));
+		assertFalse(box.contains(new WorldPoint(109, 100, 0)));
+	}
+
+	@Test
 	public void wrecksTooFarApartShareNoSpot()
 	{
 		assertNull(DoubleSpot.reachOverlap(new WorldPoint(100, 100, 0), new WorldPoint(117, 100, 0), REACH));

@@ -65,7 +65,8 @@ public interface AfkSalvagingConfig extends Config
 
 	@ConfigSection(
 		name = "Salvage spots",
-		description = "The sidebar list of hotspots, their markers on the world map and the double salvage spot boxes",
+		description = "The sidebar list of hotspots, their markers on the world map, and the boxes on the water "
+			+ "that show where to park",
 		position = 6
 	)
 	String SPOTS = "spots";
@@ -424,12 +425,38 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "doubleSpotMode",
-		name = "Double salvage spots",
-		description = "Box the water where one hook reaches two wrecks at once, so you know where to park. "
-			+ "Active wrecks: only pairs that are both up. All sites: every pair in view, sunk ones dimmer.",
+		keyName = "wreckReachBoxes",
+		name = "Wreck reach boxes",
+		description = "Box the water around each wreck in view where a hook can reach it. Sunk wrecks get a dimmer box, "
+			+ "since the next wreck rises on the same tile.",
 		section = SPOTS,
 		position = 2
+	)
+	default boolean wreckReachBoxes()
+	{
+		return true;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "wreckReachColor",
+		name = "Wreck reach colour",
+		description = "Outline colour of the wreck reach boxes. The fill is a fainter version of it.",
+		section = SPOTS,
+		position = 3
+	)
+	default Color wreckReachColor()
+	{
+		return new Color(255, 215, 40, 190);
+	}
+
+	@ConfigItem(
+		keyName = "doubleSpotMode",
+		name = "Double spot boxes",
+		description = "Box the water where one hook reaches two wrecks at once: park so a hook sits in the box and it "
+			+ "lights up. Active wrecks: only pairs that are both up. All sites: every pair in view, sunk ones dimmer.",
+		section = SPOTS,
+		position = 4
 	)
 	default DoubleSpotMode doubleSpotMode()
 	{
@@ -440,21 +467,22 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "doubleSpotColor",
 		name = "Double spot colour",
-		description = "Outline colour of the double salvage spot boxes. The fill is a fainter version of it.",
+		description = "Outline colour of the double spot boxes. The fill is a fainter version of it, and the box turns "
+			+ "solid while one of your hooks is inside it.",
 		section = SPOTS,
-		position = 3
+		position = 5
 	)
 	default Color doubleSpotColor()
 	{
-		return new Color(60, 200, 255, 200);
+		return new Color(70, 220, 90, 200);
 	}
 
 	@ConfigItem(
 		keyName = "doubleSpotLabels",
 		name = "Label double spots",
-		description = "Write which two wrecks a box covers, for example \"Barracuda + Small\".",
+		description = "Write which two wrecks a box covers, for example \"Barracuda + Small\", and \"Parked\" once a hook is in it.",
 		section = SPOTS,
-		position = 4
+		position = 6
 	)
 	default boolean doubleSpotLabels()
 	{

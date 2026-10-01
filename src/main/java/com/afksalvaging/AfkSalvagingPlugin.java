@@ -165,7 +165,7 @@ public class AfkSalvagingPlugin extends Plugin
 	private PluginManager pluginManager;
 
 	@Inject
-	private DoubleSpotOverlay doubleSpotOverlay;
+	private SalvageBoxOverlay boxOverlay;
 
 	@Inject
 	private SalvagingSpotMapPoints mapPoints;
@@ -213,7 +213,7 @@ public class AfkSalvagingPlugin extends Plugin
 	{
 		clearState();
 		overlayManager.add(overlay);
-		overlayManager.add(doubleSpotOverlay);
+		overlayManager.add(boxOverlay);
 		applySpotSettings();
 		clientThread.invokeLater(() ->
 		{
@@ -228,7 +228,7 @@ public class AfkSalvagingPlugin extends Plugin
 	protected void shutDown()
 	{
 		overlayManager.remove(overlay);
-		overlayManager.remove(doubleSpotOverlay);
+		overlayManager.remove(boxOverlay);
 		mapPoints.setShown(false);
 		removeSidebar();
 		pendingMapTarget = null;
@@ -639,6 +639,27 @@ public class AfkSalvagingPlugin extends Plugin
 	public boolean isSalvagingWorld()
 	{
 		return salvagingWorld;
+	}
+
+	/** Where our own boat's hooks are in the top-level world right now; empty ashore or on another boat. */
+	public List<WorldPoint> hookPoints()
+	{
+		List<WorldPoint> points = new ArrayList<>();
+		WorldEntity boat = boatEntity();
+		if (boat == null || boat.getOwnerType() != WorldEntity.OWNER_TYPE_SELF_PLAYER)
+		{
+			return points;
+		}
+		for (BoatFacilities.Hook hook : session.boat().hooks())
+		{
+			GameObject object = hookObjects.get(hook.getHash());
+			WorldPoint point = object == null ? null : topLevelPoint(boat, object.getLocalLocation());
+			if (point != null)
+			{
+				points.add(point);
+			}
+		}
+		return points;
 	}
 
 	/** Whether the player is aboard a boat that is their own. */
