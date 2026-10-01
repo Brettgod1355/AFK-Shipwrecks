@@ -45,6 +45,10 @@ public class SalvagingSpotPanel extends PluginPanel
 	private static final Color IN_LEVEL = new Color(70, 200, 110);
 	private static final Color BELOW_LEVEL = new Color(200, 110, 110);
 	private static final String ALL_WRECKS = "All wrecks";
+	private static final String MY_LEVEL = "Spots I can salvage";
+	/** Text widths that wrap inside the panel: the top block, and a row with its own padding. */
+	private static final int TOP_TEXT_WIDTH = 190;
+	private static final int ROW_TEXT_WIDTH = 172;
 
 	private final Actions actions;
 	private final JComboBox<String> wreckFilter = new JComboBox<>();
@@ -69,10 +73,12 @@ public class SalvagingSpotPanel extends PluginPanel
 		JLabel title = new JLabel("Salvaging spots");
 		title.setFont(FontManager.getRunescapeBoldFont());
 		title.setForeground(Color.WHITE);
+		title.setAlignmentX(LEFT_ALIGNMENT);
 		top.add(title);
 		top.add(Box.createVerticalStrut(6));
 
 		wreckFilter.addItem(ALL_WRECKS);
+		wreckFilter.addItem(MY_LEVEL);
 		for (ShipwreckType type : ShipwreckType.values())
 		{
 			wreckFilter.addItem(SalvagingSpot.salvageName(type) + "  (level " + type.getSailingLevel() + ")");
@@ -80,11 +86,13 @@ public class SalvagingSpotPanel extends PluginPanel
 		wreckFilter.setFont(FontManager.getRunescapeSmallFont());
 		wreckFilter.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
 		wreckFilter.addActionListener(e -> rebuild());
+		wreckFilter.setAlignmentX(LEFT_ALIGNMENT);
 		top.add(wreckFilter);
 		top.add(Box.createVerticalStrut(6));
 
 		levelNote.setFont(FontManager.getRunescapeSmallFont());
 		levelNote.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		levelNote.setAlignmentX(LEFT_ALIGNMENT);
 		top.add(levelNote);
 		top.add(Box.createVerticalStrut(4));
 
@@ -96,15 +104,17 @@ public class SalvagingSpotPanel extends PluginPanel
 		top.add(clear);
 		top.add(Box.createVerticalStrut(4));
 
-		JLabel note = new JLabel("<html>Map pans the world map while it is open; otherwise open it and it "
-			+ "jumps there. Route draws the way there with the Shortest Path plugin.</html>");
+		JLabel note = new JLabel(html("Map pans the world map while it is open; otherwise open it and it "
+			+ "jumps there. Route draws the way there with the Shortest Path plugin.", TOP_TEXT_WIDTH));
 		note.setFont(FontManager.getRunescapeSmallFont());
 		note.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		note.setAlignmentX(LEFT_ALIGNMENT);
 		top.add(note);
 		top.add(Box.createVerticalStrut(4));
 
 		status.setFont(FontManager.getRunescapeSmallFont());
 		status.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		status.setAlignmentX(LEFT_ALIGNMENT);
 		top.add(status);
 
 		add(top, BorderLayout.NORTH);
@@ -125,17 +135,18 @@ public class SalvagingSpotPanel extends PluginPanel
 		block.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		block.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
 
-		JLabel body = new JLabel(SalvagingTips.html());
+		JLabel body = new JLabel(SalvagingTips.html(TOP_TEXT_WIDTH));
 		body.setFont(FontManager.getRunescapeSmallFont());
 		body.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		body.setVisible(false);
 
-		JButton toggle = new JButton("Tips: how the boxes and buttons work");
+		JButton toggle = new JButton("Show tips");
 		toggle.setFont(FontManager.getRunescapeSmallFont());
-		toggle.setToolTipText("Show or hide the tips.");
+		toggle.setToolTipText("How the boxes and the buttons work.");
 		toggle.addActionListener(e ->
 		{
 			body.setVisible(!body.isVisible());
+			toggle.setText(body.isVisible() ? "Hide tips" : "Show tips");
 			block.revalidate();
 			block.repaint();
 		});
@@ -166,7 +177,7 @@ public class SalvagingSpotPanel extends PluginPanel
 	{
 		SwingUtilities.invokeLater(() ->
 		{
-			status.setText(text == null ? "" : "<html>" + text + "</html>");
+			status.setText(text == null ? "" : html(text, TOP_TEXT_WIDTH));
 			status.setForeground(problem ? BELOW_LEVEL : IN_LEVEL);
 		});
 	}
@@ -184,10 +195,16 @@ public class SalvagingSpotPanel extends PluginPanel
 		});
 	}
 
+	/** The wreck kind picked in the dropdown, or null for "all" and "spots I can salvage". */
 	private ShipwreckType selectedWreck()
 	{
 		int index = wreckFilter.getSelectedIndex();
-		return index <= 0 ? null : ShipwreckType.values()[index - 1];
+		return index <= 1 ? null : ShipwreckType.values()[index - 2];
+	}
+
+	private boolean onlyMyLevel()
+	{
+		return wreckFilter.getSelectedIndex() == 1;
 	}
 
 	private void rebuild()
@@ -195,13 +212,39 @@ public class SalvagingSpotPanel extends PluginPanel
 		list.removeAll();
 		levelNote.setText(sailingLevel > 0 ? "Your Sailing level: " + sailingLevel : "Log in to see which spots you can salvage.");
 		List<SalvagingSpot> spots = SalvagingSpot.forWreck(selectedWreck());
+		int shown = 0;
 		for (SalvagingSpot spot : spots)
 		{
+			if (onlyMyLevel() && sailingLevel < spot.getSailingLevel())
+			{
+				continue;
+			}
 			list.add(row(spot));
 			list.add(Box.createVerticalStrut(6));
+			shown++;
+		}
+		if (shown == 0)
+		{
+			JLabel none = new JLabel(html(sailingLevel > 0
+				? "No spot is within your level yet. Small salvage opens at level 15."
+				: "Log in, and the spots within your level are listed here.", TOP_TEXT_WIDTH));
+			none.setFont(FontManager.getRunescapeSmallFont());
+			none.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+			none.setAlignmentX(LEFT_ALIGNMENT);
+			list.add(none);
 		}
 		list.revalidate();
 		list.repaint();
+	}
+
+	/**
+	 * Wraps text to a fixed width in pixels: a Swing label only wraps HTML when the body has a
+	 * width. Swing's stylesheet scales a CSS "px" by 1.3 and a "pt" by 1, so the width is given in
+	 * points to come out as pixels.
+	 */
+	static String html(String text, int width)
+	{
+		return "<html><body style='width:" + width + "pt'>" + text + "</body></html>";
 	}
 
 	private JPanel row(SalvagingSpot spot)
@@ -221,12 +264,14 @@ public class SalvagingSpotPanel extends PluginPanel
 
 		JPanel heading = new JPanel(new BorderLayout());
 		heading.setOpaque(false);
+		heading.setAlignmentX(LEFT_ALIGNMENT);
 		heading.add(name, BorderLayout.WEST);
 		heading.add(level, BorderLayout.EAST);
 
-		JLabel where = new JLabel("<html>" + spot.getWhere() + "</html>");
+		JLabel where = new JLabel(html(spot.getWhere(), ROW_TEXT_WIDTH));
 		where.setFont(FontManager.getRunescapeSmallFont());
 		where.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		where.setAlignmentX(LEFT_ALIGNMENT);
 
 		JPanel text = new JPanel();
 		text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));

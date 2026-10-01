@@ -24,7 +24,7 @@ public class SalvagingTipsTest
 	@Test
 	public void htmlListsEveryTip()
 	{
-		String html = SalvagingTips.html();
+		String html = SalvagingTips.html(195);
 		assertTrue(html.startsWith("<html>"));
 		assertEquals(SalvagingTips.all().size(), html.split("<li").length - 1);
 	}

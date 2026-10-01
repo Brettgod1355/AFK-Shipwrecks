@@ -37,8 +37,9 @@ stopped, and the fact that your own hook does not restart itself.
 - **Idle logout.** If the hold will take longer to fill than you have left before the game logs
   you out for idling, it shows that too. It cannot press a key for you.
 - **Knows where the wrecks are.** A sidebar panel lists all 29 salvaging hotspots, filtered by
-  wreck, with the Sailing level each needs and where it sits from the nearest port, and a Tips
-  button at the bottom that explains the boxes, the buttons and the rest of this README in short. Every one has
+  wreck or down to the ones your level allows, with the Sailing level each needs and where it sits
+  from the nearest port, and a Tips button at the bottom that explains the boxes, the buttons and
+  the rest of this README in short. Every one has
   a Map button, which centres the world map on it, and a Route button, which hands it to the
   Shortest Path plugin to draw the way there. Without that plugin it tells you to install it.
 - **Marks them on the world map.** Hover a marker and it tells you which salvage, what level, and

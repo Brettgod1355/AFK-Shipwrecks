@@ -45,14 +45,14 @@ public final class SalvagingTips
 		return TIPS;
 	}
 
-	/** The tips as one HTML block for a Swing label. */
-	public static String html()
+	/** The tips as one HTML block for a Swing label, wrapped to the given width in pixels. */
+	public static String html(int width)
 	{
-		StringBuilder html = new StringBuilder("<html><ul style='margin-left:12px;padding-left:0'>");
+		StringBuilder html = new StringBuilder("<html><body style='width:" + width + "pt'><ul style='margin-left:12px;padding-left:0'>");
 		for (String tip : TIPS)
 		{
 			html.append("<li style='margin-bottom:4px'>").append(tip).append("</li>");
 		}
-		return html.append("</ul></html>").toString();
+		return html.append("</ul></body></html>").toString();
 	}
 }
