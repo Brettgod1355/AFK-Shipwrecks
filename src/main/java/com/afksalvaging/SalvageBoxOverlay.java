@@ -29,7 +29,8 @@ import net.runelite.client.ui.overlay.OverlayUtil;
  * reach it, and a green box where a hook reaches two wrecks at once.
  * <p>
  * The game measures reach from the hook, not the boat, so a box is where a hook has to sit. Your
- * own hooks are known, so a double spot box lights up and says "Parked" once one of them is inside.
+ * own hooks are known, so a double spot box changes colour and says "Parked" once every hook on the
+ * boat is inside it; with only some of them in, the label counts them and the colour stays.
  * Wrecks live in the top-level world even while the player stands on a boat, so the boxes are placed
  * with the top-level world view's coordinates and drawn above the scene.
  */
@@ -93,16 +94,32 @@ public class SalvageBoxOverlay extends Overlay
 			for (DoubleSpot spot : DoubleSpot.find(sites, reach, mode))
 			{
 				DoubleSpot.Box box = spot.getBox();
-				boolean parked = false;
+				int inside = 0;
 				for (WorldPoint hook : hooks)
 				{
-					parked |= box.contains(hook);
+					if (box.contains(hook))
+					{
+						inside++;
+					}
 				}
-				Color drawn = spot.activeCount() == 2 ? colour : dim(colour);
+				// Parked means every hook the boat has is in the box: both on a sloop, the one on a raft or skiff.
+				boolean parked = !hooks.isEmpty() && inside == hooks.size();
+				Color drawn = parked ? config.doubleSpotParkedColor() : (spot.activeCount() == 2 ? colour : dim(colour));
 				String label = null;
 				if (config.doubleSpotLabels())
 				{
-					label = parked ? "Parked: " + spot.label() : spot.label();
+					if (parked)
+					{
+						label = "Parked: " + spot.label();
+					}
+					else if (inside > 0)
+					{
+						label = spot.label() + " · " + inside + " of " + hooks.size() + " hooks in";
+					}
+					else
+					{
+						label = spot.label();
+					}
 				}
 				drawBox(graphics, top, box, drawn, parked ? PARKED_OUTLINE : OUTLINE, label);
 			}

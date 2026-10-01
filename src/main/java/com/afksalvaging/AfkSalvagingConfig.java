@@ -481,8 +481,8 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "doubleSpotColor",
 		name = "Double spot colour",
-		description = "Outline colour of the double spot boxes. The fill is a fainter version of it, and the box turns "
-			+ "solid while one of your hooks is inside it.",
+		description = "Outline colour of the double spot boxes while you are not parked in them. The fill is a fainter "
+			+ "version of it.",
 		section = SPOTS,
 		position = 5
 	)
@@ -491,12 +491,27 @@ public interface AfkSalvagingConfig extends Config
 		return new Color(70, 220, 90, 200);
 	}
 
+	@Alpha
+	@ConfigItem(
+		keyName = "doubleSpotParkedColor",
+		name = "Parked colour",
+		description = "The colour a double spot box changes to once every hook on your boat is inside it: both hooks on a "
+			+ "sloop, the one hook on a raft or skiff.",
+		section = SPOTS,
+		position = 6
+	)
+	default Color doubleSpotParkedColor()
+	{
+		return new Color(255, 255, 255, 230);
+	}
+
 	@ConfigItem(
 		keyName = "doubleSpotLabels",
 		name = "Label double spots",
-		description = "Write which two wrecks a box covers, for example \"Barracuda + Small\", and \"Parked\" once a hook is in it.",
+		description = "Write which two wrecks a box covers, for example \"Barracuda + Small\", how many of your hooks are "
+			+ "in it, and \"Parked\" once they all are.",
 		section = SPOTS,
-		position = 6
+		position = 7
 	)
 	default boolean doubleSpotLabels()
 	{

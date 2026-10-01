@@ -44,8 +44,9 @@ stopped, and the fact that your own hook does not restart itself.
 - **Marks them on the world map.** Hover a marker and it tells you which salvage, what level, and
   where. Green means you have the level.
 - **Boxes on the water that say where to park.** A yellow box around each wreck for where a hook
-  can reach it, and a green box where a hook reaches two wrecks at once. Park so one of your hooks
-  sits in the green box and it lights up and says "Parked". Each has its own switch and colour.
+  can reach it, and a green box where a hook reaches two wrecks at once. Park so every hook on your
+  boat sits in the green box and it changes colour and says "Parked". Each has its own switch and
+  colour, and the parked colour is its own setting too.
   Read the section below before trusting them to the tile.
 
 Everything comes from game state your client already has. No web requests other than RuneLite's
@@ -97,8 +98,8 @@ the hooks line, the wrecks line and text size.
 
 **Salvage spots**: show the sidebar; mark spots on the world map; wreck reach boxes and their
 colour (yellow); double spot boxes (off, only pairs of wrecks that are both up, or every pair of
-sites in view with the sunk ones dimmer) and their colour (green); and whether to label the double
-spot boxes.
+sites in view with the sunk ones dimmer), their colour (green) and the colour they change to once
+you are parked (white); and whether to label the double spot boxes.
 
 ## Salvage spots and double spots
 
@@ -117,8 +118,9 @@ measured as a square around the wreck: that square is the yellow box. Where two 
 overlap, a hook parked in the overlap works both wrecks: that overlap is the green box, labelled
 with the two wrecks. The game measures reach from the hook rather than the boat (a game update
 changed it to that), so the boxes are about where a hook has to sit, not the whole boat. Your own
-hooks are known, so when one of them is inside a green box the box goes solid and says "Parked";
-nudge the boat until it does. The honest caveat: the reach is taken as 8 tiles from other plugins'
+hooks are known, so when every hook on the boat is inside a green box, both on a sloop, the box
+changes to the parked colour and says "Parked"; with only one of two in, the label says so and the
+colour stays. Nudge the boat until it changes. The honest caveat: the reach is taken as 8 tiles from other plugins'
 observations and has not been confirmed from the game's own code, so a box edge may be a tile off.
 If your hook sits in a box and only one wreck is being worked, tell me and I will fix the number.
 With "All sites" the green boxes also appear around sunk wrecks, since the next wreck rises on the
