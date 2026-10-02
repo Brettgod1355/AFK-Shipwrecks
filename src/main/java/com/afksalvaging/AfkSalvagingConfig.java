@@ -726,8 +726,9 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "sortMenu",
 		name = "Shift-right-click to mark",
-		description = "Add Mark keep / hold / alch / drop and Unmark to an inventory item's menu while Shift is held. "
-			+ "These send nothing to the game.",
+		description = "Add Mark keep / hold / alch / drop and Unmark to an inventory item's menu while Shift is held, "
+			+ "only while you are on your own boat (anywhere, if the boxes are set to show everywhere). These send "
+			+ "nothing to the game.",
 		section = SORTING,
 		position = 4
 	)

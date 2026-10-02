@@ -945,6 +945,11 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			return;
 		}
+		// Only on your own boat (owner, 2026-10-02), unless the boxes are set to show everywhere.
+		if (!isOwnBoat() && config.sortWhere() != SortWhere.EVERYWHERE)
+		{
+			return;
+		}
 		int itemId = event.getItemId();
 		if (itemId <= 0 || SalvageSorter.excluded(itemId))
 		{

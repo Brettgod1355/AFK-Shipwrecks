@@ -137,7 +137,7 @@ box and sorting colours sit in their own sections.
 
 **Inventory sorting**: box inventory items; where (on my boat at a salvaging spot, whenever aboard,
 everywhere); the alch threshold; keep instead when the GE price beats the alch value by a margin
-(off by default); the shift-right-click marking entries; whether kept items get a box at all; and
+(off by default); the shift-right-click marking entries, shown only on your own boat; whether kept items get a box at all; and
 the four colours. Under Salvage spots, "Only docks I can use" turns the dock requirements check off.
 
 **Salvage spots**: show the sidebar; wreck reach boxes and their
