@@ -73,8 +73,8 @@ stopped, and the fact that your own hook does not restart itself.
   default) are Alch. Everything else gets no box, and nothing is ever Drop until you mark it.
   Repair kits, fish and the other things the hold takes are never called an alch either; the
   plugin knows them from the wiki's list and learns the game's own answer every time you open the
-  hold. Shift-right-click
-  an item to mark it, or add it by name in the Sorting tab, and take it off again there. The boxes are only ever boxes: nothing is
+  hold. Shift-right-click an item and its AFK Salvaging entry opens to Keep, Deposit, Alch, Drop and Unmark; pick one
+  to mark it, or add it by name in the Sorting tab, and take it off again there. The boxes are only ever boxes: nothing is
   dropped, alched or moved for you, and the menu entries they add send nothing to the game.
 - **Says when it was updated.** The first time you log in after the Plugin Hub has updated the
   plugin, one line in chat says what the new version brings. A setting turns it off.
@@ -137,7 +137,7 @@ and the chat lines use fixed colours, to keep the settings short.
 
 **Inventory sorting**: box inventory items; where (on my boat at a salvaging spot, whenever aboard,
 everywhere); the alch threshold; keep instead when the GE price beats the alch value by a margin
-(off by default); the shift-right-click marking entries, shown only on your own boat; whether kept items get a box at all; and
+(off by default); the shift-right-click AFK Salvaging menu, shown only on your own boat; whether kept items get a box at all; and
 the four colours. Under Salvage spots, "Only docks I can use" turns the dock requirements check off.
 
 **Salvage spots**: show the sidebar; wreck reach boxes and their

@@ -26,6 +26,7 @@ import net.runelite.api.GameState;
 import net.runelite.api.Item;
 import net.runelite.api.ItemComposition;
 import net.runelite.api.KeyCode;
+import net.runelite.api.Menu;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.MenuAction;
 import net.runelite.api.NPC;
@@ -199,6 +200,8 @@ public class AfkSalvagingPlugin extends Plugin
 	private final Map<Integer, SortRule> sortCache = new HashMap<>();
 	/** Ticks between clearing the sort cache so Grand Exchange price changes show up. */
 	private static final int SORT_CACHE_TICKS = 500;
+	/** The one entry the marking choices sit under in an item's right-click menu. */
+	private static final String SORT_MENU = "AFK Salvaging";
 	/** Whether the inventory boxes are drawn, decided once per tick rather than per item per frame. */
 	private boolean sortActive;
 
@@ -937,7 +940,8 @@ public class AfkSalvagingPlugin extends Plugin
 	}
 
 	/**
-	 * Shift-right-click on an inventory item offers Mark keep / hold / alch / drop and Unmark.
+	 * Shift-right-click on an inventory item offers one "AFK Salvaging" entry that opens to Keep /
+	 * Deposit / Alch / Drop and Unmark, so the item's own menu grows by one line rather than four.
 	 * These are RuneLite-side entries: clicking one changes a setting and sends nothing to the game.
 	 */
 	@Subscribe
@@ -958,30 +962,31 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			return;
 		}
+		Menu marks = client.getMenu().createMenuEntry(-1)
+			.setOption(SORT_MENU)
+			.setTarget(event.getTarget())
+			.setType(MenuAction.RUNELITE)
+			.setItemId(itemId)
+			.createSubMenu();
 		SortRule marked = sortLists.markOf(itemId);
-		if (marked != null)
+		// A submenu lists its entries in the order they are made, as Inventory Tags does.
+		for (SortRule rule : SortRule.values())
 		{
-			client.getMenu().createMenuEntry(-1)
-				.setOption("Unmark")
-				.setTarget(event.getTarget())
-				.setType(MenuAction.RUNELITE)
-				.setItemId(itemId)
-				.onClick(e -> markItem(itemId, null));
-		}
-		SortRule[] rules = SortRule.values();
-		for (int i = rules.length - 1; i >= 0; i--)
-		{
-			SortRule rule = rules[i];
 			if (rule == marked)
 			{
 				continue;
 			}
-			client.getMenu().createMenuEntry(-1)
-				.setOption("Mark " + rule.getLabel().toLowerCase())
-				.setTarget(event.getTarget())
+			marks.createMenuEntry(0)
+				.setOption(rule.getLabel())
 				.setType(MenuAction.RUNELITE)
-				.setItemId(itemId)
 				.onClick(e -> markItem(itemId, rule));
+		}
+		if (marked != null)
+		{
+			marks.createMenuEntry(0)
+				.setOption("Unmark")
+				.setType(MenuAction.RUNELITE)
+				.onClick(e -> markItem(itemId, null));
 		}
 	}
 
