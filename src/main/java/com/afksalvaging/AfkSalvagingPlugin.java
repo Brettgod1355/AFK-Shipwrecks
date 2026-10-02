@@ -207,8 +207,8 @@ public class AfkSalvagingPlugin extends Plugin
 	@Inject
 	private SalvageBoxOverlay boxOverlay;
 
-	@Inject
-	private SalvagingSpotMapPoints mapPoints;
+	/** The spot last sent to the map or routed to; the sidebar highlights it. */
+	private SalvagingSpot pickedSpot;
 
 	/** The sidebar entry and its panel, present while the setting is on. */
 	private NavigationButton spotsButton;
@@ -289,7 +289,6 @@ public class AfkSalvagingPlugin extends Plugin
 			worldRequest.cancel(false);
 			worldRequest = null;
 		}
-		mapPoints.setShown(false);
 		removeSidebar();
 		pendingMapTarget = null;
 		session.flushMemory();
@@ -1127,7 +1126,7 @@ public class AfkSalvagingPlugin extends Plugin
 		}
 	}
 
-	// ---- Salvage spots: sidebar, world map markers, double spot boxes ----
+	// ---- Salvage spots: sidebar, double spot boxes ----
 
 	/** The plugin's chat line colour as the game's tag wants it: six hex digits, no transparency. */
 	private String tipColour()
@@ -1147,11 +1146,9 @@ public class AfkSalvagingPlugin extends Plugin
 			config.goodColor(), sorting);
 	}
 
-	/** Brings the sidebar and the map markers in line with the settings. */
+	/** Brings the sidebar in line with the settings. */
 	private void applySpotSettings()
 	{
-		mapPoints.setColours(config.mapInLevelColor(), config.mapBelowLevelColor(), config.mapPickedColor());
-		mapPoints.setShown(config.spotMapMarkers());
 		if (config.spotSidebar())
 		{
 			addSidebar();
@@ -1271,7 +1268,7 @@ public class AfkSalvagingPlugin extends Plugin
 		spotsPanel.setAutoRoute(SpotList.spotNamed(config.autoRouteSpot()));
 		spotsPanel.setDockShown(config.nearestDock());
 		spotsPanel.setSailingLevel(sailingLevelForSpots());
-		spotsPanel.setPicked(mapPoints.getPicked());
+		spotsPanel.setPicked(pickedSpot);
 		String problem = ShortestPathPresence.check(pluginManager).problem();
 		spotsPanel.setStatus(problem, problem != null);
 		spotsButton = NavigationButton.builder()
@@ -1293,11 +1290,10 @@ public class AfkSalvagingPlugin extends Plugin
 		}
 	}
 
-	/** Tells the sidebar and the map markers what level the player salvages at. */
+	/** Tells the sidebar what level the player salvages at. */
 	private void shareSailingLevel()
 	{
 		int level = sailingLevelForSpots();
-		mapPoints.setSailingLevel(level);
 		if (spotsPanel != null)
 		{
 			spotsPanel.setSailingLevel(level);
@@ -1470,7 +1466,7 @@ public class AfkSalvagingPlugin extends Plugin
 
 	private void pickSpot(SalvagingSpot spot)
 	{
-		mapPoints.setPicked(spot);
+		pickedSpot = spot;
 		if (spotsPanel != null)
 		{
 			spotsPanel.setPicked(spot);

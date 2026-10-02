@@ -107,12 +107,6 @@ public enum SalvagingSpot
 		return tilesFromPort + " tiles " + bearing + " of " + port;
 	}
 
-	/** Two lines for the world map: what and what level, then where. */
-	public String getTooltip()
-	{
-		return getSalvageName() + " - Level " + getSailingLevel() + "<br>" + getWhere();
-	}
-
 	/** What the game calls a wreck's salvage, which is also how its map icon is named. */
 	public static String salvageName(ShipwreckType type)
 	{

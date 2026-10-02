@@ -62,7 +62,6 @@ public class SalvagingSpotTest
 		assertEquals("Fishy salvage", SalvagingSpot.salvageName(ShipwreckType.FISHERMAN));
 		assertEquals("Opulent salvage", SalvagingSpot.salvageName(ShipwreckType.MERCHANT));
 		assertEquals("25 tiles south-west of Ruins of Unkah", SalvagingSpot.BARRACUDA_UNKAH.getWhere());
-		assertEquals("Barracuda salvage - Level 35<br>25 tiles south-west of Ruins of Unkah", SalvagingSpot.BARRACUDA_UNKAH.getTooltip());
 	}
 
 	@Test

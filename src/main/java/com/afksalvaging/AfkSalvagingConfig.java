@@ -65,8 +65,7 @@ public interface AfkSalvagingConfig extends Config
 
 	@ConfigSection(
 		name = "Salvage spots",
-		description = "The sidebar list of hotspots, their markers on the world map, and the boxes on the water "
-			+ "that show where to park",
+		description = "The sidebar list of hotspots and the boxes on the water that show where to park",
 		position = 6
 	)
 	String SPOTS = "spots";
@@ -535,19 +534,6 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "spotMapMarkers",
-		name = "Mark spots on world map",
-		description = "Put a marker on every salvaging hotspot on the world map. Hovering it names the salvage, "
-			+ "the Sailing level it needs and where it is. Green means you have the level.",
-		section = SPOTS,
-		position = 1
-	)
-	default boolean spotMapMarkers()
-	{
-		return true;
-	}
-
-	@ConfigItem(
 		keyName = "wreckReachBoxes",
 		name = "Wreck reach boxes",
 		description = "Box the water around each wreck in view where a hook can reach it. Sunk wrecks get a dimmer box, "
@@ -904,45 +890,6 @@ public interface AfkSalvagingConfig extends Config
 	default Color counterFullColor()
 	{
 		return new Color(230, 60, 60, 255);
-	}
-
-	@Alpha
-	@ConfigItem(
-		keyName = "mapInLevelColor",
-		name = "Map marker, within level",
-		description = "World map marker of a spot you have the level for.",
-		section = COLOURS,
-		position = 7
-	)
-	default Color mapInLevelColor()
-	{
-		return new Color(70, 200, 110, 255);
-	}
-
-	@Alpha
-	@ConfigItem(
-		keyName = "mapBelowLevelColor",
-		name = "Map marker, above level",
-		description = "World map marker of a spot above your level.",
-		section = COLOURS,
-		position = 8
-	)
-	default Color mapBelowLevelColor()
-	{
-		return new Color(140, 140, 140, 255);
-	}
-
-	@Alpha
-	@ConfigItem(
-		keyName = "mapPickedColor",
-		name = "Map marker, picked",
-		description = "World map marker of the spot last sent to the map or routed to.",
-		section = COLOURS,
-		position = 9
-	)
-	default Color mapPickedColor()
-	{
-		return new Color(255, 190, 40, 255);
 	}
 
 	@Alpha

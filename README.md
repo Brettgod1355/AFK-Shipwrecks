@@ -58,8 +58,6 @@ stopped, and the fact that your own hook does not restart itself.
   full-hold notification and banner so you can check your set-up; and Forget rates, which
   throws away what the timer has learned about your crew's speed. A Tips button at the bottom
   explains the boxes, the buttons and the rest of this README in short.
-- **Marks them on the world map.** Hover a marker and it tells you which salvage, what level, and
-  where. Green means you have the level.
 - **Boxes on the water that say where to park.** A yellow box around each wreck for where a hook
   can reach it, and a green box where a hook reaches two wrecks at once. Park so every hook on your
   boat sits in the green box and it changes colour and says "Parked". Each has its own switch and
@@ -128,8 +126,8 @@ percent full), the hooks line, the wrecks line, text size, and the countdown inf
 default).
 
 **Colours**: every other colour the plugin draws with, each its own setting: overlay text and dim
-text, attention, good and bad, the two ends of the cargo counter's shading, the three world map
-marker colours, the sidebar's level and mark colours, and the plugin's chat lines. The banner,
+text, attention, good and bad, the two ends of the cargo counter's shading, the sidebar's level
+and mark colours, and the plugin's chat lines. The banner,
 box and sorting colours sit in their own sections.
 
 **Inventory sorting**: box inventory items; where (on my boat at a salvaging spot, whenever aboard,
@@ -137,7 +135,7 @@ everywhere); the alch threshold; keep instead when the GE price beats the alch v
 (off by default); the shift-right-click marking entries; whether kept items get a box at all; and
 the four colours. Under Salvage spots, "Only docks I can use" turns the dock requirements check off.
 
-**Salvage spots**: show the sidebar; mark spots on the world map; wreck reach boxes and their
+**Salvage spots**: show the sidebar; wreck reach boxes and their
 colour (yellow); double spot boxes (off, only pairs of wrecks that are both up, or every pair of
 sites in view with the sunk ones dimmer), their colour (green) and the colour they change to once
 you are parked (white); whether to label the double spot boxes; show the nearest dock; and auto
@@ -146,8 +144,10 @@ the dropdown choices and the Auto spot are kept with the plugin's settings.
 
 ## Salvage spots and double spots
 
-The sidebar and the map markers use the same list of hotspots RuneLite's own World Map plugin
-draws its salvaging icons from, so they agree with the icons already on your map. Each spot is
+The sidebar uses the same list of hotspots RuneLite's own World Map plugin draws its salvaging
+icons from, so it agrees with the icons already on your map. Hovering one of those icons already
+names the salvage and its level, and spots above your level are marked, both on by default in the
+World Map plugin's settings, so this plugin adds no markers of its own. Each spot is
 described from the nearest port by sailing distance, for example "Barracuda salvage, 25 tiles
 south-west of Ruins of Unkah", because six Barracuda spots called "Barracuda salvage" would not
 help anyone. The world map can only be moved while it is open and nothing lets a plugin open it
