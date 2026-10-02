@@ -41,7 +41,10 @@ development tooling is not included in the plugin JAR.
 
 ## Behaviour references (no code copied)
 
-- Game figures were checked against the [Old School RuneScape Wiki](https://oldschool.runescape.wiki):
+- Game figures were checked against the [Old School RuneScape Wiki](https://oldschool.runescape.wiki),
+  whose content is licensed [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/).
+  This plugin uses only the numbers, which are facts about the game rather than the wiki's
+  writing; the wiki is credited as their source all the same:
   cargo hold capacities per tier and boat size ([Cargo hold](https://oldschool.runescape.wiki/w/Cargo_hold)),
   shipwreck levels, lifetimes, salvaging and sorting XP, spawn mechanics and the crew and player roll
   cadence ([Shipwreck salvaging](https://oldschool.runescape.wiki/w/Shipwreck_salvaging) and the

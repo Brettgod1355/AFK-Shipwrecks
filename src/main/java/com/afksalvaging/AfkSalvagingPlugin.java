@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
 import net.runelite.api.Actor;
@@ -128,7 +129,11 @@ public class AfkSalvagingPlugin extends Plugin
 		VarbitID.SAILING_CREW_SLOT_1_POSITION, VarbitID.SAILING_CREW_SLOT_2_POSITION, VarbitID.SAILING_CREW_SLOT_3_POSITION,
 		VarbitID.SAILING_CREW_SLOT_4_POSITION, VarbitID.SAILING_CREW_SLOT_5_POSITION
 	};
-	/** World entity types of the player's own boats: raft, skiff, sloop. */
+	/**
+	 * World entity config ids of the player's own boats: raft, skiff, sloop. Literals because the
+	 * 1.13.1 gameval classes have no constants for world entity configs; the values were read from
+	 * the client in game (WorldEntity.getConfig().getId()).
+	 */
 	private static final int ENTITY_RAFT = 1;
 	private static final int ENTITY_SKIFF = 2;
 	private static final int ENTITY_SLOOP = 3;
@@ -207,6 +212,8 @@ public class AfkSalvagingPlugin extends Plugin
 	private boolean readInterfaceNextTick;
 	private int lastSailingXp = -1;
 	private volatile WorldResult worldResult;
+	/** The one-off world list read on the executor, kept so shutDown can cancel it. */
+	private Future<?> worldRequest;
 	private volatile boolean worldDirty = true;
 	private int worldChecked = -1;
 	private boolean salvagingWorld;
@@ -253,6 +260,11 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.remove(overlay);
 		overlayManager.remove(boxOverlay);
 		removeInfoBox();
+		if (worldRequest != null)
+		{
+			worldRequest.cancel(false);
+			worldRequest = null;
+		}
 		mapPoints.setShown(false);
 		removeSidebar();
 		pendingMapTarget = null;
@@ -1721,7 +1733,11 @@ public class AfkSalvagingPlugin extends Plugin
 
 	private void requestWorlds()
 	{
-		executor.execute(() ->
+		if (worldRequest != null)
+		{
+			worldRequest.cancel(false);
+		}
+		worldRequest = executor.submit(() ->
 		{
 			try
 			{
