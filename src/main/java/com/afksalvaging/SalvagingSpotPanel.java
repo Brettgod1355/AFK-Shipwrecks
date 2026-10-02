@@ -577,7 +577,8 @@ public class SalvagingSpotPanel extends PluginPanel
 		list.removeAll();
 		shown.clear();
 		shownDistance.clear();
-		levelNote.setText(sailingLevel > 0 ? "Your Sailing level: " + sailingLevel : "Log in to see which spots you can salvage.");
+		levelNote.setText(html(sailingLevel > 0 ? "Your Sailing level: " + sailingLevel
+			: "Log in to see which spots you can salvage.", TOP_TEXT_WIDTH));
 		for (SalvagingSpot spot : arranged())
 		{
 			list.add(row(spot));
