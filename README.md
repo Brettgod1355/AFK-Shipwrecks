@@ -116,8 +116,10 @@ settling in to sort shortens it), how often to repeat, and how long before the i
 warn (60 s; 0 never).
 
 **Cargo full** and **Early warning**: as before. **Banner**: as before, plus a colour for the
-reminder banner. **Overlay**: when to show it (near wrecks, or always aboard), the cargo counter,
-the hooks line, the wrecks line, text size, and the countdown infobox (off by default).
+reminder banner and a colour for the nearly-full banner. **Overlay**: when to show it (near
+wrecks, or always aboard), the cargo counter and what it shows (used of total, slots left or
+percent full), the hooks line, the wrecks line, text size, and the countdown infobox (off by
+default).
 
 **Colours**: every other colour the plugin draws with, each its own setting: overlay text and dim
 text, attention, good and bad, the two ends of the cargo counter's shading, the three world map

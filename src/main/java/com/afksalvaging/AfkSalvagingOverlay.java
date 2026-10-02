@@ -107,7 +107,7 @@ public class AfkSalvagingOverlay extends OverlayPanel
 			int used = monitor.getUsed();
 			int capacity = monitor.getCapacity();
 			double fill = capacity > 0 ? Math.min(1.0, (double) used / capacity) : 0;
-			lines.add(new Line("Cargo hold", used + "/" + capacity,
+			lines.add(new Line("Cargo hold", config.counterStyle().format(used, capacity),
 				ColorUtil.colorLerp(counterEmpty, counterFull, fill)));
 		}
 		if (aboardOwnBoat && config.showHooks() && view.hookCount > 0)
@@ -129,7 +129,18 @@ public class AfkSalvagingOverlay extends OverlayPanel
 		int width = 0;
 		if (banner)
 		{
-			background = holdBanner != CargoHoldMonitor.Level.OK ? config.bannerColor() : config.reminderBannerColor();
+			if (holdBanner == CargoHoldMonitor.Level.FULL)
+			{
+				background = config.bannerColor();
+			}
+			else if (holdBanner == CargoHoldMonitor.Level.NEARLY_FULL)
+			{
+				background = config.warningBannerColor();
+			}
+			else
+			{
+				background = config.reminderBannerColor();
+			}
 			if (config.flashBanner() && (now / FLASH_PERIOD_MS) % 2 == 1)
 			{
 				background = new Color(background.getRed(), background.getGreen(), background.getBlue(),

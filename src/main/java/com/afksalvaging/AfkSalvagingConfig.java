@@ -360,11 +360,24 @@ public interface AfkSalvagingConfig extends Config
 
 	@Alpha
 	@ConfigItem(
+		keyName = "warningBannerColor",
+		name = "Nearly full colour",
+		description = "Background colour of the banner for the early warning, so you can tell it from the full one at a glance.",
+		section = BANNER,
+		position = 5
+	)
+	default Color warningBannerColor()
+	{
+		return new Color(200, 110, 20, 210);
+	}
+
+	@Alpha
+	@ConfigItem(
 		keyName = "reminderBannerColor",
 		name = "Reminder colour",
 		description = "Background colour of the banner when a hook needs attention.",
 		section = BANNER,
-		position = 5
+		position = 6
 	)
 	default Color reminderBannerColor()
 	{
@@ -397,6 +410,18 @@ public interface AfkSalvagingConfig extends Config
 	default boolean showCounter()
 	{
 		return true;
+	}
+
+	@ConfigItem(
+		keyName = "counterStyle",
+		name = "Counter shows",
+		description = "What the counter shows: used out of total (154/160), slots left (6 left), or percent full (96%).",
+		section = OVERLAY,
+		position = 11
+	)
+	default CounterStyle counterStyle()
+	{
+		return CounterStyle.USED_OF_TOTAL;
 	}
 
 	@ConfigItem(
