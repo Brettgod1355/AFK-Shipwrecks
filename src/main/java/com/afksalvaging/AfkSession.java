@@ -87,6 +87,8 @@ public final class AfkSession
 		public long graceMillis = 15_000;
 		public long repeatReminderMillis = 60_000;
 		public boolean salvagingWorld;
+		/** Warn this long before the idle logout; 0 for never. */
+		public long idleWarnMillis = 60_000;
 	}
 
 	/** A hook on the boat as the client sees it right now. */
@@ -133,7 +135,9 @@ public final class AfkSession
 		HOOK_EMPTY,
 		HOOK_IDLE,
 		BOOST_DROPPED,
-		WORLD_TIP
+		WORLD_TIP,
+		/** The game will log the player out for idling soon, and they are aboard their own boat. */
+		IDLE_LOGOUT_SOON
 	}
 
 	/** What to show. */
@@ -161,6 +165,8 @@ public final class AfkSession
 		public long waitingMillis = -1;
 		public long sortingLeftMillis = -1;
 		public long idleLogoutMillis = -1;
+		/** The idle logout is within the warning window and the player is aboard their own boat. */
+		public boolean idleWarning;
 		public boolean showWorldTip;
 		public boolean hazardous;
 	}
@@ -208,6 +214,7 @@ public final class AfkSession
 	private long waitingSince = -1;
 	private boolean worldTipGiven;
 	private boolean boostDropNotified;
+	private boolean idleWarned;
 	private long lastAvailabilityAt = Long.MIN_VALUE;
 
 	public AfkSession(MemoryStore memory)
@@ -507,6 +514,7 @@ public final class AfkSession
 		waitingSince = -1;
 		worldTipGiven = false;
 		boostDropNotified = false;
+		idleWarned = false;
 		lastAvailabilityAt = Long.MIN_VALUE;
 		wasConfirmedFull = false;
 		lastTickNow = -1;
@@ -799,6 +807,23 @@ public final class AfkSession
 			boostDropNotified = false;
 		}
 
+		// The idle logout: one warning per idle stretch, only aboard the player's own boat, where
+		// being logged out is what the whole plugin exists to prevent going unnoticed.
+		boolean idleWarning = in.sailing && in.ownBoat && settings.idleWarnMillis > 0
+			&& in.idleLogoutMillis >= 0 && in.idleLogoutMillis <= settings.idleWarnMillis;
+		if (idleWarning)
+		{
+			if (!idleWarned)
+			{
+				idleWarned = true;
+				notices.add(Notice.IDLE_LOGOUT_SOON);
+			}
+		}
+		else
+		{
+			idleWarned = false;
+		}
+
 		boolean showTip = false;
 		if (estimate.getState() == AfkEstimate.State.WAITING_FOR_WRECK && !settings.salvagingWorld
 			&& waitingSince >= 0 && now - waitingSince >= WORLD_TIP_AFTER_MILLIS)
@@ -831,6 +856,7 @@ public final class AfkSession
 		view.waitingMillis = waitingSince < 0 ? -1 : now - waitingSince;
 		view.sortingLeftMillis = sortingFinishTick < 0 ? -1 : Math.max(0, (sortingFinishTick - tick) * 600L);
 		view.idleLogoutMillis = in.idleLogoutMillis;
+		view.idleWarning = idleWarning;
 		view.showWorldTip = showTip;
 		view.hazardous = hazardous;
 		return notices;

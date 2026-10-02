@@ -207,6 +207,33 @@ public interface AfkSalvagingConfig extends Config
 		return 60;
 	}
 
+	@ConfigItem(
+		keyName = "idleLogoutNotification",
+		name = "Idle logout coming",
+		description = "Notify shortly before the game logs you out for idling while you are on your own boat, so a "
+			+ "full-hold alert does not arrive after you are gone.",
+		section = REMINDERS,
+		position = 5
+	)
+	default Notification idleLogoutNotification()
+	{
+		return Notification.ON;
+	}
+
+	@ConfigItem(
+		keyName = "idleLogoutWarnSeconds",
+		name = "Warn before logout",
+		description = "How long before the idle logout to warn. 0 never warns.",
+		section = REMINDERS,
+		position = 6
+	)
+	@Range(min = 0, max = 600)
+	@Units(Units.SECONDS)
+	default int idleLogoutWarnSeconds()
+	{
+		return 60;
+	}
+
 	// ---- Cargo full ----
 
 	@ConfigItem(
@@ -408,6 +435,19 @@ public interface AfkSalvagingConfig extends Config
 	default int overlayScale()
 	{
 		return 100;
+	}
+
+	@ConfigItem(
+		keyName = "showInfoBox",
+		name = "Countdown infobox",
+		description = "A small box among RuneLite's infoboxes with the time to a full hold, so it stays in view with "
+			+ "the overlay hidden or scrolled away. Hover it for the detail.",
+		section = OVERLAY,
+		position = 10
+	)
+	default boolean showInfoBox()
+	{
+		return false;
 	}
 
 	// ---- Salvage spots ----

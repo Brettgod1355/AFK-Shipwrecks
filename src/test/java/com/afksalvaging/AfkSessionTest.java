@@ -74,6 +74,7 @@ public class AfkSessionTest
 	private boolean interfaceOpen;
 	private WorldPoint playerPoint = PLAYER;
 	private WorldPoint boatPoint = BOAT;
+	private long idleLogout = -1;
 	private final List<Notice> notices = new ArrayList<>();
 
 	@Before
@@ -116,6 +117,7 @@ public class AfkSessionTest
 		in.boatPoint = boatPoint;
 		in.playerPoint = playerPoint;
 		in.cargoInterfaceOpen = interfaceOpen;
+		in.idleLogoutMillis = idleLogout;
 		notices.addAll(session.tick(in));
 		return session.view();
 	}
@@ -687,6 +689,43 @@ public class AfkSessionTest
 		session.crewLine("Jolly Jim", tick);
 		ticks(3);
 		assertEquals(State.COUNTING_DOWN, session.view().estimate.getState());
+	}
+
+	@Test
+	public void theIdleLogoutIsWarnedOncePerIdleStretchAndOnlyAboard()
+	{
+		session.settings().idleWarnMillis = 60_000;
+		idleLogout = 120_000;
+		tick();
+		assertFalse(notices.contains(Notice.IDLE_LOGOUT_SOON));
+		idleLogout = 59_000;
+		AfkSession.View view = tick();
+		assertTrue(view.idleWarning);
+		assertEquals(1, count(Notice.IDLE_LOGOUT_SOON));
+		idleLogout = 30_000;
+		ticks(5);
+		assertEquals("said once", 1, count(Notice.IDLE_LOGOUT_SOON));
+		// The player moved: the idle clock is back up, and the next stretch warns again.
+		idleLogout = 300_000;
+		assertFalse(tick().idleWarning);
+		idleLogout = 10_000;
+		tick();
+		assertEquals(2, count(Notice.IDLE_LOGOUT_SOON));
+		// Not on our own boat: nothing, however idle.
+		ownBoat = false;
+		idleLogout = 300_000;
+		tick();
+		idleLogout = 5_000;
+		assertFalse(tick().idleWarning);
+		assertEquals(2, count(Notice.IDLE_LOGOUT_SOON));
+		// Switched off.
+		ownBoat = true;
+		session.settings().idleWarnMillis = 0;
+		idleLogout = 300_000;
+		tick();
+		idleLogout = 5_000;
+		assertFalse(tick().idleWarning);
+		assertEquals(2, count(Notice.IDLE_LOGOUT_SOON));
 	}
 
 	@Test

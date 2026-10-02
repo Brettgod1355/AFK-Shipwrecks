@@ -85,6 +85,30 @@ public final class Durations
 		return rest > 0 ? hours + " h " + rest + " min" : hours + " h";
 	}
 
+	/**
+	 * The shortest form, for an infobox: {@code 4:31} under ten minutes, then {@code 52m},
+	 * {@code 1h30}, {@code 2h}. A negative value is "?".
+	 */
+	public static String tiny(long millis)
+	{
+		if (millis < 0)
+		{
+			return "?";
+		}
+		if (millis < FINE_MILLIS)
+		{
+			return countdown(millis);
+		}
+		long minutes = (millis + 30_000) / 60_000;
+		long hours = minutes / 60;
+		long rest = minutes % 60;
+		if (hours == 0)
+		{
+			return minutes + "m";
+		}
+		return rest > 0 ? String.format(Locale.ROOT, "%dh%02d", hours, rest) : hours + "h";
+	}
+
 	/** The local wall-clock time this many milliseconds after {@code now}, as {@code HH:mm}. */
 	public static String clockAfter(long now, long millis, ZoneId zone)
 	{

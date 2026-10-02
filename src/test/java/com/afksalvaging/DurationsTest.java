@@ -13,6 +13,16 @@ import static org.junit.Assert.assertEquals;
 public class DurationsTest
 {
 	@Test
+	public void tinyIsForAnInfobox()
+	{
+		assertEquals("?", Durations.tiny(-1));
+		assertEquals("4:31", Durations.tiny(271_000));
+		assertEquals("52m", Durations.tiny(52 * 60_000L));
+		assertEquals("1h30", Durations.tiny(90 * 60_000L));
+		assertEquals("2h", Durations.tiny(120 * 60_000L));
+	}
+
+	@Test
 	public void countdownRoundsUpAndSwitchesToHours()
 	{
 		assertEquals("0:00", Durations.countdown(0));

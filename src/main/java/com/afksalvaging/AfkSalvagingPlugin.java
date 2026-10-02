@@ -72,6 +72,7 @@ import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.Text;
 import net.runelite.http.api.worlds.World;
@@ -170,6 +171,11 @@ public class AfkSalvagingPlugin extends Plugin
 	private ClientToolbar clientToolbar;
 
 	@Inject
+	private InfoBoxManager infoBoxManager;
+
+	private HoldInfoBox infoBox;
+
+	@Inject
 	private PluginManager pluginManager;
 
 	@Inject
@@ -231,6 +237,7 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.add(overlay);
 		overlayManager.add(boxOverlay);
 		applySpotSettings();
+		applyInfoBox();
 		clientThread.invokeLater(() ->
 		{
 			if (client.getGameState() == GameState.LOGGED_IN)
@@ -245,6 +252,7 @@ public class AfkSalvagingPlugin extends Plugin
 	{
 		overlayManager.remove(overlay);
 		overlayManager.remove(boxOverlay);
+		removeInfoBox();
 		mapPoints.setShown(false);
 		removeSidebar();
 		pendingMapTarget = null;
@@ -258,6 +266,7 @@ public class AfkSalvagingPlugin extends Plugin
 		if (AfkSalvagingConfig.GROUP.equals(event.getGroup()))
 		{
 			applySpotSettings();
+			applyInfoBox();
 		}
 	}
 
@@ -606,6 +615,7 @@ public class AfkSalvagingPlugin extends Plugin
 		settings.graceMillis = config.reminderGraceSeconds() * 1000L;
 		settings.repeatReminderMillis = config.reminderRepeatSeconds() * 1000L;
 		settings.salvagingWorld = salvagingWorld;
+		settings.idleWarnMillis = config.idleLogoutWarnSeconds() * 1000L;
 
 		AfkSession.TickInputs in = new AfkSession.TickInputs();
 		in.tick = tick;
@@ -806,6 +816,33 @@ public class AfkSalvagingPlugin extends Plugin
 		if (!WhatsNew.VERSION.equals(last))
 		{
 			configManager.setConfiguration(AfkSalvagingConfig.GROUP, "lastVersion", WhatsNew.VERSION);
+		}
+	}
+
+	/** Adds or removes the countdown infobox to match the setting. */
+	private void applyInfoBox()
+	{
+		if (config.showInfoBox())
+		{
+			if (infoBox == null)
+			{
+				infoBox = new HoldInfoBox(ImageUtil.loadImageResource(getClass(), "infobox_icon.png"), this,
+					session::view, () -> session.monitor().level(config.warnSlotsRemaining()));
+				infoBoxManager.addInfoBox(infoBox);
+			}
+		}
+		else
+		{
+			removeInfoBox();
+		}
+	}
+
+	private void removeInfoBox()
+	{
+		if (infoBox != null)
+		{
+			infoBoxManager.removeInfoBox(infoBox);
+			infoBox = null;
 		}
 	}
 
@@ -1181,6 +1218,10 @@ public class AfkSalvagingPlugin extends Plugin
 				int needed = session.view().levelNeeded;
 				notifier.notify(config.boostDroppedNotification(), "Your crew stopped salvaging: your Sailing level is too low for this wreck"
 					+ (needed > 0 ? " (needs " + needed + ")." : "."));
+				break;
+			case IDLE_LOGOUT_SOON:
+				notifier.notify(config.idleLogoutNotification(), "You will be logged out for idling in about "
+					+ Durations.countdown(session.view().idleLogoutMillis) + ". Move the mouse or press a key.");
 				break;
 			case WORLD_TIP:
 				if (config.worldTip())

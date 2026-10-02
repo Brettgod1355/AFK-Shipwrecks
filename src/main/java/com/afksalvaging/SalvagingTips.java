@@ -38,6 +38,10 @@ public final class SalvagingTips
 		"Your crew salvage at your Sailing level, boosted or not. If a boost lapses below the wreck's level they "
 			+ "stop, and the plugin says so.",
 		"Your own hook does not restart when the wreck sinks; your crew do. The plugin reminds you to click it.",
+		"A minute before the game logs you out for idling, while you are on your own boat, the plugin sends a "
+			+ "notification (Reminders settings: how long before, or never). It cannot press a key for you.",
+		"\"Countdown infobox\" in the Overlay settings puts the time to a full hold in a small box among RuneLite's "
+			+ "infoboxes, with the detail on hover, for when the overlay is hidden.",
 		"The overlay only appears while a wreck site is in view. \"Show overlay\" in the Overlay settings can make it "
 			+ "show whenever you are aboard."
 	));

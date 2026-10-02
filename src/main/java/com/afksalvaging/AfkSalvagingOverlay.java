@@ -266,7 +266,7 @@ public class AfkSalvagingOverlay extends OverlayPanel
 				{
 					lines.add(new Line("", "at " + Durations.clockAfter(System.currentTimeMillis(), remaining, ZoneId.systemDefault()), DIM));
 				}
-				if (view.idleLogoutMillis >= 0 && remaining > view.idleLogoutMillis)
+				if (view.idleLogoutMillis >= 0 && remaining > view.idleLogoutMillis && !view.idleWarning)
 				{
 					lines.add(new Line("Idle logout in", Durations.countdown(view.idleLogoutMillis), AMBER));
 				}
@@ -275,10 +275,11 @@ public class AfkSalvagingOverlay extends OverlayPanel
 			default:
 				break;
 		}
-		if (view.sortingLeftMillis >= 0)
+		if (view.idleWarning)
 		{
-			lines.add(new Line("Sorting", Durations.countdown(view.sortingLeftMillis) + " left", DIM));
+			lines.add(new Line("Idle logout in", Durations.countdown(view.idleLogoutMillis) + "; move the mouse", BAD));
 		}
+
 	}
 
 	private Line hooksLine(AfkSession.View view)

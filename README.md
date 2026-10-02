@@ -35,7 +35,11 @@ stopped, and the fact that your own hook does not restart itself.
 - **Full-hold alert.** Sound, tray popup, screen flash, focus, whatever you set up in RuneLite,
   plus a big red banner and an optional early warning and repeat. As before.
 - **Idle logout.** If the hold will take longer to fill than you have left before the game logs
-  you out for idling, it shows that too. It cannot press a key for you.
+  you out for idling, it shows that too, and a minute before the logout (your choice how long) it
+  sends a notification while you are on your own boat, once per idle stretch. It cannot press a
+  key for you.
+- **A countdown infobox.** Optionally, the time to a full hold as one of RuneLite's small
+  infoboxes, with the detail on hover, so it stays in view with the overlay hidden.
 - **Knows where the wrecks are.** A sidebar panel lists all 29 salvaging hotspots, filtered by
   wreck, down to the ones your level allows, or to your favourites, sorted by wreck or nearest to
   you first, with the Sailing level each needs, where it sits from the nearest port and how far it
@@ -99,14 +103,15 @@ salvages have been seen. Other lines you may see:
 for a wreck, stay); show clock time; count salvage you hooked; salvaging worlds (default
 `596, 597`); salvaging world tip.
 
-**Reminders**: three RuneLite notifications you can shape separately (hook empty with a crewmate
-free; your hook is idle; crew stopped because your level is too low), the grace period before the
-first reminder (15 s by default; using the hold buys a little more, settling in to sort shortens
-it) and how often to repeat.
+**Reminders**: four RuneLite notifications you can shape separately (hook empty with a crewmate
+free; your hook is idle; crew stopped because your level is too low; idle logout coming), the
+grace period before the first reminder (15 s by default; using the hold buys a little more,
+settling in to sort shortens it), how often to repeat, and how long before the idle logout to
+warn (60 s; 0 never).
 
 **Cargo full** and **Early warning**: as before. **Banner**: as before, plus a colour for the
 reminder banner. **Overlay**: when to show it (near wrecks, or always aboard), the cargo counter,
-the hooks line, the wrecks line and text size.
+the hooks line, the wrecks line, text size, and the countdown infobox (off by default).
 
 **Salvage spots**: show the sidebar; mark spots on the world map; wreck reach boxes and their
 colour (yellow); double spot boxes (off, only pairs of wrecks that are both up, or every pair of
