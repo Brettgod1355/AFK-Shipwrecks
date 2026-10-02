@@ -40,7 +40,7 @@ stopped, and the fact that your own hook does not restart itself.
   key for you.
 - **A countdown infobox.** Optionally, the time to a full hold as one of RuneLite's small
   infoboxes, with the detail on hover, so it stays in view with the overlay hidden.
-- **A sidebar with three tabs.** Spots (the list, the nearest dock and the tools below), Sorting
+- **A sidebar with three tabs.** Spots (Test alert and Forget rates at the top, the nearest dock and the list), Sorting
   (each inventory sorting list with what you added and what it does by default) and Tips.
 - **Knows where the wrecks are.** The Spots tab lists all 29 salvaging hotspots, filtered by
   wreck, down to the ones your level allows, or to your favourites, sorted by wreck or nearest to

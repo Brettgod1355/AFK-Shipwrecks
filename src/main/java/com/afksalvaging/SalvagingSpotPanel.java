@@ -141,6 +141,9 @@ public class SalvagingSpotPanel extends PluginPanel
 		title.setAlignmentX(LEFT_ALIGNMENT);
 		top.add(title);
 		top.add(Box.createVerticalStrut(6));
+		// The tools sit at the top so they are not buried under the spot list (owner, 2026-10-02).
+		top.add(toolsBlock());
+		top.add(Box.createVerticalStrut(8));
 
 		for (String[] choice : FILTERS)
 		{
@@ -224,7 +227,6 @@ public class SalvagingSpotPanel extends PluginPanel
 		spotsTab.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		spotsTab.add(top, BorderLayout.NORTH);
 		spotsTab.add(list, BorderLayout.CENTER);
-		spotsTab.add(toolsBlock(), BorderLayout.SOUTH);
 
 		JPanel display = new JPanel(new BorderLayout());
 		display.setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -254,14 +256,9 @@ public class SalvagingSpotPanel extends PluginPanel
 		return block;
 	}
 
-	/** Test alert and Forget rates, under the spot list. */
+	/** Test alert and Forget rates, at the top of the Spots tab. */
 	private JPanel toolsBlock()
 	{
-		JPanel block = new JPanel();
-		block.setLayout(new BoxLayout(block, BoxLayout.Y_AXIS));
-		block.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		block.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
-
 		JButton test = button("Test alert", "Send the full-hold notification now, with the banner, so you can check "
 			+ "the sound and popup you set up.");
 		test.addActionListener(e -> actions.testAlert());
@@ -271,8 +268,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		JPanel tools = buttons(test, forget);
 		tools.setAlignmentX(LEFT_ALIGNMENT);
 		tools.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
-		block.add(tools);
-		return block;
+		return tools;
 	}
 
 	/** The four sorting lists with a remove button per item, and a row to add one by name. */
