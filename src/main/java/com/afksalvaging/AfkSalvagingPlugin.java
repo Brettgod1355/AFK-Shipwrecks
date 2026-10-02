@@ -1170,7 +1170,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			if (infoBox == null)
 			{
-				infoBox = new HoldInfoBox(ImageUtil.loadImageResource(getClass(), "infobox_icon.png"), this, config,
+				infoBox = new HoldInfoBox(ImageUtil.loadImageResource(getClass(), "infobox_icon.png"), this,
 					session::view, () -> session.monitor().level(config.warnSlotsRemaining()));
 				infoBoxManager.addInfoBox(infoBox);
 			}
@@ -1195,10 +1195,10 @@ public class AfkSalvagingPlugin extends Plugin
 	/** The plugin's chat line colour as the game's tag wants it: six hex digits, no transparency. */
 	private String tipColour()
 	{
-		return String.format("%06x", config.chatTipColor().getRGB() & 0xFFFFFF);
+		return Palette.CHAT_TIP;
 	}
 
-	/** The sidebar's colours from the settings. */
+	/** The sorting colours from the settings, for the sidebar's list headings. */
 	private void applyPalette()
 	{
 		Map<SortRule, Color> sorting = new EnumMap<>(SortRule.class);
@@ -1206,8 +1206,7 @@ public class AfkSalvagingPlugin extends Plugin
 		sorting.put(SortRule.HOLD, config.holdColor());
 		sorting.put(SortRule.ALCH, config.alchColor());
 		sorting.put(SortRule.DROP, config.dropColor());
-		spotsPanel.setPalette(config.sidebarInLevelColor(), config.sidebarBelowLevelColor(), config.sidebarMarkedColor(),
-			config.goodColor(), sorting);
+		spotsPanel.setSortColours(sorting);
 	}
 
 	/** Brings the sidebar in line with the settings. */

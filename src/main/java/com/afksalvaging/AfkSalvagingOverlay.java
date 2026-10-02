@@ -35,14 +35,14 @@ public class AfkSalvagingOverlay extends OverlayPanel
 	/** Minimum space between a line's label and its value. */
 	private static final int LINE_GAP = 12;
 	private static final long FLASH_PERIOD_MS = 500;
-	// The colours, read from the settings at the start of every frame.
-	private Color counterEmpty;
-	private Color counterFull;
-	private Color amber;
-	private Color dim;
-	private Color good;
-	private Color bad;
-	private Color textColour;
+	// Fixed text colours (the banner colours stay settings).
+	private final Color counterEmpty = Palette.COUNTER_EMPTY;
+	private final Color counterFull = Palette.COUNTER_FULL;
+	private final Color amber = Palette.ATTENTION;
+	private final Color dim = Palette.DIM;
+	private final Color good = Palette.GOOD;
+	private final Color bad = Palette.BAD;
+	private final Color textColour = Palette.TEXT;
 
 	private final AfkSalvagingPlugin plugin;
 	private final AfkSalvagingConfig config;
@@ -83,13 +83,6 @@ public class AfkSalvagingOverlay extends OverlayPanel
 			return null;
 		}
 		long now = AfkSalvagingPlugin.clock();
-		counterEmpty = config.counterEmptyColor();
-		counterFull = config.counterFullColor();
-		amber = config.attentionColor();
-		dim = config.overlayDimColor();
-		good = config.goodColor();
-		bad = config.badColor();
-		textColour = config.overlayTextColor();
 		AfkSession session = plugin.getSession();
 		AfkSession.View view = session.view();
 		CargoHoldMonitor monitor = session.monitor();

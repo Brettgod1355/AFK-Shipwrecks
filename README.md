@@ -130,10 +130,9 @@ the way when you withdraw), the cargo counter and what it shows (used of total, 
 percent full), the hooks line, the wrecks line, text size, and the countdown infobox (off by
 default).
 
-**Colours**: every other colour the plugin draws with, each its own setting: overlay text and dim
-text, attention, good and bad, the two ends of the cargo counter's shading, the sidebar's level
-and mark colours, and the plugin's chat lines. The banner,
-box and sorting colours sit in their own sections.
+**Colours**: only the ones you notice are settings: the banners, the boxes on the water and the
+four sorting boxes, each in its own section. The overlay text, the counter's shading, the sidebar
+and the chat lines use fixed colours, to keep the settings short.
 
 **Inventory sorting**: box inventory items; where (on my boat at a salvaging spot, whenever aboard,
 everywhere); the alch threshold; keep instead when the GE price beats the alch value by a margin

@@ -78,11 +78,11 @@ public class SalvagingSpotPanel extends PluginPanel
 		void sortItemRemove(int itemId);
 	}
 
-	/** The sidebar's colours, from the settings; see {@link #setPalette}. */
-	private Color inLevel = new Color(70, 200, 110);
-	private Color belowLevel = new Color(200, 110, 110);
-	private Color marked = new Color(255, 200, 60);
-	private Color good = new Color(120, 220, 120);
+	/** The sidebar's fixed colours; the sorting list headings follow the settings, see {@link #setSortColours}. */
+	private final Color inLevel = Palette.SIDEBAR_IN_LEVEL;
+	private final Color belowLevel = Palette.SIDEBAR_BELOW_LEVEL;
+	private final Color marked = Palette.SIDEBAR_MARKED;
+	private final Color good = Palette.GOOD;
 	private final Map<SortRule, Color> sortColours = new EnumMap<>(SortRule.class);
 	private Map<SortRule, List<String[]>> lastSortLists = new EnumMap<>(SortRule.class);
 	private SortDefaults lastSortDefaults = SortDefaults.NONE;
@@ -433,24 +433,16 @@ public class SalvagingSpotPanel extends PluginPanel
 
 	// ---- What the plugin tells the panel; all safe to call from any thread ----
 
-	/**
-	 * The colours from the settings: the level within and above reach, the marks, the good status
-	 * line, and the four sorting lists. Transparency is dropped; the sidebar is opaque.
-	 */
-	public void setPalette(Color within, Color above, Color marks, Color goodStatus, Map<SortRule, Color> sorting)
+	/** The four sorting colours from the settings, for the list headings. Transparency is dropped; the sidebar is opaque. */
+	public void setSortColours(Map<SortRule, Color> sorting)
 	{
 		SwingUtilities.invokeLater(() ->
 		{
-			inLevel = opaque(within);
-			belowLevel = opaque(above);
-			marked = opaque(marks);
-			good = opaque(goodStatus);
 			sortColours.clear();
 			for (Map.Entry<SortRule, Color> entry : sorting.entrySet())
 			{
 				sortColours.put(entry.getKey(), opaque(entry.getValue()));
 			}
-			rebuild();
 			setSortLists(lastSortLists, lastSortDefaults);
 		});
 	}
