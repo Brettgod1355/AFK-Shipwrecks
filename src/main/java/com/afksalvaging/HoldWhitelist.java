@@ -139,6 +139,15 @@ public final class HoldWhitelist
 		return changed;
 	}
 
+	/** Every item id the hold is known to take now: the wiki list and what the game said, minus its refusals. */
+	public Set<Integer> knownAccepted()
+	{
+		Set<Integer> known = new TreeSet<>(SEED);
+		known.addAll(accepted);
+		known.removeAll(refused);
+		return known;
+	}
+
 	/** Forgets the half-seen look, for example when the hold closes. */
 	public void resetObservation()
 	{

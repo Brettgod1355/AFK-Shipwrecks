@@ -119,14 +119,6 @@ public final class DoubleSpot
 		return box;
 	}
 
-	/** The two wrecks by name, for example {@code Barracuda + Small}. */
-	public String label()
-	{
-		String a = first.getType().getDisplayName();
-		String b = second.getType().getDisplayName();
-		return a.equals(b) ? "2 x " + a : a + " + " + b;
-	}
-
 	/**
 	 * The tiles from which a hook with this reach works both wrecks, or null when no tile does.
 	 * Wrecks on different planes never share a spot.

@@ -30,6 +30,8 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.ui.components.materialtabs.MaterialTab;
+import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
 
 /**
  * The sidebar: every salvaging hotspot, filtered and sorted from two dropdowns, each with buttons
@@ -83,6 +85,7 @@ public class SalvagingSpotPanel extends PluginPanel
 	private Color good = new Color(120, 220, 120);
 	private final Map<SortRule, Color> sortColours = new EnumMap<>(SortRule.class);
 	private Map<SortRule, List<String[]>> lastSortLists = new EnumMap<>(SortRule.class);
+	private SortDefaults lastSortDefaults = SortDefaults.NONE;
 	/** Text widths that wrap inside the panel: the top block, and a row with its own padding. */
 	private static final int TOP_TEXT_WIDTH = 190;
 	private static final int ROW_TEXT_WIDTH = 172;
@@ -213,27 +216,51 @@ public class SalvagingSpotPanel extends PluginPanel
 		small(statsLabel);
 		top.add(statsLabel);
 
-		add(top, BorderLayout.NORTH);
-
 		list.setLayout(new BoxLayout(list, BoxLayout.Y_AXIS));
 		list.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		add(list, BorderLayout.CENTER);
 
-		add(bottomBlock(), BorderLayout.SOUTH);
+		// Three tabs: the spots and tools, inventory sorting, and the tips.
+		JPanel spotsTab = new JPanel(new BorderLayout(0, 8));
+		spotsTab.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		spotsTab.add(top, BorderLayout.NORTH);
+		spotsTab.add(list, BorderLayout.CENTER);
+		spotsTab.add(toolsBlock(), BorderLayout.SOUTH);
+
+		JPanel display = new JPanel(new BorderLayout());
+		display.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		MaterialTabGroup tabs = new MaterialTabGroup(display);
+		tabs.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
+		MaterialTab spots = new MaterialTab("Spots", tabs, spotsTab);
+		tabs.addTab(spots);
+		tabs.addTab(new MaterialTab("Sorting", tabs, sortBlock()));
+		tabs.addTab(new MaterialTab("Tips", tabs, tipsBlock()));
+		tabs.select(spots);
+		add(tabs, BorderLayout.NORTH);
+		add(display, BorderLayout.CENTER);
 
 		rebuild();
 	}
 
-	/** The tools and the tips at the bottom: the tips closed by default. */
-	private JPanel bottomBlock()
+	/** The tips, in their own tab. */
+	private JPanel tipsBlock()
+	{
+		JPanel block = new JPanel();
+		block.setLayout(new BoxLayout(block, BoxLayout.Y_AXIS));
+		block.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		JLabel body = new JLabel(SalvagingTips.html(TOP_TEXT_WIDTH));
+		small(body);
+		body.setAlignmentX(LEFT_ALIGNMENT);
+		block.add(body);
+		return block;
+	}
+
+	/** Test alert and Forget rates, under the spot list. */
+	private JPanel toolsBlock()
 	{
 		JPanel block = new JPanel();
 		block.setLayout(new BoxLayout(block, BoxLayout.Y_AXIS));
 		block.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		block.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
-
-		block.add(sortBlock());
-		block.add(Box.createVerticalStrut(8));
 
 		JButton test = button("Test alert", "Send the full-hold notification now, with the banner, so you can check "
 			+ "the sound and popup you set up.");
@@ -245,24 +272,6 @@ public class SalvagingSpotPanel extends PluginPanel
 		tools.setAlignmentX(LEFT_ALIGNMENT);
 		tools.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
 		block.add(tools);
-		block.add(Box.createVerticalStrut(6));
-
-		JLabel body = new JLabel(SalvagingTips.html(TOP_TEXT_WIDTH));
-		small(body);
-		body.setVisible(false);
-
-		JButton toggle = button("Show tips", "How the boxes and the buttons work.");
-		toggle.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
-		toggle.addActionListener(e ->
-		{
-			body.setVisible(!body.isVisible());
-			toggle.setText(body.isVisible() ? "Hide tips" : "Show tips");
-			block.revalidate();
-			block.repaint();
-		});
-		block.add(toggle);
-		block.add(Box.createVerticalStrut(4));
-		block.add(body);
 		return block;
 	}
 
@@ -280,15 +289,10 @@ public class SalvagingSpotPanel extends PluginPanel
 		title.setAlignmentX(LEFT_ALIGNMENT);
 		block.add(title);
 		JLabel note = new JLabel(html("Boxes round inventory items on your boat at a salvaging spot: keep, hold, alch or "
-			+ "drop. Unmarked items sort themselves; mark one by shift-right-clicking it, or type its name here.", TOP_TEXT_WIDTH));
+			+ "drop. Unmarked items sort themselves by the defaults under each list; mark one by "
+			+ "shift-right-clicking it, or type its name here.", TOP_TEXT_WIDTH));
 		small(note);
 		block.add(note);
-		block.add(Box.createVerticalStrut(4));
-
-		sortLists.setLayout(new BoxLayout(sortLists, BoxLayout.Y_AXIS));
-		sortLists.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		sortLists.setAlignmentX(LEFT_ALIGNMENT);
-		block.add(sortLists);
 		block.add(Box.createVerticalStrut(4));
 
 		for (SortRule rule : SortRule.values())
@@ -316,23 +320,74 @@ public class SalvagingSpotPanel extends PluginPanel
 		addRow.setAlignmentX(LEFT_ALIGNMENT);
 		addRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
 		block.add(addRow);
+		block.add(Box.createVerticalStrut(8));
+
+		sortLists.setLayout(new BoxLayout(sortLists, BoxLayout.Y_AXIS));
+		sortLists.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		sortLists.setAlignmentX(LEFT_ALIGNMENT);
+		block.add(sortLists);
 		return block;
 	}
 
-	/** The sorting lists with item names: each row is {id, name}. Safe to call from any thread. */
-	public void setSortLists(Map<SortRule, List<String[]>> lists)
+	/** What each list does for items nobody marked, for showing under the marks. */
+	public static final class SortDefaults
+	{
+		/** Names of the items the cargo hold is known to accept, sorted. */
+		final List<String> holdNames;
+		final int alchThreshold;
+		final int geOverAlchPercent;
+
+		public SortDefaults(List<String> holdNames, int alchThreshold, int geOverAlchPercent)
+		{
+			this.holdNames = holdNames;
+			this.alchThreshold = alchThreshold;
+			this.geOverAlchPercent = geOverAlchPercent;
+		}
+
+		static final SortDefaults NONE = new SortDefaults(new ArrayList<>(), 0, 0);
+	}
+
+	/** The default rule of one list, in words. */
+	static String defaultLine(SortRule rule, SortDefaults defaults)
+	{
+		switch (rule)
+		{
+			case KEEP:
+				return defaults.geOverAlchPercent > 0
+					? "By default: items whose Grand Exchange price beats their alch value by "
+						+ defaults.geOverAlchPercent + "% or more."
+					: "By default: nothing; only what you mark.";
+			case HOLD:
+				return "By default: the " + defaults.holdNames.size() + " items the cargo hold is known to take. "
+					+ "The list grows as the game answers each time you open the hold. Never noted items.";
+			case ALCH:
+				return "By default: tradeable items that alch for at least "
+					+ String.format("%,d", defaults.alchThreshold) + " coins.";
+			default:
+				return "By default: every other tradeable item. Untradeable items get no box unless you mark them.";
+		}
+	}
+
+	/**
+	 * The sorting lists: the player's marks with item names (each row {id, name}), then each list's
+	 * default. Safe to call from any thread.
+	 */
+	public void setSortLists(Map<SortRule, List<String[]>> lists, SortDefaults defaults)
 	{
 		SwingUtilities.invokeLater(() ->
 		{
 			lastSortLists = lists;
+			lastSortDefaults = defaults;
 			sortLists.removeAll();
 			Map<SortRule, Color> colours = sortColours;
 			for (SortRule rule : SortRule.values())
 			{
 				List<String[]> rows = lists.get(rule);
-				JLabel heading = new JLabel(rule.getLabel() + (rows == null || rows.isEmpty() ? ": nothing marked" : ""));
-				small(heading);
+				int count = rows == null ? 0 : rows.size();
+				JLabel heading = new JLabel(rule.getLabel() + (count == 0 ? ": nothing marked" : ": " + count + " marked"));
+				heading.setFont(FontManager.getRunescapeBoldFont());
 				heading.setForeground(colours.getOrDefault(rule, Color.WHITE));
+				heading.setAlignmentX(LEFT_ALIGNMENT);
 				sortLists.add(heading);
 				if (rows != null)
 				{
@@ -354,7 +409,22 @@ public class SalvagingSpotPanel extends PluginPanel
 						sortLists.add(line);
 					}
 				}
-				sortLists.add(Box.createVerticalStrut(3));
+				JLabel ruleText = new JLabel(html(defaultLine(rule, defaults), TOP_TEXT_WIDTH));
+				small(ruleText);
+				ruleText.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+				ruleText.setAlignmentX(LEFT_ALIGNMENT);
+				sortLists.add(ruleText);
+				if (rule == SortRule.HOLD && !defaults.holdNames.isEmpty())
+				{
+					// Whole names separated by commas; the label wraps between words, never inside one.
+					String joined = String.join(", ", defaults.holdNames).replace("&", "&amp;").replace("<", "&lt;");
+					JLabel names = new JLabel(html(joined + ".", TOP_TEXT_WIDTH));
+					small(names);
+					names.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+					names.setAlignmentX(LEFT_ALIGNMENT);
+					sortLists.add(names);
+				}
+				sortLists.add(Box.createVerticalStrut(8));
 			}
 			sortLists.revalidate();
 			sortLists.repaint();
@@ -381,7 +451,7 @@ public class SalvagingSpotPanel extends PluginPanel
 				sortColours.put(entry.getKey(), opaque(entry.getValue()));
 			}
 			rebuild();
-			setSortLists(lastSortLists);
+			setSortLists(lastSortLists, lastSortDefaults);
 		});
 	}
 

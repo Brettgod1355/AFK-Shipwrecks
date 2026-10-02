@@ -603,8 +603,8 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "doubleSpotLabels",
 		name = "Label double spots",
-		description = "Write which two wrecks a box covers, for example \"Barracuda + Small\", how many of your hooks are "
-			+ "in it, and \"Parked\" once they all are.",
+		description = "Write \"Double spot\" on each box where to park, with how many of your hooks are in it, and "
+			+ "\"Parked\" once they all are.",
 		section = SPOTS,
 		position = 7
 	)

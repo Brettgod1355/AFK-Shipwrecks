@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
@@ -1090,9 +1091,21 @@ public class AfkSalvagingPlugin extends Plugin
 				}
 				named.put(rule, rows);
 			}
+			// One name per item, versions of the same item folded together, alphabetical.
+			Set<String> holdNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+			for (int id : holdWhitelist.knownAccepted())
+			{
+				String name = itemManager.getItemComposition(id).getName();
+				if (name != null && !name.isEmpty() && !"null".equals(name))
+				{
+					holdNames.add(name);
+				}
+			}
+			SalvagingSpotPanel.SortDefaults defaults = new SalvagingSpotPanel.SortDefaults(
+				new ArrayList<>(holdNames), config.alchThreshold(), config.geOverAlchPercent());
 			if (spotsPanel != null)
 			{
-				spotsPanel.setSortLists(named);
+				spotsPanel.setSortLists(named, defaults);
 			}
 		});
 	}

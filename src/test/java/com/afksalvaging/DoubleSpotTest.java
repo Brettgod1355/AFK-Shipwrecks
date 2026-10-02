@@ -85,7 +85,7 @@ public class DoubleSpotTest
 		int withStump = 0;
 		for (DoubleSpot spot : spots)
 		{
-			if (spot.label().contains("Small"))
+			if (spot.getFirst().getType() == ShipwreckType.SMALL || spot.getSecond().getType() == ShipwreckType.SMALL)
 			{
 				withStump++;
 			}
@@ -105,7 +105,8 @@ public class DoubleSpotTest
 		tracker.observe(new WorldPoint(110, 100, 0), ObjectID.SAILING_MERCENARY_SHIPWRECK_STUMP, 1);
 		List<DoubleSpot> spots = DoubleSpot.find(tracker.presentSites(), REACH);
 		assertEquals(1, spots.size());
-		assertEquals("2 x Mercenary", spots.get(0).label());
+		assertEquals(ShipwreckType.MERCENARY, spots.get(0).getFirst().getType());
+		assertEquals(ShipwreckType.MERCENARY, spots.get(0).getSecond().getType());
 	}
 
 	@Test

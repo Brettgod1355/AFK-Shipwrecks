@@ -40,7 +40,9 @@ stopped, and the fact that your own hook does not restart itself.
   key for you.
 - **A countdown infobox.** Optionally, the time to a full hold as one of RuneLite's small
   infoboxes, with the detail on hover, so it stays in view with the overlay hidden.
-- **Knows where the wrecks are.** A sidebar panel lists all 29 salvaging hotspots, filtered by
+- **A sidebar with three tabs.** Spots (the list, the nearest dock and the tools below), Sorting
+  (each inventory sorting list with what you added and what it does by default) and Tips.
+- **Knows where the wrecks are.** The Spots tab lists all 29 salvaging hotspots, filtered by
   wreck, down to the ones your level allows, or to your favourites, sorted by wreck or nearest to
   you first, with the Sailing level each needs, where it sits from the nearest port and how far it
   is from you. Every one has a Map button, which centres the world map on it, a Route button,
@@ -56,8 +58,8 @@ stopped, and the fact that your own hook does not restart itself.
 - **A session line and two tools.** How much has been salvaged, the Sailing XP, holds filled and
   time spent waiting for wrecks since the client started; a Test alert button that fires the
   full-hold notification and banner so you can check your set-up; and Forget rates, which
-  throws away what the timer has learned about your crew's speed. A Tips button at the bottom
-  explains the boxes, the buttons and the rest of this README in short.
+  throws away what the timer has learned about your crew's speed. The Tips tab explains the boxes,
+  the buttons and the rest of this README in short.
 - **Boxes on the water that say where to park.** A yellow box around each wreck for where a hook
   can reach it, and a green box where a hook reaches two wrecks at once. Park so every hook on your
   boat sits in the green box and it changes colour and says "Parked". Each has its own switch and
@@ -71,7 +73,7 @@ stopped, and the fact that your own hook does not restart itself.
   (Sailing kit, repair kits, cannonballs, drinks, fish and fishing gear) and learns the game's own
   answer every time you open the hold, which greys out the rest. Noted items never get it, since
   the hold refuses them. Untradeable items get no box at all unless you mark them. Shift-right-click
-  an item to mark it, or add it by name in the sidebar, and take it off again there. The boxes are only ever boxes: nothing is
+  an item to mark it, or add it by name in the Sorting tab, and take it off again there. The boxes are only ever boxes: nothing is
   dropped, alched or moved for you, and the menu entries they add send nothing to the game.
 - **Says when it was updated.** The first time you log in after the Plugin Hub has updated the
   plugin, one line in chat says what the new version brings. A setting turns it off.

@@ -109,17 +109,18 @@ public class SalvageBoxOverlay extends Overlay
 				String label = null;
 				if (config.doubleSpotLabels())
 				{
+					// Owner, 2026-10-02: label the box where to park simply "Double spot".
 					if (parked)
 					{
-						label = "Parked: " + spot.label();
+						label = "Double spot · Parked";
 					}
 					else if (inside > 0)
 					{
-						label = spot.label() + " · " + inside + " of " + hooks.size() + " hooks in";
+						label = "Double spot · " + inside + " of " + hooks.size() + " hooks in";
 					}
 					else
 					{
-						label = spot.label();
+						label = "Double spot";
 					}
 				}
 				drawBox(graphics, top, box, drawn, parked ? PARKED_OUTLINE : OUTLINE, label);
