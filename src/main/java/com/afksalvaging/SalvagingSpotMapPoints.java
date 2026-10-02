@@ -31,9 +31,10 @@ public class SalvagingSpotMapPoints
 	private static final int SIZE = 14;
 	private static final int PICKED_SIZE = 20;
 	private static final Color RING = new Color(20, 20, 20, 220);
-	private static final Color BELOW_LEVEL = new Color(140, 140, 140);
-	private static final Color IN_LEVEL = new Color(70, 200, 110);
-	private static final Color PICKED = new Color(255, 190, 40);
+
+	private Color inLevel = new Color(70, 200, 110);
+	private Color belowLevel = new Color(140, 140, 140);
+	private Color pickedColour = new Color(255, 190, 40);
 
 	private final WorldMapPointManager manager;
 	private final Map<SalvagingSpot, WorldMapPoint> points = new EnumMap<>(SalvagingSpot.class);
@@ -93,6 +94,19 @@ public class SalvagingSpotMapPoints
 		redraw();
 	}
 
+	/** The marker colours from the settings; redraws when they change. */
+	public void setColours(Color within, Color above, Color chosen)
+	{
+		if (within.equals(inLevel) && above.equals(belowLevel) && chosen.equals(pickedColour))
+		{
+			return;
+		}
+		inLevel = within;
+		belowLevel = above;
+		pickedColour = chosen;
+		redraw();
+	}
+
 	/** Marks the spot the sidebar picked, or none, and points at it from the map's edge. */
 	public void setPicked(SalvagingSpot spot)
 	{
@@ -123,7 +137,7 @@ public class SalvagingSpotMapPoints
 	{
 		boolean isPicked = spot == picked;
 		int size = isPicked ? PICKED_SIZE : SIZE;
-		Color colour = isPicked ? PICKED : (sailingLevel >= spot.getSailingLevel() ? IN_LEVEL : BELOW_LEVEL);
+		Color colour = isPicked ? pickedColour : (sailingLevel >= spot.getSailingLevel() ? inLevel : belowLevel);
 		BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g = image.createGraphics();
 		try

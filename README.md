@@ -119,6 +119,11 @@ warn (60 s; 0 never).
 reminder banner. **Overlay**: when to show it (near wrecks, or always aboard), the cargo counter,
 the hooks line, the wrecks line, text size, and the countdown infobox (off by default).
 
+**Colours**: every other colour the plugin draws with, each its own setting: overlay text and dim
+text, attention, good and bad, the two ends of the cargo counter's shading, the three world map
+marker colours, the sidebar's level and mark colours, and the plugin's chat lines. The banner,
+box and sorting colours sit in their own sections.
+
 **Inventory sorting**: box inventory items; where (on my boat at a salvaging spot, whenever aboard,
 everywhere); the alch threshold; keep instead when the GE price beats the alch value by a margin
 (off by default); the shift-right-click marking entries; whether kept items get a box at all; and

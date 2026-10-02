@@ -17,17 +17,15 @@ import net.runelite.client.ui.overlay.infobox.InfoBox;
  */
 public class HoldInfoBox extends InfoBox
 {
-	private static final Color NORMAL = Color.WHITE;
-	private static final Color SOON = new Color(255, 190, 70);
-	private static final Color FULL = new Color(240, 90, 90);
-
+	private final AfkSalvagingConfig config;
 	private final Supplier<AfkSession.View> view;
 	private final Supplier<CargoHoldMonitor.Level> holdLevel;
 
-	public HoldInfoBox(BufferedImage image, Plugin plugin, Supplier<AfkSession.View> view,
+	public HoldInfoBox(BufferedImage image, Plugin plugin, AfkSalvagingConfig config, Supplier<AfkSession.View> view,
 		Supplier<CargoHoldMonitor.Level> holdLevel)
 	{
 		super(image, plugin);
+		this.config = config;
 		this.view = view;
 		this.holdLevel = holdLevel;
 		setTooltip("AFK Salvaging");
@@ -55,14 +53,14 @@ public class HoldInfoBox extends InfoBox
 		CargoHoldMonitor.Level level = holdLevel.get();
 		if (level == CargoHoldMonitor.Level.FULL || v.estimate.getState() == AfkEstimate.State.HOLD_FULL)
 		{
-			return FULL;
+			return config.badColor();
 		}
 		if (level == CargoHoldMonitor.Level.NEARLY_FULL || v.idleWarning
 			|| v.estimate.getState() == AfkEstimate.State.WAITING_FOR_WRECK)
 		{
-			return SOON;
+			return config.attentionColor();
 		}
-		return NORMAL;
+		return config.overlayTextColor();
 	}
 
 	/** The short text, or null when the box should not be drawn. Package-private for tests. */

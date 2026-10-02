@@ -6,6 +6,7 @@
 package com.afksalvaging;
 
 import com.google.inject.Provides;
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -143,7 +144,6 @@ public class AfkSalvagingPlugin extends Plugin
 	private static final int ENTITY_RAFT = 1;
 	private static final int ENTITY_SKIFF = 2;
 	private static final int ENTITY_SLOOP = 3;
-	private static final String TIP_COLOUR = "1e5aa8";
 
 	@Inject
 	private Client client;
@@ -683,7 +683,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			if (config.updateMessage())
 			{
-				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=" + TIP_COLOUR + ">" + updateMessage + "</col>", null);
+				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=" + tipColour() + ">" + updateMessage + "</col>", null);
 			}
 			updateMessage = null;
 		}
@@ -1087,7 +1087,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			if (infoBox == null)
 			{
-				infoBox = new HoldInfoBox(ImageUtil.loadImageResource(getClass(), "infobox_icon.png"), this,
+				infoBox = new HoldInfoBox(ImageUtil.loadImageResource(getClass(), "infobox_icon.png"), this, config,
 					session::view, () -> session.monitor().level(config.warnSlotsRemaining()));
 				infoBoxManager.addInfoBox(infoBox);
 			}
@@ -1109,13 +1109,33 @@ public class AfkSalvagingPlugin extends Plugin
 
 	// ---- Salvage spots: sidebar, world map markers, double spot boxes ----
 
+	/** The plugin's chat line colour as the game's tag wants it: six hex digits, no transparency. */
+	private String tipColour()
+	{
+		return String.format("%06x", config.chatTipColor().getRGB() & 0xFFFFFF);
+	}
+
+	/** The sidebar's colours from the settings. */
+	private void applyPalette()
+	{
+		Map<SortRule, Color> sorting = new EnumMap<>(SortRule.class);
+		sorting.put(SortRule.KEEP, config.keepColor());
+		sorting.put(SortRule.HOLD, config.holdColor());
+		sorting.put(SortRule.ALCH, config.alchColor());
+		sorting.put(SortRule.DROP, config.dropColor());
+		spotsPanel.setPalette(config.sidebarInLevelColor(), config.sidebarBelowLevelColor(), config.sidebarMarkedColor(),
+			config.goodColor(), sorting);
+	}
+
 	/** Brings the sidebar and the map markers in line with the settings. */
 	private void applySpotSettings()
 	{
+		mapPoints.setColours(config.mapInLevelColor(), config.mapBelowLevelColor(), config.mapPickedColor());
 		mapPoints.setShown(config.spotMapMarkers());
 		if (config.spotSidebar())
 		{
 			addSidebar();
+			applyPalette();
 			spotsPanel.setDockShown(config.nearestDock());
 			spotsPanel.setAutoRoute(SpotList.spotNamed(config.autoRouteSpot()));
 		}
@@ -1294,7 +1314,7 @@ public class AfkSalvagingPlugin extends Plugin
 			{
 				pendingMapTarget = point;
 				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
-					"<col=" + TIP_COLOUR + ">Open the world map and it will jump to " + what + ".</col>", null);
+					"<col=" + tipColour() + ">Open the world map and it will jump to " + what + ".</col>", null);
 			}
 		});
 	}
@@ -1320,7 +1340,7 @@ public class AfkSalvagingPlugin extends Plugin
 			if (problem != null)
 			{
 				setSpotStatus(problem, true);
-				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=" + TIP_COLOUR + ">" + problem + "</col>", null);
+				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=" + tipColour() + ">" + problem + "</col>", null);
 				return;
 			}
 			eventBus.post(ShortestPathMessages.routeTo(point));
@@ -1340,7 +1360,7 @@ public class AfkSalvagingPlugin extends Plugin
 		route(spot.getPoint(), spot.getSalvageName() + ", " + spot.getWhere(), "Auto route sent to Shortest Path: ");
 		if (ShortestPathPresence.check(pluginManager).problem() == null)
 		{
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=" + TIP_COLOUR + ">Auto route: "
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=" + tipColour() + ">Auto route: "
 				+ spot.getSalvageName() + ", " + spot.getWhere() + ".</col>", null);
 		}
 	}
@@ -1506,7 +1526,7 @@ public class AfkSalvagingPlugin extends Plugin
 				if (config.worldTip())
 				{
 					client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
-						"<col=" + TIP_COLOUR + ">Waiting for a wreck? On the salvaging worlds (" + salvagingWorldsText()
+						"<col=" + tipColour() + ">Waiting for a wreck? On the salvaging worlds (" + salvagingWorldsText()
 							+ ") every site is worked, so wrecks near you come back sooner.</col>", null);
 				}
 				break;

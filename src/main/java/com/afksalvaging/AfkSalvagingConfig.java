@@ -585,6 +585,13 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigSection(
+		name = "Colours",
+		description = "Every other colour the plugin draws with; the banners, boxes and sorting colours sit in their own sections",
+		position = 8
+	)
+	String COLOURS = "colours";
+
+	@ConfigSection(
 		name = "Inventory sorting",
 		description = "Boxes round inventory items saying what to keep, put in the hold, alch or drop",
 		position = 7
@@ -722,6 +729,190 @@ public interface AfkSalvagingConfig extends Config
 	default String sortDropIds()
 	{
 		return "";
+	}
+
+	// ---- Colours ----
+
+	@Alpha
+	@ConfigItem(
+		keyName = "overlayTextColor",
+		name = "Overlay text",
+		description = "The main text of the overlay, such as the countdown.",
+		section = COLOURS,
+		position = 0
+	)
+	default Color overlayTextColor()
+	{
+		return new Color(255, 255, 255, 255);
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "overlayDimColor",
+		name = "Overlay dim text",
+		description = "Secondary overlay text: the clock time, left to salvage, sorting.",
+		section = COLOURS,
+		position = 1
+	)
+	default Color overlayDimColor()
+	{
+		return new Color(190, 190, 190, 255);
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "attentionColor",
+		name = "Attention",
+		description = "Overlay and infobox text that needs a look: waiting for a wreck, an empty hook, the idle logout line, nearly full.",
+		section = COLOURS,
+		position = 2
+	)
+	default Color attentionColor()
+	{
+		return new Color(255, 190, 70, 255);
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "goodColor",
+		name = "Good",
+		description = "Overlay text for things going well, such as a hooks line with everyone working, and the sidebar's green status line.",
+		section = COLOURS,
+		position = 3
+	)
+	default Color goodColor()
+	{
+		return new Color(120, 220, 120, 255);
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "badColor",
+		name = "Bad",
+		description = "Overlay, infobox and sidebar text for things gone wrong: crew stopped, a problem with Shortest Path, the idle logout warning.",
+		section = COLOURS,
+		position = 4
+	)
+	default Color badColor()
+	{
+		return new Color(240, 90, 90, 255);
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "counterEmptyColor",
+		name = "Counter when empty",
+		description = "The cargo counter's colour with the hold empty; it shades towards the full colour as the hold fills.",
+		section = COLOURS,
+		position = 5
+	)
+	default Color counterEmptyColor()
+	{
+		return new Color(70, 200, 70, 255);
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "counterFullColor",
+		name = "Counter when full",
+		description = "The cargo counter's colour with the hold full.",
+		section = COLOURS,
+		position = 6
+	)
+	default Color counterFullColor()
+	{
+		return new Color(230, 60, 60, 255);
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "mapInLevelColor",
+		name = "Map marker, within level",
+		description = "World map marker of a spot you have the level for.",
+		section = COLOURS,
+		position = 7
+	)
+	default Color mapInLevelColor()
+	{
+		return new Color(70, 200, 110, 255);
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "mapBelowLevelColor",
+		name = "Map marker, above level",
+		description = "World map marker of a spot above your level.",
+		section = COLOURS,
+		position = 8
+	)
+	default Color mapBelowLevelColor()
+	{
+		return new Color(140, 140, 140, 255);
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "mapPickedColor",
+		name = "Map marker, picked",
+		description = "World map marker of the spot last sent to the map or routed to.",
+		section = COLOURS,
+		position = 9
+	)
+	default Color mapPickedColor()
+	{
+		return new Color(255, 190, 40, 255);
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "sidebarInLevelColor",
+		name = "Sidebar level, within",
+		description = "The level on a sidebar row you can salvage.",
+		section = COLOURS,
+		position = 10
+	)
+	default Color sidebarInLevelColor()
+	{
+		return new Color(70, 200, 110, 255);
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "sidebarBelowLevelColor",
+		name = "Sidebar level, above",
+		description = "The level on a sidebar row above your level.",
+		section = COLOURS,
+		position = 11
+	)
+	default Color sidebarBelowLevelColor()
+	{
+		return new Color(200, 110, 110, 255);
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "sidebarMarkedColor",
+		name = "Sidebar marks",
+		description = "The sidebar's favourite star, Auto mark and picked row text.",
+		section = COLOURS,
+		position = 12
+	)
+	default Color sidebarMarkedColor()
+	{
+		return new Color(255, 200, 60, 255);
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "chatTipColor",
+		name = "Chat lines",
+		description = "The plugin's lines in the chat box: tips, routes, the update note. Transparency is ignored.",
+		section = COLOURS,
+		position = 13
+	)
+	default Color chatTipColor()
+	{
+		return new Color(30, 90, 168, 255);
 	}
 
 	@ConfigItem(

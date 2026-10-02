@@ -35,12 +35,14 @@ public class AfkSalvagingOverlay extends OverlayPanel
 	/** Minimum space between a line's label and its value. */
 	private static final int LINE_GAP = 12;
 	private static final long FLASH_PERIOD_MS = 500;
-	private static final Color COUNTER_EMPTY = new Color(70, 200, 70);
-	private static final Color COUNTER_FULL = new Color(230, 60, 60);
-	private static final Color AMBER = new Color(255, 190, 70);
-	private static final Color DIM = new Color(190, 190, 190);
-	private static final Color GOOD = new Color(120, 220, 120);
-	private static final Color BAD = new Color(240, 90, 90);
+	// The colours, read from the settings at the start of every frame.
+	private Color counterEmpty;
+	private Color counterFull;
+	private Color amber;
+	private Color dim;
+	private Color good;
+	private Color bad;
+	private Color textColour;
 
 	private final AfkSalvagingPlugin plugin;
 	private final AfkSalvagingConfig config;
@@ -76,6 +78,13 @@ public class AfkSalvagingOverlay extends OverlayPanel
 	public Dimension render(Graphics2D graphics)
 	{
 		long now = AfkSalvagingPlugin.clock();
+		counterEmpty = config.counterEmptyColor();
+		counterFull = config.counterFullColor();
+		amber = config.attentionColor();
+		dim = config.overlayDimColor();
+		good = config.goodColor();
+		bad = config.badColor();
+		textColour = config.overlayTextColor();
 		AfkSession session = plugin.getSession();
 		AfkSession.View view = session.view();
 		CargoHoldMonitor monitor = session.monitor();
@@ -99,7 +108,7 @@ public class AfkSalvagingOverlay extends OverlayPanel
 			int capacity = monitor.getCapacity();
 			double fill = capacity > 0 ? Math.min(1.0, (double) used / capacity) : 0;
 			lines.add(new Line("Cargo hold", used + "/" + capacity,
-				ColorUtil.colorLerp(COUNTER_EMPTY, COUNTER_FULL, fill)));
+				ColorUtil.colorLerp(counterEmpty, counterFull, fill)));
 		}
 		if (aboardOwnBoat && config.showHooks() && view.hookCount > 0)
 		{
@@ -148,7 +157,7 @@ public class AfkSalvagingOverlay extends OverlayPanel
 			width = Math.max(Math.round(BASE_WIDTH * scale), textWidth + 2 * ComponentConstants.STANDARD_BORDER + TEXT_PADDING);
 			panelComponent.getChildren().add(TitleComponent.builder()
 				.text(text)
-				.color(Color.WHITE)
+				.color(textColour)
 				.build());
 		}
 		panelComponent.setBackgroundColor(background);
@@ -164,8 +173,8 @@ public class AfkSalvagingOverlay extends OverlayPanel
 			panelComponent.getChildren().add(LineComponent.builder()
 				.left(line.left)
 				.right(line.right)
-				.leftColor(banner ? Color.WHITE : DIM)
-				.rightColor(banner ? Color.WHITE : line.rightColor)
+				.leftColor(banner ? textColour : dim)
+				.rightColor(banner ? textColour : line.rightColor)
 				.leftFont(lineFont)
 				.rightFont(lineFont)
 				.build());
@@ -188,65 +197,65 @@ public class AfkSalvagingOverlay extends OverlayPanel
 		switch (estimate.getState())
 		{
 			case NO_HOOK:
-				lines.add(new Line("Timer", "no salvaging hook on this boat", DIM));
+				lines.add(new Line("Timer", "no salvaging hook on this boat", dim));
 				break;
 			case HOLD_UNKNOWN:
-				lines.add(new Line("Timer", "open the cargo hold once to start", AMBER));
+				lines.add(new Line("Timer", "open the cargo hold once to start", amber));
 				break;
 			case HOLD_FULL:
 				if (holdBanner == CargoHoldMonitor.Level.OK)
 				{
-					lines.add(new Line("Hold", "full", COUNTER_FULL));
+					lines.add(new Line("Hold", "full", counterFull));
 				}
 				break;
 			case HOLD_FULL_UNCONFIRMED:
-				lines.add(new Line("Hold", "full by the tally; open it to check", AMBER));
+				lines.add(new Line("Hold", "full by the tally; open it to check", amber));
 				break;
 			case HOLD_DRIFTED:
-				lines.add(new Line("Hold", "tally has drifted; open it to resync", AMBER));
+				lines.add(new Line("Hold", "tally has drifted; open it to resync", amber));
 				break;
 			case NOBODY_SALVAGING:
-				lines.add(new Line("Timer", "no one is on a hook", DIM));
+				lines.add(new Line("Timer", "no one is on a hook", dim));
 				break;
 			case HAZARDOUS:
-				lines.add(new Line("Timer", "not safe to salvage here", BAD));
+				lines.add(new Line("Timer", "not safe to salvage here", bad));
 				break;
 			case LEVEL_TOO_LOW:
 				lines.add(new Line(crew ? "Crew stopped" : "Timer",
-					"Sailing level too low" + (view.levelNeeded > 0 ? " (needs " + view.levelNeeded + ")" : ""), BAD));
+					"Sailing level too low" + (view.levelNeeded > 0 ? " (needs " + view.levelNeeded + ")" : ""), bad));
 				break;
 			case WAITING_FOR_WRECK:
-				lines.add(new Line("Waiting for a wreck", view.waitingMillis >= 0 ? Durations.countdown(view.waitingMillis) + " so far" : "", AMBER));
+				lines.add(new Line("Waiting for a wreck", view.waitingMillis >= 0 ? Durations.countdown(view.waitingMillis) + " so far" : "", amber));
 				if (timer && estimate.hasWork())
 				{
-					lines.add(new Line("Left to salvage", approx + Durations.coarse(estimate.getWorkMillis()), DIM));
+					lines.add(new Line("Left to salvage", approx + Durations.coarse(estimate.getWorkMillis()), dim));
 				}
 				if (view.showWorldTip && config.worldTip())
 				{
-					lines.add(new Line("Tip", "wrecks refill faster on worlds " + plugin.salvagingWorldsText(), DIM));
+					lines.add(new Line("Tip", "wrecks refill faster on worlds " + plugin.salvagingWorldsText(), dim));
 				}
 				break;
 			case STALLED:
-				lines.add(new Line("Timer", crew ? "crew do not seem to be salvaging" : "no salvage is arriving; is the hook in reach?", BAD));
+				lines.add(new Line("Timer", crew ? "crew do not seem to be salvaging" : "no salvage is arriving; is the hook in reach?", bad));
 				break;
 			case PLAYER_HOOK_IDLE:
-				lines.add(new Line("Your hook", "idle; click it to salvage", AMBER));
+				lines.add(new Line("Your hook", "idle; click it to salvage", amber));
 				break;
 			case INVENTORY_FULL:
-				lines.add(new Line("Inventory", "full; deposit to carry on", AMBER));
+				lines.add(new Line("Inventory", "full; deposit to carry on", amber));
 				break;
 			case INVENTORY_FILLS_FIRST:
 				if (timer)
 				{
-					lines.add(new Line("Inventory full in", Durations.countdown(view.countdownMillis), AMBER));
-					lines.add(new Line("", "deposit to keep the hold filling", DIM));
+					lines.add(new Line("Inventory full in", Durations.countdown(view.countdownMillis), amber));
+					lines.add(new Line("", "deposit to keep the hold filling", dim));
 				}
 				break;
 			case WRECK_SINKS_FIRST:
 				if (timer)
 				{
-					lines.add(new Line("Wreck sinks in", "≤ " + Durations.countdown(view.countdownMillis), AMBER));
-					lines.add(new Line("", "you stop then; nobody else is on a hook", DIM));
+					lines.add(new Line("Wreck sinks in", "≤ " + Durations.countdown(view.countdownMillis), amber));
+					lines.add(new Line("", "you stop then; nobody else is on a hook", dim));
 				}
 				break;
 			case COUNTING_DOWN:
@@ -258,17 +267,17 @@ public class AfkSalvagingOverlay extends OverlayPanel
 				long remaining = view.countdownMillis;
 				if (remaining == 0 && estimate.getWorkMillis() == 0)
 				{
-					lines.add(new Line("Hold", "full once you deposit your salvage", AMBER));
+					lines.add(new Line("Hold", "full once you deposit your salvage", amber));
 					break;
 				}
-				lines.add(new Line("Hold full in", approx + Durations.coarse(remaining), Color.WHITE));
+				lines.add(new Line("Hold full in", approx + Durations.coarse(remaining), textColour));
 				if (config.showClockTime() && remaining >= 0)
 				{
-					lines.add(new Line("", "at " + Durations.clockAfter(System.currentTimeMillis(), remaining, ZoneId.systemDefault()), DIM));
+					lines.add(new Line("", "at " + Durations.clockAfter(System.currentTimeMillis(), remaining, ZoneId.systemDefault()), dim));
 				}
 				if (view.idleLogoutMillis >= 0 && remaining > view.idleLogoutMillis && !view.idleWarning)
 				{
-					lines.add(new Line("Idle logout in", Durations.countdown(view.idleLogoutMillis), AMBER));
+					lines.add(new Line("Idle logout in", Durations.countdown(view.idleLogoutMillis), amber));
 				}
 				break;
 			}
@@ -277,7 +286,7 @@ public class AfkSalvagingOverlay extends OverlayPanel
 		}
 		if (view.idleWarning)
 		{
-			lines.add(new Line("Idle logout in", Durations.countdown(view.idleLogoutMillis) + "; move the mouse", BAD));
+			lines.add(new Line("Idle logout in", Durations.countdown(view.idleLogoutMillis) + "; move the mouse", bad));
 		}
 
 	}
@@ -297,7 +306,7 @@ public class AfkSalvagingOverlay extends OverlayPanel
 		{
 			text.append(text.length() > 0 ? " + you" : "you");
 		}
-		Color color = GOOD;
+		Color color = good;
 		if (view.emptyHooks > 0)
 		{
 			if (text.length() > 0)
@@ -309,12 +318,12 @@ public class AfkSalvagingOverlay extends OverlayPanel
 			{
 				text.append(" (no crewmate can use it)");
 			}
-			color = AMBER;
+			color = amber;
 		}
 		else if (text.length() == 0)
 		{
 			text.append("none");
-			color = DIM;
+			color = dim;
 		}
 		return new Line("Hooks", text.toString(), color);
 	}
@@ -325,9 +334,9 @@ public class AfkSalvagingOverlay extends OverlayPanel
 		{
 			if (view.higherWrecksUp > 0)
 			{
-				return new Line("Wrecks", view.higherWrecksUp + " up, need level " + view.levelNeeded, BAD);
+				return new Line("Wrecks", view.higherWrecksUp + " up, need level " + view.levelNeeded, bad);
 			}
-			return new Line("Wrecks", "none in reach", DIM);
+			return new Line("Wrecks", "none in reach", dim);
 		}
 		StringBuilder text = new StringBuilder();
 		text.append(view.wrecksUp).append(" up");
@@ -340,7 +349,7 @@ public class AfkSalvagingOverlay extends OverlayPanel
 			text.append(" · ").append(view.wrecksUp == 1 ? "sinks in ≤ " : "last sinks in ≤ ")
 				.append(Durations.countdown(view.wreckWindowMillis));
 		}
-		return new Line("Wrecks", text.toString(), GOOD);
+		return new Line("Wrecks", text.toString(), good);
 	}
 
 }

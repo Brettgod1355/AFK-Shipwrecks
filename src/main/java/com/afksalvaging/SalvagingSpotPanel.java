@@ -76,9 +76,13 @@ public class SalvagingSpotPanel extends PluginPanel
 		void sortItemRemove(int itemId);
 	}
 
-	private static final Color IN_LEVEL = new Color(70, 200, 110);
-	private static final Color BELOW_LEVEL = new Color(200, 110, 110);
-	private static final Color MARKED = new Color(255, 200, 60);
+	/** The sidebar's colours, from the settings; see {@link #setPalette}. */
+	private Color inLevel = new Color(70, 200, 110);
+	private Color belowLevel = new Color(200, 110, 110);
+	private Color marked = new Color(255, 200, 60);
+	private Color good = new Color(120, 220, 120);
+	private final Map<SortRule, Color> sortColours = new EnumMap<>(SortRule.class);
+	private Map<SortRule, List<String[]>> lastSortLists = new EnumMap<>(SortRule.class);
 	/** Text widths that wrap inside the panel: the top block, and a row with its own padding. */
 	private static final int TOP_TEXT_WIDTH = 190;
 	private static final int ROW_TEXT_WIDTH = 172;
@@ -318,18 +322,15 @@ public class SalvagingSpotPanel extends PluginPanel
 	{
 		SwingUtilities.invokeLater(() ->
 		{
+			lastSortLists = lists;
 			sortLists.removeAll();
-			Map<SortRule, Color> colours = new EnumMap<>(SortRule.class);
-			colours.put(SortRule.KEEP, new Color(255, 215, 40));
-			colours.put(SortRule.HOLD, new Color(60, 220, 230));
-			colours.put(SortRule.ALCH, new Color(70, 220, 90));
-			colours.put(SortRule.DROP, new Color(240, 80, 80));
+			Map<SortRule, Color> colours = sortColours;
 			for (SortRule rule : SortRule.values())
 			{
 				List<String[]> rows = lists.get(rule);
 				JLabel heading = new JLabel(rule.getLabel() + (rows == null || rows.isEmpty() ? ": nothing marked" : ""));
 				small(heading);
-				heading.setForeground(colours.get(rule));
+				heading.setForeground(colours.getOrDefault(rule, Color.WHITE));
 				sortLists.add(heading);
 				if (rows != null)
 				{
@@ -360,6 +361,33 @@ public class SalvagingSpotPanel extends PluginPanel
 
 	// ---- What the plugin tells the panel; all safe to call from any thread ----
 
+	/**
+	 * The colours from the settings: the level within and above reach, the marks, the good status
+	 * line, and the four sorting lists. Transparency is dropped; the sidebar is opaque.
+	 */
+	public void setPalette(Color within, Color above, Color marks, Color goodStatus, Map<SortRule, Color> sorting)
+	{
+		SwingUtilities.invokeLater(() ->
+		{
+			inLevel = opaque(within);
+			belowLevel = opaque(above);
+			marked = opaque(marks);
+			good = opaque(goodStatus);
+			sortColours.clear();
+			for (Map.Entry<SortRule, Color> entry : sorting.entrySet())
+			{
+				sortColours.put(entry.getKey(), opaque(entry.getValue()));
+			}
+			rebuild();
+			setSortLists(lastSortLists);
+		});
+	}
+
+	private static Color opaque(Color colour)
+	{
+		return new Color(colour.getRed(), colour.getGreen(), colour.getBlue());
+	}
+
 	/** Recolours the levels for the player's Sailing level. */
 	public void setSailingLevel(int level)
 	{
@@ -382,7 +410,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		SwingUtilities.invokeLater(() ->
 		{
 			status.setText(text == null ? "" : html(text, TOP_TEXT_WIDTH));
-			status.setForeground(problem ? BELOW_LEVEL : IN_LEVEL);
+			status.setForeground(problem ? belowLevel : good);
 		});
 	}
 
@@ -603,7 +631,7 @@ public class SalvagingSpotPanel extends PluginPanel
 
 		JLabel level = new JLabel("Level " + spot.getSailingLevel());
 		level.setFont(FontManager.getRunescapeSmallFont());
-		level.setForeground(sailingLevel > 0 ? (canSalvage ? IN_LEVEL : BELOW_LEVEL) : ColorScheme.LIGHT_GRAY_COLOR);
+		level.setForeground(sailingLevel > 0 ? (canSalvage ? inLevel : belowLevel) : ColorScheme.LIGHT_GRAY_COLOR);
 
 		JPanel heading = new JPanel(new BorderLayout());
 		heading.setOpaque(false);
@@ -628,7 +656,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		{
 			JLabel auto = new JLabel("Auto route when you board");
 			small(auto);
-			auto.setForeground(MARKED);
+			auto.setForeground(marked);
 			text.add(auto);
 		}
 
@@ -639,7 +667,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		JButton star = button(favourite ? "★" : "☆", favourite ? "Unpin this spot." : "Pin this spot to the top of every list.");
 		if (favourite)
 		{
-			star.setForeground(MARKED);
+			star.setForeground(marked);
 		}
 		star.addActionListener(e ->
 		{
@@ -659,7 +687,7 @@ public class SalvagingSpotPanel extends PluginPanel
 			: "Route here automatically whenever you board your boat from a dock. Only one spot can be marked.");
 		if (spot == autoRoute)
 		{
-			auto.setForeground(MARKED);
+			auto.setForeground(marked);
 		}
 		auto.addActionListener(e ->
 		{
