@@ -9,6 +9,7 @@ import com.google.inject.Provides;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,8 @@ import net.runelite.api.Client;
 import net.runelite.api.GameObject;
 import net.runelite.api.GameState;
 import net.runelite.api.Item;
+import net.runelite.api.ItemComposition;
+import net.runelite.api.KeyCode;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.MenuAction;
 import net.runelite.api.NPC;
@@ -41,6 +44,7 @@ import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.OverheadTextChanged;
 import net.runelite.api.events.StatChanged;
@@ -66,6 +70,7 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.events.RuneScapeProfileChanged;
 import net.runelite.client.events.WorldsFetch;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.WorldService;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -76,6 +81,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.Text;
+import net.runelite.http.api.item.ItemPrice;
 import net.runelite.http.api.worlds.World;
 import net.runelite.http.api.worlds.WorldResult;
 import org.slf4j.Logger;
@@ -178,6 +184,19 @@ public class AfkSalvagingPlugin extends Plugin
 	@Inject
 	private InfoBoxManager infoBoxManager;
 
+	@Inject
+	private ItemManager itemManager;
+
+	@Inject
+	private InventorySortOverlay sortOverlay;
+
+	/** The player's keep / hold / alch / drop marks, from the settings. */
+	private final SalvageSorter.Lists sortLists = new SalvageSorter.Lists();
+	/** The box decided for each item id, cleared when the marks or the thresholds change and now and then for prices. */
+	private final Map<Integer, SortRule> sortCache = new HashMap<>();
+	/** Ticks between clearing the sort cache so Grand Exchange price changes show up. */
+	private static final int SORT_CACHE_TICKS = 500;
+
 	private HoldInfoBox infoBox;
 
 	@Inject
@@ -243,6 +262,8 @@ public class AfkSalvagingPlugin extends Plugin
 		noteVersion();
 		overlayManager.add(overlay);
 		overlayManager.add(boxOverlay);
+		overlayManager.add(sortOverlay);
+		reloadSortLists();
 		applySpotSettings();
 		applyInfoBox();
 		clientThread.invokeLater(() ->
@@ -259,6 +280,7 @@ public class AfkSalvagingPlugin extends Plugin
 	{
 		overlayManager.remove(overlay);
 		overlayManager.remove(boxOverlay);
+		overlayManager.remove(sortOverlay);
 		removeInfoBox();
 		if (worldRequest != null)
 		{
@@ -279,6 +301,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			applySpotSettings();
 			applyInfoBox();
+			reloadSortLists();
 		}
 	}
 
@@ -474,6 +497,14 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			return;
 		}
+		if (option.equals("drop") && event.getItemId() > 0 && sortRule(event.getItemId()) == SortRule.DROP)
+		{
+			session.stats().dropped++;
+		}
+		else if (option.startsWith("cast") && target.contains("high level alchemy"))
+		{
+			session.stats().alched++;
+		}
 		boolean objectOp = action == MenuAction.GAME_OBJECT_FIRST_OPTION || action == MenuAction.GAME_OBJECT_SECOND_OPTION
 			|| action == MenuAction.GAME_OBJECT_THIRD_OPTION || action == MenuAction.GAME_OBJECT_FOURTH_OPTION
 			|| action == MenuAction.GAME_OBJECT_FIFTH_OPTION;
@@ -663,6 +694,10 @@ public class AfkSalvagingPlugin extends Plugin
 		lastOwnBoat = in.ownBoat;
 		lastSailing = sailing;
 		ticksSinceLogin++;
+		if (tick % SORT_CACHE_TICKS == 0)
+		{
+			sortCache.clear();
+		}
 		if (spotsPanel != null && tick % SIDEBAR_REFRESH_TICKS == 0)
 		{
 			spotsPanel.setPosition(in.playerPoint);
@@ -831,6 +866,220 @@ public class AfkSalvagingPlugin extends Plugin
 		}
 	}
 
+	// ---- Inventory sorting: boxes round items, marks, the sidebar lists ----
+
+	/** Whether the inventory boxes are drawn right now, by the "Show boxes" setting. */
+	public boolean inventorySortActive()
+	{
+		if (!config.inventorySort() || client.getGameState() != GameState.LOGGED_IN)
+		{
+			return false;
+		}
+		switch (config.sortWhere())
+		{
+			case EVERYWHERE:
+				return true;
+			case ABOARD:
+				return isOwnBoat();
+			default:
+				AfkSession.View view = session.view();
+				return isOwnBoat() && (view.wrecksUp > 0 || view.higherWrecksUp > 0 || !session.wrecks().presentSites().isEmpty());
+		}
+	}
+
+	/** The box for an item, or null for one the boxes never apply to. Client thread. */
+	public SortRule sortRule(int itemId)
+	{
+		if (SalvageSorter.excluded(itemId))
+		{
+			return null;
+		}
+		SortRule rule = sortCache.get(itemId);
+		if (rule == null)
+		{
+			rule = SalvageSorter.rule(itemFacts(itemId), sortLists, config.alchThreshold(), config.geOverAlchPercent());
+			sortCache.put(itemId, rule);
+		}
+		return rule;
+	}
+
+	private SalvageSorter.ItemFacts itemFacts(int itemId)
+	{
+		ItemComposition item = itemManager.getItemComposition(itemId);
+		// A noted item stacks and is worth what the real one is worth.
+		int real = itemManager.canonicalize(itemId);
+		ItemComposition realItem = real == itemId ? item : itemManager.getItemComposition(real);
+		boolean stackable = item.isStackable() || item.getNote() != -1;
+		return new SalvageSorter.ItemFacts(itemId, stackable, realItem.getHaPrice(), itemManager.getItemPrice(real));
+	}
+
+	/**
+	 * Shift-right-click on an inventory item offers Mark keep / hold / alch / drop and Unmark.
+	 * These are RuneLite-side entries: clicking one changes a setting and sends nothing to the game.
+	 */
+	@Subscribe
+	public void onMenuEntryAdded(MenuEntryAdded event)
+	{
+		if (!config.sortMenu() || event.getActionParam1() != InterfaceID.Inventory.ITEMS
+			|| !client.isKeyPressed(KeyCode.KC_SHIFT) || !"Examine".equals(event.getOption()))
+		{
+			return;
+		}
+		int itemId = event.getItemId();
+		if (itemId <= 0 || SalvageSorter.excluded(itemId))
+		{
+			return;
+		}
+		SortRule marked = sortLists.markOf(itemId);
+		if (marked != null)
+		{
+			client.getMenu().createMenuEntry(-1)
+				.setOption("Unmark")
+				.setTarget(event.getTarget())
+				.setType(MenuAction.RUNELITE)
+				.setItemId(itemId)
+				.onClick(e -> markItem(itemId, null));
+		}
+		SortRule[] rules = SortRule.values();
+		for (int i = rules.length - 1; i >= 0; i--)
+		{
+			SortRule rule = rules[i];
+			if (rule == marked)
+			{
+				continue;
+			}
+			client.getMenu().createMenuEntry(-1)
+				.setOption("Mark " + rule.getLabel().toLowerCase())
+				.setTarget(event.getTarget())
+				.setType(MenuAction.RUNELITE)
+				.setItemId(itemId)
+				.onClick(e -> markItem(itemId, rule));
+		}
+	}
+
+	/** Puts an item in one list (null: none), saves, and refreshes the boxes and the sidebar. Client thread. */
+	private void markItem(int itemId, SortRule rule)
+	{
+		sortLists.mark(itemId, rule);
+		for (SortRule each : SortRule.values())
+		{
+			String key = sortListKey(each);
+			String encoded = sortLists.encode(each);
+			if (encoded.isEmpty())
+			{
+				configManager.unsetConfiguration(AfkSalvagingConfig.GROUP, key);
+			}
+			else
+			{
+				configManager.setConfiguration(AfkSalvagingConfig.GROUP, key, encoded);
+			}
+		}
+		sortCache.clear();
+		String name = itemManager.getItemComposition(itemId).getName();
+		setSpotStatus(rule == null ? name + " unmarked; it is sorted by what it is again." : name + " marked: " + rule.getLabel() + ".", false);
+		pushSortLists();
+	}
+
+	private static String sortListKey(SortRule rule)
+	{
+		switch (rule)
+		{
+			case KEEP:
+				return "sortKeepIds";
+			case HOLD:
+				return "sortHoldIds";
+			case ALCH:
+				return "sortAlchIds";
+			default:
+				return "sortDropIds";
+		}
+	}
+
+	/** Reads the four lists from the settings and forgets the decided boxes. */
+	private void reloadSortLists()
+	{
+		sortLists.decode(SortRule.KEEP, config.sortKeepIds());
+		sortLists.decode(SortRule.HOLD, config.sortHoldIds());
+		sortLists.decode(SortRule.ALCH, config.sortAlchIds());
+		sortLists.decode(SortRule.DROP, config.sortDropIds());
+		sortCache.clear();
+		pushSortLists();
+	}
+
+	/** Sends the lists, with item names, to the sidebar. Names need the client thread. */
+	private void pushSortLists()
+	{
+		if (spotsPanel == null)
+		{
+			return;
+		}
+		clientThread.invokeLater(() ->
+		{
+			Map<SortRule, List<String[]>> named = new EnumMap<>(SortRule.class);
+			for (SortRule rule : SortRule.values())
+			{
+				List<String[]> rows = new ArrayList<>();
+				for (int id : sortLists.ids(rule))
+				{
+					rows.add(new String[]{String.valueOf(id), itemManager.getItemComposition(id).getName()});
+				}
+				named.put(rule, rows);
+			}
+			if (spotsPanel != null)
+			{
+				spotsPanel.setSortLists(named);
+			}
+		});
+	}
+
+	/**
+	 * Adds an item typed into the sidebar. The search covers tradeable items by name; anything
+	 * else is marked by shift-right-clicking it in the inventory.
+	 */
+	private void addSortItemByName(String typed, SortRule rule)
+	{
+		String name = typed == null ? "" : typed.trim();
+		if (name.isEmpty())
+		{
+			return;
+		}
+		clientThread.invokeLater(() ->
+		{
+			List<ItemPrice> found = itemManager.search(name);
+			ItemPrice pick = null;
+			for (ItemPrice candidate : found)
+			{
+				if (candidate.getName().equalsIgnoreCase(name))
+				{
+					pick = candidate;
+					break;
+				}
+			}
+			if (pick == null && found.size() == 1)
+			{
+				pick = found.get(0);
+			}
+			if (pick == null)
+			{
+				if (found.isEmpty())
+				{
+					setSpotStatus("No tradeable item is called \"" + name + "\". Shift-right-click it in your inventory to mark it instead.", true);
+				}
+				else
+				{
+					StringBuilder names = new StringBuilder();
+					for (int i = 0; i < Math.min(5, found.size()); i++)
+					{
+						names.append(i == 0 ? "" : ", ").append(found.get(i).getName());
+					}
+					setSpotStatus("Several items match \"" + name + "\": " + names + (found.size() > 5 ? ", ..." : "") + ". Type the full name.", true);
+				}
+				return;
+			}
+			markItem(pick.getId(), rule);
+		});
+	}
+
 	/** Adds or removes the countdown infobox to match the setting. */
 	private void applyInfoBox()
 	{
@@ -954,6 +1203,18 @@ public class AfkSalvagingPlugin extends Plugin
 			}
 
 			@Override
+			public void sortItemAdd(String name, SortRule rule)
+			{
+				addSortItemByName(name, rule);
+			}
+
+			@Override
+			public void sortItemRemove(int itemId)
+			{
+				clientThread.invokeLater(() -> markItem(itemId, null));
+			}
+
+			@Override
 			public void forgetLearnedRates()
 			{
 				clientThread.invokeLater(() ->
@@ -965,6 +1226,7 @@ public class AfkSalvagingPlugin extends Plugin
 			}
 		});
 		spotsPanel.setChoices(config.spotFilter(), config.spotNearestFirst());
+		pushSortLists();
 		spotsPanel.setFavourites(loadFavourites());
 		spotsPanel.setAutoRoute(SpotList.spotNamed(config.autoRouteSpot()));
 		spotsPanel.setDockShown(config.nearestDock());
@@ -1120,9 +1382,14 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			return "This session: nothing salvaged yet.";
 		}
-		return String.format("This session: %,d salvage · %,d Sailing XP · %d hold%s filled · %s waiting for wrecks",
+		String sorted = "";
+		if (stats.dropped > 0 || stats.alched > 0)
+		{
+			sorted = " · " + stats.dropped + " dropped · " + stats.alched + " alched";
+		}
+		return String.format("This session: %,d salvage · %,d Sailing XP · %d hold%s filled · %s waiting for wrecks%s",
 			stats.salvages, stats.sailingXp, stats.holdsFilled, stats.holdsFilled == 1 ? "" : "s",
-			Durations.coarse(stats.waitingMillis));
+			Durations.coarse(stats.waitingMillis), sorted);
 	}
 
 	private Set<SalvagingSpot> loadFavourites()

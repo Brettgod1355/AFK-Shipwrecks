@@ -62,6 +62,12 @@ stopped, and the fact that your own hook does not restart itself.
   colour, and the parked colour is its own setting too.
   Read the section below before trusting them to the tile.
 
+- **Sorts your inventory for you to act on.** On your boat at a salvaging spot, every inventory
+  item gets a coloured box: yellow keep, cyan hold (a stack takes one slot in the cargo hold),
+  green alch (its alch value is at or above a threshold you set, 1,000 by default), red drop.
+  Unmarked items sort themselves by what they are; shift-right-click an item to mark it, or add it
+  by name in the sidebar, and take it off again there. The boxes are only ever boxes: nothing is
+  dropped, alched or moved for you, and the menu entries they add send nothing to the game.
 - **Says when it was updated.** The first time you log in after the Plugin Hub has updated the
   plugin, one line in chat says what the new version brings. A setting turns it off.
 
@@ -112,6 +118,11 @@ warn (60 s; 0 never).
 **Cargo full** and **Early warning**: as before. **Banner**: as before, plus a colour for the
 reminder banner. **Overlay**: when to show it (near wrecks, or always aboard), the cargo counter,
 the hooks line, the wrecks line, text size, and the countdown infobox (off by default).
+
+**Inventory sorting**: box inventory items; where (on my boat at a salvaging spot, whenever aboard,
+everywhere); the alch threshold; keep instead when the GE price beats the alch value by a margin
+(off by default); the shift-right-click marking entries; whether kept items get a box at all; and
+the four colours.
 
 **Salvage spots**: show the sidebar; mark spots on the world map; wreck reach boxes and their
 colour (yellow); double spot boxes (off, only pairs of wrecks that are both up, or every pair of

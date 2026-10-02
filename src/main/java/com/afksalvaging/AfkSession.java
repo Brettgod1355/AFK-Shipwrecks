@@ -68,6 +68,10 @@ public final class AfkSession
 		public int holdsFilled;
 		/** Time spent with no wreck up to salvage. */
 		public long waitingMillis;
+		/** Drop clicks on items the sorter boxed red. */
+		public int dropped;
+		/** High Level Alchemy casts. */
+		public int alched;
 
 		public void reset()
 		{
@@ -75,6 +79,8 @@ public final class AfkSession
 			sailingXp = 0;
 			holdsFilled = 0;
 			waitingMillis = 0;
+			dropped = 0;
+			alched = 0;
 		}
 	}
 

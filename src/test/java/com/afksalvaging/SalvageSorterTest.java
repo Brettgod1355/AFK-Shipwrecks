@@ -1,0 +1,75 @@
+/*
+ * SPDX-License-Identifier: BSD-2-Clause
+ * Copyright (c) 2026, Brettgod1355 <github.com/Brettgod1355>
+ * See LICENSE for redistribution conditions and disclaimer.
+ */
+package com.afksalvaging;
+
+import java.util.Arrays;
+import net.runelite.api.gameval.ItemID;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+public class SalvageSorterTest
+{
+	private static SalvageSorter.ItemFacts item(int id, boolean stackable, int alch, long ge)
+	{
+		return new SalvageSorter.ItemFacts(id, stackable, alch, ge);
+	}
+
+	@Test
+	public void unmarkedItemsSortThemselves()
+	{
+		SalvageSorter.Lists none = new SalvageSorter.Lists();
+		assertEquals("a stackable goes in the hold", SortRule.HOLD, SalvageSorter.rule(item(1, true, 5, 100), none, 1000, 0));
+		assertEquals("alchs for the threshold", SortRule.ALCH, SalvageSorter.rule(item(2, false, 1000, 100), none, 1000, 0));
+		assertEquals("alchs for less", SortRule.DROP, SalvageSorter.rule(item(3, false, 999, 100), none, 1000, 0));
+		assertEquals("GE rule off: still alch", SortRule.ALCH, SalvageSorter.rule(item(4, false, 1000, 5000), none, 1000, 0));
+		assertEquals("GE beats alch by 50%: keep", SortRule.KEEP, SalvageSorter.rule(item(4, false, 1000, 1500), none, 1000, 50));
+		assertEquals("GE beats alch by less than 50%: alch", SortRule.ALCH, SalvageSorter.rule(item(4, false, 1000, 1499), none, 1000, 50));
+	}
+
+	@Test
+	public void aMarkWinsAndAnItemIsInOneListOnly()
+	{
+		SalvageSorter.Lists lists = new SalvageSorter.Lists();
+		lists.mark(7, SortRule.KEEP);
+		assertEquals(SortRule.KEEP, SalvageSorter.rule(item(7, true, 0, 0), lists, 1000, 0));
+		lists.mark(7, SortRule.DROP);
+		assertEquals(SortRule.DROP, lists.markOf(7));
+		assertTrue(lists.ids(SortRule.KEEP).isEmpty());
+		lists.mark(7, null);
+		assertNull(lists.markOf(7));
+		assertEquals(SortRule.HOLD, SalvageSorter.rule(item(7, true, 0, 0), lists, 1000, 0));
+	}
+
+	@Test
+	public void listsSurviveStorageAndBadEntries()
+	{
+		SalvageSorter.Lists lists = new SalvageSorter.Lists();
+		lists.mark(10, SortRule.ALCH);
+		lists.mark(11, SortRule.ALCH);
+		assertEquals("10,11", lists.encode(SortRule.ALCH));
+		assertEquals("", lists.encode(SortRule.DROP));
+		SalvageSorter.Lists restored = new SalvageSorter.Lists();
+		restored.decode(SortRule.ALCH, "10, 11,junk,");
+		assertEquals(Arrays.asList(10, 11), restored.ids(SortRule.ALCH));
+		// Decoding a list pulls an id out of any other list, so a hand-edited setting cannot double-mark.
+		restored.decode(SortRule.DROP, "11");
+		assertEquals(Arrays.asList(10), restored.ids(SortRule.ALCH));
+		assertEquals(SortRule.DROP, restored.markOf(11));
+		restored.decode(SortRule.ALCH, null);
+		assertTrue(restored.ids(SortRule.ALCH).isEmpty());
+	}
+
+	@Test
+	public void coinsAndUnsortedSalvageAreNeverBoxed()
+	{
+		assertTrue(SalvageSorter.excluded(ItemID.COINS));
+		assertTrue(SalvageSorter.excluded(ShipwreckType.BARRACUDA.getSalvageItemId()));
+		assertTrue(!SalvageSorter.excluded(ItemID.LOBSTER));
+	}
+}

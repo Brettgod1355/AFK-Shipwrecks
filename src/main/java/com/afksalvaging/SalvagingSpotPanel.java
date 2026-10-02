@@ -11,7 +11,9 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -22,6 +24,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.ColorScheme;
@@ -66,6 +69,11 @@ public class SalvagingSpotPanel extends PluginPanel
 		void testAlert();
 
 		void forgetLearnedRates();
+
+		/** Add an item typed by name to one of the sorting lists. */
+		void sortItemAdd(String name, SortRule rule);
+
+		void sortItemRemove(int itemId);
 	}
 
 	private static final Color IN_LEVEL = new Color(70, 200, 110);
@@ -89,6 +97,9 @@ public class SalvagingSpotPanel extends PluginPanel
 	private final JPanel dockBlock = new JPanel(new BorderLayout(0, 4));
 	private final JLabel dockLabel = new JLabel();
 	private final JLabel statsLabel = new JLabel();
+	private final JPanel sortLists = new JPanel();
+	private final JTextField sortName = new JTextField();
+	private final JComboBox<String> sortRule = new JComboBox<>();
 	private final List<String> filterKeys = new ArrayList<>();
 	private final Set<SalvagingSpot> favourites = EnumSet.noneOf(SalvagingSpot.class);
 	/** The distance label of each listed row, updated in place as the player moves. */
@@ -215,6 +226,9 @@ public class SalvagingSpotPanel extends PluginPanel
 		block.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		block.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
 
+		block.add(sortBlock());
+		block.add(Box.createVerticalStrut(8));
+
 		JButton test = button("Test alert", "Send the full-hold notification now, with the banner, so you can check "
 			+ "the sound and popup you set up.");
 		test.addActionListener(e -> actions.testAlert());
@@ -244,6 +258,104 @@ public class SalvagingSpotPanel extends PluginPanel
 		block.add(Box.createVerticalStrut(4));
 		block.add(body);
 		return block;
+	}
+
+	/** The four sorting lists with a remove button per item, and a row to add one by name. */
+	private JPanel sortBlock()
+	{
+		JPanel block = new JPanel();
+		block.setLayout(new BoxLayout(block, BoxLayout.Y_AXIS));
+		block.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		block.setAlignmentX(LEFT_ALIGNMENT);
+
+		JLabel title = new JLabel("Inventory sorting");
+		title.setFont(FontManager.getRunescapeBoldFont());
+		title.setForeground(Color.WHITE);
+		title.setAlignmentX(LEFT_ALIGNMENT);
+		block.add(title);
+		JLabel note = new JLabel(html("Boxes round inventory items on your boat at a salvaging spot: keep, hold, alch or "
+			+ "drop. Unmarked items sort themselves; mark one by shift-right-clicking it, or type its name here.", TOP_TEXT_WIDTH));
+		small(note);
+		block.add(note);
+		block.add(Box.createVerticalStrut(4));
+
+		sortLists.setLayout(new BoxLayout(sortLists, BoxLayout.Y_AXIS));
+		sortLists.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		sortLists.setAlignmentX(LEFT_ALIGNMENT);
+		block.add(sortLists);
+		block.add(Box.createVerticalStrut(4));
+
+		for (SortRule rule : SortRule.values())
+		{
+			sortRule.addItem(rule.getLabel());
+		}
+		dropdown(sortRule, "Which list the typed item goes in.");
+		sortName.setFont(FontManager.getRunescapeSmallFont());
+		sortName.setToolTipText("An item's name, as the game spells it.");
+		sortName.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
+		sortName.setAlignmentX(LEFT_ALIGNMENT);
+		JButton add = button("Add", "Add the named item to the chosen list.");
+		add.addActionListener(e ->
+		{
+			actions.sortItemAdd(sortName.getText(), SortRule.values()[Math.max(0, sortRule.getSelectedIndex())]);
+			sortName.setText("");
+		});
+		sortName.addActionListener(add.getActionListeners()[0]);
+		block.add(sortName);
+		block.add(Box.createVerticalStrut(4));
+		JPanel addRow = new JPanel(new BorderLayout(6, 0));
+		addRow.setOpaque(false);
+		addRow.add(sortRule, BorderLayout.CENTER);
+		addRow.add(add, BorderLayout.EAST);
+		addRow.setAlignmentX(LEFT_ALIGNMENT);
+		addRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
+		block.add(addRow);
+		return block;
+	}
+
+	/** The sorting lists with item names: each row is {id, name}. Safe to call from any thread. */
+	public void setSortLists(Map<SortRule, List<String[]>> lists)
+	{
+		SwingUtilities.invokeLater(() ->
+		{
+			sortLists.removeAll();
+			Map<SortRule, Color> colours = new EnumMap<>(SortRule.class);
+			colours.put(SortRule.KEEP, new Color(255, 215, 40));
+			colours.put(SortRule.HOLD, new Color(60, 220, 230));
+			colours.put(SortRule.ALCH, new Color(70, 220, 90));
+			colours.put(SortRule.DROP, new Color(240, 80, 80));
+			for (SortRule rule : SortRule.values())
+			{
+				List<String[]> rows = lists.get(rule);
+				JLabel heading = new JLabel(rule.getLabel() + (rows == null || rows.isEmpty() ? ": nothing marked" : ""));
+				small(heading);
+				heading.setForeground(colours.get(rule));
+				sortLists.add(heading);
+				if (rows != null)
+				{
+					for (String[] row : rows)
+					{
+						JPanel line = new JPanel(new BorderLayout(4, 0));
+						line.setOpaque(false);
+						line.setAlignmentX(LEFT_ALIGNMENT);
+						line.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+						JLabel name = new JLabel(row[1]);
+						small(name);
+						name.setForeground(Color.WHITE);
+						JButton remove = button("×", "Take " + row[1] + " off the list.");
+						remove.setMargin(new Insets(0, 4, 0, 4));
+						int id = Integer.parseInt(row[0]);
+						remove.addActionListener(e -> actions.sortItemRemove(id));
+						line.add(name, BorderLayout.CENTER);
+						line.add(remove, BorderLayout.EAST);
+						sortLists.add(line);
+					}
+				}
+				sortLists.add(Box.createVerticalStrut(3));
+			}
+			sortLists.revalidate();
+			sortLists.repaint();
+		});
 	}
 
 	// ---- What the plugin tells the panel; all safe to call from any thread ----

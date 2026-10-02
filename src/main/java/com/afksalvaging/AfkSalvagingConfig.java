@@ -584,6 +584,146 @@ public interface AfkSalvagingConfig extends Config
 		return true;
 	}
 
+	@ConfigSection(
+		name = "Inventory sorting",
+		description = "Boxes round inventory items saying what to keep, put in the hold, alch or drop",
+		position = 7
+	)
+	String SORTING = "sorting";
+
+	// ---- Inventory sorting ----
+
+	@ConfigItem(
+		keyName = "inventorySort",
+		name = "Box inventory items",
+		description = "Draw a coloured box round each item in your inventory: keep (yellow), hold (cyan), alch (green) "
+			+ "or drop (red). Unmarked items are sorted by what they are: stackables to the hold, items that alch "
+			+ "for at least the threshold to alch, the rest to drop. Shift-right-click an item to mark it.",
+		section = SORTING,
+		position = 0
+	)
+	default boolean inventorySort()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "sortWhere",
+		name = "Show boxes",
+		description = "Where the boxes are drawn. A salvaging spot is anywhere a wreck site is in view.",
+		section = SORTING,
+		position = 1
+	)
+	default SortWhere sortWhere()
+	{
+		return SortWhere.AT_WRECKS;
+	}
+
+	@ConfigItem(
+		keyName = "alchThreshold",
+		name = "Alch from",
+		description = "An unmarked item that alchs for at least this much gets the alch box; below it, the drop box.",
+		section = SORTING,
+		position = 2
+	)
+	@Range(min = 0, max = 10_000_000)
+	default int alchThreshold()
+	{
+		return 1000;
+	}
+
+	@ConfigItem(
+		keyName = "geOverAlchPercent",
+		name = "Keep if GE beats alch by",
+		description = "An item that would be alched gets the keep box instead when its Grand Exchange price beats its "
+			+ "alch value by at least this much, since it is worth carrying home. 0 turns this off.",
+		section = SORTING,
+		position = 3
+	)
+	@Range(min = 0, max = 1000)
+	@Units(Units.PERCENT)
+	default int geOverAlchPercent()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
+		keyName = "sortMenu",
+		name = "Shift-right-click to mark",
+		description = "Add Mark keep / hold / alch / drop and Unmark to an inventory item's menu while Shift is held. "
+			+ "These send nothing to the game.",
+		section = SORTING,
+		position = 4
+	)
+	default boolean sortMenu()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "boxKeep",
+		name = "Box kept items",
+		description = "Draw the keep box at all. Off leaves kept items plain so only the others stand out.",
+		section = SORTING,
+		position = 5
+	)
+	default boolean boxKeep()
+	{
+		return true;
+	}
+
+	@Alpha
+	@ConfigItem(keyName = "keepColor", name = "Keep colour", description = "", section = SORTING, position = 6)
+	default Color keepColor()
+	{
+		return new Color(255, 215, 40, 220);
+	}
+
+	@Alpha
+	@ConfigItem(keyName = "holdColor", name = "Hold colour", description = "", section = SORTING, position = 7)
+	default Color holdColor()
+	{
+		return new Color(60, 220, 230, 220);
+	}
+
+	@Alpha
+	@ConfigItem(keyName = "alchColor", name = "Alch colour", description = "", section = SORTING, position = 8)
+	default Color alchColor()
+	{
+		return new Color(70, 220, 90, 220);
+	}
+
+	@Alpha
+	@ConfigItem(keyName = "dropColor", name = "Drop colour", description = "", section = SORTING, position = 9)
+	default Color dropColor()
+	{
+		return new Color(240, 80, 80, 220);
+	}
+
+	@ConfigItem(keyName = "sortKeepIds", name = "", description = "", hidden = true)
+	default String sortKeepIds()
+	{
+		return "";
+	}
+
+	@ConfigItem(keyName = "sortHoldIds", name = "", description = "", hidden = true)
+	default String sortHoldIds()
+	{
+		return "";
+	}
+
+	@ConfigItem(keyName = "sortAlchIds", name = "", description = "", hidden = true)
+	default String sortAlchIds()
+	{
+		return "";
+	}
+
+	@ConfigItem(keyName = "sortDropIds", name = "", description = "", hidden = true)
+	default String sortDropIds()
+	{
+		return "";
+	}
+
 	@ConfigItem(
 		keyName = "updateMessage",
 		name = "Say when updated",

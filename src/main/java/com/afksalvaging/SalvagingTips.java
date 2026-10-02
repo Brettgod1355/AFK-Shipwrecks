@@ -42,6 +42,9 @@ public final class SalvagingTips
 			+ "notification (Reminders settings: how long before, or never). It cannot press a key for you.",
 		"\"Countdown infobox\" in the Overlay settings puts the time to a full hold in a small box among RuneLite's "
 			+ "infoboxes, with the detail on hover, for when the overlay is hidden.",
+		"Inventory sorting boxes each item on your boat at a salvaging spot: yellow keep, cyan hold (a stack takes one "
+			+ "hold slot), green alch (at or above the \"Alch from\" value), red drop. Unmarked items sort themselves; "
+			+ "shift-right-click an item to mark it, or type its name in the sidebar. Nothing is dropped or alched for you.",
 		"The overlay only appears while a wreck site is in view. \"Show overlay\" in the Overlay settings can make it "
 			+ "show whenever you are aboard."
 	));
