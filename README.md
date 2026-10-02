@@ -152,7 +152,7 @@ The sidebar uses the same list of hotspots RuneLite's own World Map plugin draws
 icons from, so it agrees with the icons already on your map. Hovering one of those icons already
 names the salvage and its level, and spots above your level are marked, both on by default in the
 World Map plugin's settings, so this plugin adds no markers of its own. Each spot is
-described from the nearest port by sailing distance, for example "Barracuda salvage, 25 tiles
+described from its nearest port in a straight line, for example "Barracuda salvage, 25 tiles
 south-west of Ruins of Unkah", because six Barracuda spots called "Barracuda salvage" would not
 help anyone. The world map can only be moved while it is open and nothing lets a plugin open it
 for you, so if you press Map with the map closed the plugin remembers the spot and jumps to it the
@@ -162,7 +162,11 @@ says so in red and the same line appears in your chat, with what to do about it.
 marked Auto, stepping from a dock onto your own boat sends that spot to Shortest Path by itself and
 says so in chat; logging in aboard, hopping worlds and leaving the boat at sea do not count as
 boarding. The nearest dock is the nearest of the same moorings the World Map plugin draws, measured
-as the crow flies from where you stand.
+as the crow flies from where you stand, and so is the "tiles in a straight line" under each spot and
+the nearest-first order: none of them know about the land in the way, so a spot on the far side of
+a peninsula reads much closer than the voyage really is. A route to a spot, whether you pressed
+Route or it was the Auto spot, is cleared again once you pull up to one of the spot's wrecks or
+step off your boat, so the line does not hang about after it has done its job.
 
 The boxes are worked out, not looked up. A hook works any wreck within its reach, and reach is
 measured as a square around the wreck: that square is the yellow box. Where two yellow boxes

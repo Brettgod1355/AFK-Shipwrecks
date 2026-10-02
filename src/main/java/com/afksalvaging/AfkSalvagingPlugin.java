@@ -212,6 +212,8 @@ public class AfkSalvagingPlugin extends Plugin
 
 	/** The spot last sent to the map or routed to; the sidebar highlights it. */
 	private SalvagingSpot pickedSpot;
+	/** The route to a salvaging spot that Shortest Path is drawing for us, or null. */
+	private SpotRoute spotRoute;
 
 	/** The sidebar entry and its panel, present while the setting is on. */
 	private NavigationButton spotsButton;
@@ -294,6 +296,7 @@ public class AfkSalvagingPlugin extends Plugin
 		}
 		removeSidebar();
 		pendingMapTarget = null;
+		spotRoute = null;
 		session.flushMemory();
 		clearState();
 	}
@@ -696,6 +699,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			boarded();
 		}
+		watchSpotRoute(in);
 		lastOwnBoat = in.ownBoat;
 		lastSailing = sailing;
 		ticksSinceLogin++;
@@ -1249,7 +1253,7 @@ public class AfkSalvagingPlugin extends Plugin
 			@Override
 			public void routeToDock(Mooring dock)
 			{
-				route(dock.getPoint(), dock.getDisplayName() + " dock", "Route sent to Shortest Path: ");
+				route(dock.getPoint(), dock.getDisplayName() + " dock", "Route sent to Shortest Path: ", null);
 			}
 
 			@Override
@@ -1395,11 +1399,14 @@ public class AfkSalvagingPlugin extends Plugin
 	private void routeToSpot(SalvagingSpot spot)
 	{
 		clientThread.invokeLater(() -> pickSpot(spot));
-		route(spot.getPoint(), spot.getSalvageName() + ", " + spot.getWhere(), "Route sent to Shortest Path: ");
+		route(spot.getPoint(), spot.getSalvageName() + ", " + spot.getWhere(), "Route sent to Shortest Path: ", spot);
 	}
 
-	/** Sends a route over the bus, or reports why it could not; the report starts with {@code sent}. */
-	private void route(WorldPoint point, String what, String sent)
+	/**
+	 * Sends a route over the bus, or reports why it could not; the report starts with {@code sent}.
+	 * A route to a salvaging spot is watched so it can be cleared on arrival; pass null for anything else.
+	 */
+	private void route(WorldPoint point, String what, String sent, SalvagingSpot spot)
 	{
 		clientThread.invokeLater(() ->
 		{
@@ -1412,8 +1419,26 @@ public class AfkSalvagingPlugin extends Plugin
 				return;
 			}
 			eventBus.post(ShortestPathMessages.routeTo(point));
+			spotRoute = spot == null ? null : new SpotRoute(spot);
 			setSpotStatus(sent + what + ".", false);
 		});
+	}
+
+	/** Takes a route to a salvaging spot off the screen once the player is there or has left the boat. */
+	private void watchSpotRoute(AfkSession.TickInputs in)
+	{
+		if (spotRoute == null)
+		{
+			return;
+		}
+		SpotRoute.End end = spotRoute.tick(in.ownBoat, in.playerPoint, session.wrecks().presentSites());
+		if (end == SpotRoute.End.NONE)
+		{
+			return;
+		}
+		spotRoute = null;
+		eventBus.post(ShortestPathMessages.clearRoute());
+		setSpotStatus(end.getStatus(), false);
 	}
 
 	/** The player has just stepped from a dock onto their own boat: send the marked spot, if any. */
@@ -1425,7 +1450,7 @@ public class AfkSalvagingPlugin extends Plugin
 			return;
 		}
 		pickSpot(spot);
-		route(spot.getPoint(), spot.getSalvageName() + ", " + spot.getWhere(), "Auto route sent to Shortest Path: ");
+		route(spot.getPoint(), spot.getSalvageName() + ", " + spot.getWhere(), "Auto route sent to Shortest Path: ", spot);
 		if (ShortestPathPresence.check(pluginManager).problem() == null)
 		{
 			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=" + tipColour() + ">Auto route: "
@@ -1438,6 +1463,7 @@ public class AfkSalvagingPlugin extends Plugin
 		clientThread.invokeLater(() ->
 		{
 			eventBus.post(ShortestPathMessages.clearRoute());
+			spotRoute = null;
 			setSpotStatus(ShortestPathPresence.check(pluginManager).problem(), true);
 		});
 	}

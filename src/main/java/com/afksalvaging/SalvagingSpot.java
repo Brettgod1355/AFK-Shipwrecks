@@ -95,7 +95,7 @@ public enum SalvagingSpot
 		return salvageName(wreck);
 	}
 
-	/** The nearest port by sailing distance. */
+	/** The nearest port, measured in a straight line. */
 	public String getPort()
 	{
 		return port;

@@ -643,7 +643,8 @@ public interface AfkSalvagingConfig extends Config
 		keyName = "autoRouteOnBoarding",
 		name = "Auto route when boarding",
 		description = "When you board your boat from a dock, hand the spot marked Auto in the sidebar to the Shortest "
-			+ "Path plugin so the route is drawn without pressing anything. Only one spot can be marked.",
+			+ "Path plugin so the route is drawn without pressing anything. Only one spot can be marked. The route is "
+			+ "cleared when you reach the spot or leave your boat.",
 		section = SPOTS,
 		position = 9
 	)

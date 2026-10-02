@@ -27,10 +27,13 @@ public final class SalvagingTips
 			+ "dimmer.",
 		"Map pans the world map while it is open. With it closed, press Map, then open the map and it jumps there.",
 		"Route asks the Shortest Path plugin to draw the way. The line above the list says if it is missing or "
-			+ "switched off.",
+			+ "switched off. A route to a spot, sent by Route or by Auto, is cleared for you once you pull up to one "
+			+ "of its wrecks or step off your boat.",
 		"The star pins a spot to the top of every list and to the Favourites filter; favourites are kept per "
 			+ "account. Auto marks one spot to be routed to by itself whenever you board your boat from a dock.",
-		"Sort: nearest first orders the spots by their distance from you, and the nearest dock block at the top "
+		"Sort: nearest first orders the spots by their distance from you in a straight line, not by how far you "
+			+ "would have to sail round the land, so a spot on the other coast can look close. The nearest dock "
+			+ "block at the top "
 			+ "follows you about: it names the nearest dock your Sailing level (unboosted) and quests let you use, and "
 			+ "says what a nearer one needs. The dropdowns are remembered between sessions.",
 		"Test alert fires the full-hold notification and banner so you can check your set-up without filling a "

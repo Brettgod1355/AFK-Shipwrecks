@@ -605,7 +605,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		if (dock != null)
 		{
 			text.append("<b>Nearest dock you can use:</b> ").append(dock.getDisplayName())
-				.append("<br>").append(tiles(dock.tilesFrom(position))).append(" from you");
+				.append("<br>").append(tiles(dock.tilesFrom(position))).append(" in a straight line");
 		}
 		else
 		{
@@ -635,7 +635,7 @@ public class SalvagingSpotPanel extends PluginPanel
 
 	private String distanceText(SalvagingSpot spot)
 	{
-		return position == null ? "" : tiles(Mooring.distance(position, spot.getPoint())) + " from you";
+		return position == null ? "" : tiles(Mooring.distance(position, spot.getPoint())) + " in a straight line";
 	}
 
 	private static String tiles(int tiles)
