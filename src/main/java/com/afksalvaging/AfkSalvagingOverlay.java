@@ -77,6 +77,11 @@ public class AfkSalvagingOverlay extends OverlayPanel
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
+		if (config.hideWhileHoldOpen() && plugin.isCargoInterfaceOpen())
+		{
+			// The panel sits over the hold window and gets in the way of withdrawing.
+			return null;
+		}
 		long now = AfkSalvagingPlugin.clock();
 		counterEmpty = config.counterEmptyColor();
 		counterFull = config.counterFullColor();

@@ -424,11 +424,24 @@ public interface AfkSalvagingConfig extends Config
 			+ "so sailing from port to port stays clear. Always aboard: show them whenever you are on your boat. "
 			+ "Alerts and banners show either way.",
 		section = OVERLAY,
-		position = -1
+		position = -2
 	)
 	default OverlayWhen overlayWhen()
 	{
 		return OverlayWhen.NEAR_WRECKS;
+	}
+
+	@ConfigItem(
+		keyName = "hideWhileHoldOpen",
+		name = "Hide while the hold is open",
+		description = "Hide the overlay panel, banners included, while the cargo hold window is open, so it does not "
+			+ "cover the items you are withdrawing. It comes back when you close the hold.",
+		section = OVERLAY,
+		position = -1
+	)
+	default boolean hideWhileHoldOpen()
+	{
+		return true;
 	}
 
 	@ConfigItem(

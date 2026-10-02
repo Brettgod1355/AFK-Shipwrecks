@@ -1860,7 +1860,8 @@ public class AfkSalvagingPlugin extends Plugin
 		return last ? CargoHoldCapacity.lastNumber(plain) : CargoHoldCapacity.firstNumber(plain);
 	}
 
-	private boolean isCargoInterfaceOpen()
+	/** Whether the cargo hold window is open on screen. */
+	boolean isCargoInterfaceOpen()
 	{
 		Widget root = client.getWidget(InterfaceID.SailingBoatCargohold.UNIVERSE);
 		return root != null && !root.isHidden();

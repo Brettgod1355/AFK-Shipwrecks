@@ -122,7 +122,8 @@ warn (60 s; 0 never).
 
 **Cargo full** and **Early warning**: as before. **Banner**: as before, plus a colour for the
 reminder banner and a colour for the nearly-full banner. **Overlay**: when to show it (near
-wrecks, or always aboard), the cargo counter and what it shows (used of total, slots left or
+wrecks, or always aboard), hiding it while the cargo hold is open (on by default, so it is not in
+the way when you withdraw), the cargo counter and what it shows (used of total, slots left or
 percent full), the hooks line, the wrecks line, text size, and the countdown infobox (off by
 default).
 
