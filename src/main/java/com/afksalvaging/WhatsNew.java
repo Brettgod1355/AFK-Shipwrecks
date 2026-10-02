@@ -18,7 +18,10 @@ public final class WhatsNew
 	/** The version being run. Must match {@code version} in build.gradle and runelite-plugin.properties. */
 	public static final String VERSION = "2.0";
 
-	/** One line on what this version brings, no links. Finishes with a full stop when said. */
+	/**
+	 * One line on what this version brings, no links; a full stop is added when it is said. Leave
+	 * it empty for a release not worth a line (a fix, a wording change) and nothing is said.
+	 */
 	public static final String NOTE = "a countdown to a full hold, hook and crew reminders, and a Salvaging spots "
 		+ "sidebar with the world map, Shortest Path routes, favourites, auto route and the boxes that show where to park";
 
@@ -36,7 +39,7 @@ public final class WhatsNew
 	 */
 	public static String message(String lastVersion, boolean installedBefore)
 	{
-		if (VERSION.equals(lastVersion))
+		if (VERSION.equals(lastVersion) || NOTE.isEmpty())
 		{
 			return null;
 		}

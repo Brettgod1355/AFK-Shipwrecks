@@ -52,6 +52,14 @@ public class WhatsNewTest
 		assertTrue(line, line.startsWith("Cargo Hold Alert is now AFK Salvaging " + WhatsNew.VERSION + ": "));
 	}
 
+	@Test
+	public void theNoteIsOneLineWithoutLinks()
+	{
+		assertFalse(WhatsNew.NOTE.contains("http"));
+		assertFalse(WhatsNew.NOTE.contains("\n"));
+		assertFalse("the full stop is added when it is said", WhatsNew.NOTE.endsWith("."));
+	}
+
 	private static String versionIn(String file, String regex) throws IOException
 	{
 		String text = new String(Files.readAllBytes(Paths.get(file)), StandardCharsets.UTF_8);
