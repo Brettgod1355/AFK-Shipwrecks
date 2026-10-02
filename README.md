@@ -47,8 +47,12 @@ stopped, and the fact that your own hook does not restart itself.
   which hands it to the Shortest Path plugin to draw the way there (without that plugin it tells
   you to install it), a star to pin it to the top, and Auto, which marks it as the one spot to
   route to by itself whenever you board your boat from a dock. The dropdowns are remembered.
-- **Knows where the docks are.** The nearest dock to you is named at the top of the sidebar with
-  its distance and its own Map and Route buttons.
+- **Knows where the docks are, and which you can use.** The nearest dock you can disembark at is
+  named at the top of the sidebar with its distance and its own Map and Route buttons. Each of the
+  61 docks carries the Sailing level (not boostable) and the quest it needs, from the wiki; a nearer
+  dock you do not yet qualify for is named with what it needs. Things the client cannot see, such as
+  a first visit to Kourend or Varlamore, the items worn for Entrana, or the raft needed for
+  Wyrmscraig Cavern, are shown rather than checked.
 - **A session line and two tools.** How much has been salvaged, the Sailing XP, holds filled and
   time spent waiting for wrecks since the client started; a Test alert button that fires the
   full-hold notification and banner so you can check your set-up; and Forget rates, which
@@ -129,7 +133,7 @@ box and sorting colours sit in their own sections.
 **Inventory sorting**: box inventory items; where (on my boat at a salvaging spot, whenever aboard,
 everywhere); the alch threshold; keep instead when the GE price beats the alch value by a margin
 (off by default); the shift-right-click marking entries; whether kept items get a box at all; and
-the four colours.
+the four colours. Under Salvage spots, "Only docks I can use" turns the dock requirements check off.
 
 **Salvage spots**: show the sidebar; mark spots on the world map; wreck reach boxes and their
 colour (yellow); double spot boxes (off, only pairs of wrecks that are both up, or every pair of

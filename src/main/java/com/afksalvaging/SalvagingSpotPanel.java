@@ -112,7 +112,9 @@ public class SalvagingSpotPanel extends PluginPanel
 	private int sailingLevel;
 	private SalvagingSpot picked;
 	private SalvagingSpot autoRoute;
+	/** The nearest dock the player can use, and the nearest of all when that is a different one. */
 	private Mooring dock;
+	private Mooring nearestDock;
 	private WorldPoint position;
 	private boolean dockShownSetting = true;
 	/** Set while the dropdowns are being put to a stored value, so that does not count as a choice. */
@@ -195,7 +197,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		dockBlock.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		dockBlock.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
 		dockBlock.setAlignmentX(LEFT_ALIGNMENT);
-		dockBlock.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+		dockBlock.setMaximumSize(new Dimension(Integer.MAX_VALUE, 140));
 		small(dockLabel);
 		dockLabel.setForeground(Color.WHITE);
 		dockBlock.add(dockLabel, BorderLayout.CENTER);
@@ -478,11 +480,6 @@ public class SalvagingSpotPanel extends PluginPanel
 		SwingUtilities.invokeLater(() ->
 		{
 			position = point;
-			Mooring nearest = Mooring.nearest(point);
-			if (nearest != dock)
-			{
-				dock = nearest;
-			}
 			refreshDock();
 			if (nearestFirst() && !arranged().equals(shown))
 			{
@@ -495,13 +492,27 @@ public class SalvagingSpotPanel extends PluginPanel
 		});
 	}
 
+	/**
+	 * The nearest dock the player can disembark at (null when none), and the nearest dock of all,
+	 * which is named with what it needs when it is a different one. Safe to call from any thread.
+	 */
+	public void setDock(Mooring usable, Mooring nearest)
+	{
+		SwingUtilities.invokeLater(() ->
+		{
+			dock = usable;
+			nearestDock = nearest;
+			refreshDock();
+		});
+	}
+
 	/** Whether the nearest dock block is shown at all (a setting). */
 	public void setDockShown(boolean shown)
 	{
 		SwingUtilities.invokeLater(() ->
 		{
 			dockShownSetting = shown;
-			dockBlock.setVisible(shown && dock != null && position != null);
+			dockBlock.setVisible(shown && (dock != null || nearestDock != null) && position != null);
 			revalidate();
 		});
 	}
@@ -540,13 +551,28 @@ public class SalvagingSpotPanel extends PluginPanel
 
 	private void refreshDock()
 	{
-		if (dock == null || position == null)
+		if (position == null || (dock == null && nearestDock == null))
 		{
 			dockLabel.setText("");
 			return;
 		}
-		dockLabel.setText(html("<b>Nearest dock:</b> " + dock.getDisplayName() + "<br>" + tiles(dock.tilesFrom(position))
-			+ " from you", ROW_TEXT_WIDTH));
+		StringBuilder text = new StringBuilder();
+		if (dock != null)
+		{
+			text.append("<b>Nearest dock you can use:</b> ").append(dock.getDisplayName())
+				.append("<br>").append(tiles(dock.tilesFrom(position))).append(" from you");
+		}
+		else
+		{
+			text.append("<b>No dock you can use yet.</b>");
+		}
+		if (nearestDock != null && nearestDock != dock)
+		{
+			text.append("<br><i>Nearer but not yet: ").append(nearestDock.getDisplayName()).append(", ")
+				.append(tiles(nearestDock.tilesFrom(position))).append(": needs ")
+				.append(nearestDock.requirementText()).append(".</i>");
+		}
+		dockLabel.setText(html(text.toString(), ROW_TEXT_WIDTH));
 		if (!dockBlock.isVisible() && dockShownSetting)
 		{
 			dockBlock.setVisible(true);

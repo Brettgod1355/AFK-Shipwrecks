@@ -597,6 +597,19 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "dockRequirements",
+		name = "Only docks I can use",
+		description = "Name the nearest dock whose Sailing level (unboosted) and quest you meet, and say what the nearer "
+			+ "one needs when there is one. Off names the nearest dock whatever it needs.",
+		section = SPOTS,
+		position = 10
+	)
+	default boolean dockRequirements()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "autoRouteOnBoarding",
 		name = "Auto route when boarding",
 		description = "When you board your boat from a dock, hand the spot marked Auto in the sidebar to the Shortest "

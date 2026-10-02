@@ -52,7 +52,9 @@ development tooling is not included in the plugin JAR.
   and 99), hook tiers and their deckhandiness requirements
   ([Salvaging hook](https://oldschool.runescape.wiki/w/Salvaging_hook)), crewmates' deckhandiness
   and the crew size per level ([Crew Management](https://oldschool.runescape.wiki/w/Crew_Management)),
-  and the official salvaging worlds ([World](https://oldschool.runescape.wiki/w/World)). The same
+  the official salvaging worlds ([World](https://oldschool.runescape.wiki/w/World)), and the Sailing
+  level and quest each dock needs ([Mooring point](https://oldschool.runescape.wiki/w/Mooring_point)
+  and [Last Light](https://oldschool.runescape.wiki/w/Last_Light), read 2026-10-02). The same
   salvaging page's update history is where "double salvage spots" is named as a game feature. Only
   the figures are used; no wiki text or images are included.
 - The [Sailing](https://github.com/LlemonDuck/sailing) plugin by LlemonDuck (BSD 2-Clause) was

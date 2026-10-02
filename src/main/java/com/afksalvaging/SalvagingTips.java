@@ -30,7 +30,8 @@ public final class SalvagingTips
 		"The star pins a spot to the top of every list and to the Favourites filter; favourites are kept per "
 			+ "account. Auto marks one spot to be routed to by itself whenever you board your boat from a dock.",
 		"Sort: nearest first orders the spots by their distance from you, and the nearest dock block at the top "
-			+ "follows you about. The dropdowns are remembered between sessions.",
+			+ "follows you about: it names the nearest dock your Sailing level (unboosted) and quests let you use, and "
+			+ "says what a nearer one needs. The dropdowns are remembered between sessions.",
 		"Test alert fires the full-hold notification and banner so you can check your set-up without filling a "
 			+ "hold. Forget rates throws away what the timer learned about your crew's speed on each wreck.",
 		"The timer and counter need one real look at the hold: open the cargo hold once and they follow from there. "

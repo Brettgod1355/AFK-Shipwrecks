@@ -704,6 +704,11 @@ public class AfkSalvagingPlugin extends Plugin
 		if (spotsPanel != null && tick % SIDEBAR_REFRESH_TICKS == 0)
 		{
 			spotsPanel.setPosition(in.playerPoint);
+			Mooring nearest = Mooring.nearest(in.playerPoint);
+			Mooring usable = config.dockRequirements()
+				? Mooring.nearestUsable(in.playerPoint, client.getRealSkillLevel(Skill.SAILING), quest -> quest.getState(client))
+				: nearest;
+			spotsPanel.setDock(usable, nearest);
 			spotsPanel.setStats(statsLine());
 		}
 		if (session.monitor().isEstimate())

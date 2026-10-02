@@ -6,11 +6,15 @@
 package com.afksalvaging;
 
 import java.util.HashSet;
+import java.util.function.Function;
 import java.util.Set;
+import net.runelite.api.Quest;
+import net.runelite.api.QuestState;
 import net.runelite.api.coords.WorldPoint;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -39,6 +43,51 @@ public class MooringTest
 		// Out at the Unkah Barracuda spot, the ruins are the nearest dock.
 		assertEquals(Mooring.RUINS_OF_UNKAH, Mooring.nearest(SalvagingSpot.BARRACUDA_UNKAH.getPoint()));
 		assertNull(Mooring.nearest(null));
+	}
+
+	@Test
+	public void everyDockHasALevelAndTheQuestedOnesNameTheirQuest()
+	{
+		for (Mooring dock : Mooring.values())
+		{
+			assertTrue(dock.name(), dock.getSailingLevel() >= 1 && dock.getSailingLevel() <= 99);
+			assertTrue(dock.name(), dock.requirementText().startsWith("level " + dock.getSailingLevel() + " Sailing"));
+		}
+		assertEquals(1, Mooring.PORT_SARIM.getSailingLevel());
+		assertEquals(Quest.SONG_OF_THE_ELVES, Mooring.PRIFDDINAS.getQuest());
+		assertEquals("level 70 Sailing, Song of the Elves", Mooring.PRIFDDINAS.requirementText());
+		assertEquals("level 45 Sailing, Troubled Tortugans started", Mooring.THE_SUMMER_SHORE.requirementText());
+		assertEquals("level 62 Sailing, Fallen From Grace started, raft or skiff only", Mooring.WYRMSCRAIG_CAVERN.requirementText());
+		assertEquals("level 5 Sailing, must have visited Kourend", Mooring.LANDS_END.requirementText());
+	}
+
+	@Test
+	public void usableMeansTheUnboostedLevelAndTheQuestState()
+	{
+		Function<Quest, QuestState> nothingDone = quest -> QuestState.NOT_STARTED;
+		Function<Quest, QuestState> allStarted = quest -> QuestState.IN_PROGRESS;
+		Function<Quest, QuestState> allDone = quest -> QuestState.FINISHED;
+		assertTrue(Mooring.PORT_SARIM.usable(1, nothingDone));
+		assertFalse("level 70 needed", Mooring.PRIFDDINAS.usable(69, allDone));
+		assertFalse("quest must be finished", Mooring.PRIFDDINAS.usable(70, allStarted));
+		assertTrue(Mooring.PRIFDDINAS.usable(70, allDone));
+		assertFalse(Mooring.THE_SUMMER_SHORE.usable(45, nothingDone));
+		assertTrue("partial completion: started is enough", Mooring.THE_SUMMER_SHORE.usable(45, allStarted));
+		// A condition the client cannot see is taken as met.
+		assertTrue(Mooring.LANDS_END.usable(5, nothingDone));
+	}
+
+	@Test
+	public void theNearestUsableDockSkipsWhatThePlayerCannotUse()
+	{
+		WorldPoint nearPrifddinas = new WorldPoint(2160, 3330, 0);
+		Function<Quest, QuestState> nothingDone = quest -> QuestState.NOT_STARTED;
+		assertEquals(Mooring.PRIFDDINAS, Mooring.nearest(nearPrifddinas));
+		Mooring usable = Mooring.nearestUsable(nearPrifddinas, 99, nothingDone);
+		assertTrue(usable != Mooring.PRIFDDINAS);
+		assertTrue(usable.usable(99, nothingDone));
+		assertNull("nothing at level 0", Mooring.nearestUsable(nearPrifddinas, 0, nothingDone));
+		assertNull(Mooring.nearestUsable(null, 99, nothingDone));
 	}
 
 	@Test
