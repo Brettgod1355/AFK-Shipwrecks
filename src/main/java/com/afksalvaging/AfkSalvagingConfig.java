@@ -544,7 +544,30 @@ public interface AfkSalvagingConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "updateMessage",
+		name = "Say when updated",
+		description = "One line in chat, once, the first time you log in after the Plugin Hub has updated the plugin, "
+			+ "saying what the new version brings.",
+		position = 100
+	)
+	default boolean updateMessage()
+	{
+		return true;
+	}
+
 	// ---- Remembered sidebar choices; set from the sidebar, not shown in the settings ----
+
+	@ConfigItem(
+		keyName = "lastVersion",
+		name = "",
+		description = "",
+		hidden = true
+	)
+	default String lastVersion()
+	{
+		return "";
+	}
 
 	@ConfigItem(
 		keyName = "spotFilter",

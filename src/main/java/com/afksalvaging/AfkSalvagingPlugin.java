@@ -214,6 +214,8 @@ public class AfkSalvagingPlugin extends Plugin
 	private boolean lastOwnBoat;
 	private int ticksSinceLogin;
 	private long testAlertAt;
+	/** The update line owed to the player, said on the first tick they are logged in. */
+	private String updateMessage;
 
 	@Provides
 	AfkSalvagingConfig provideConfig(ConfigManager configManager)
@@ -225,6 +227,7 @@ public class AfkSalvagingPlugin extends Plugin
 	protected void startUp()
 	{
 		clearState();
+		noteVersion();
 		overlayManager.add(overlay);
 		overlayManager.add(boxOverlay);
 		applySpotSettings();
@@ -623,6 +626,14 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			give(notice, now);
 		}
+		if (updateMessage != null)
+		{
+			if (config.updateMessage())
+			{
+				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=" + TIP_COLOUR + ">" + updateMessage + "</col>", null);
+			}
+			updateMessage = null;
+		}
 		if (in.ownBoat && !lastOwnBoat && !lastSailing && ticksSinceLogin > BOARDING_SETTLE_TICKS)
 		{
 			boarded();
@@ -776,6 +787,25 @@ public class AfkSalvagingPlugin extends Plugin
 		if (spotsPanel != null)
 		{
 			spotsPanel.setFavourites(loadFavourites());
+		}
+	}
+
+	/**
+	 * Works out whether this is the first run of a new version and, if so, what to say once the
+	 * player is logged in. Reads the settings before anything in this run writes to them, so a
+	 * fresh install (nothing of the plugin stored anywhere) is told from an update from 1.0,
+	 * which stored settings and remembered counts under the same group but no version.
+	 */
+	private void noteVersion()
+	{
+		String last = config.lastVersion();
+		boolean installedBefore = !configManager.getConfigurationKeys(AfkSalvagingConfig.GROUP + ".").isEmpty()
+			|| configManager.getConfigurationKeys(ConfigManager.RSPROFILE_GROUP + ".").stream()
+				.anyMatch(key -> key.contains("." + AfkSalvagingConfig.GROUP + "."));
+		updateMessage = WhatsNew.message(last, installedBefore);
+		if (!WhatsNew.VERSION.equals(last))
+		{
+			configManager.setConfiguration(AfkSalvagingConfig.GROUP, "lastVersion", WhatsNew.VERSION);
 		}
 	}
 

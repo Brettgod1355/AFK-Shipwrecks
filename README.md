@@ -58,6 +58,9 @@ stopped, and the fact that your own hook does not restart itself.
   colour, and the parked colour is its own setting too.
   Read the section below before trusting them to the tile.
 
+- **Says when it was updated.** The first time you log in after the Plugin Hub has updated the
+  plugin, one line in chat says what the new version brings. A setting turns it off.
+
 Everything comes from game state your client already has. No web requests other than RuneLite's
 own world list, no accounts, nothing sent anywhere, and it never clicks anything for you. It does
 not need any other plugin; Shortest Path is optional and only used if you press Route.
