@@ -68,7 +68,7 @@ public class DoubleSpotTest
 	}
 
 	@Test
-	public void findsPairsAmongSitesAndRespectsTheMode()
+	public void anyTwoSitesInReachAreADoubleSpotWhetherOrNotTheirWrecksAreUp()
 	{
 		WreckTracker tracker = new WreckTracker();
 		long now = 1_000;
@@ -79,25 +79,46 @@ public class DoubleSpotTest
 		List<WreckTracker.Site> sites = tracker.presentSites();
 		assertEquals(4, sites.size());
 
-		assertTrue(DoubleSpot.find(sites, REACH, DoubleSpotMode.OFF).isEmpty());
-
-		List<DoubleSpot> active = DoubleSpot.find(sites, REACH, DoubleSpotMode.ACTIVE_WRECKS);
-		assertEquals(1, active.size());
-		assertEquals(2, active.get(0).activeCount());
-		assertEquals("2 x Barracuda", active.get(0).label());
-
-		List<DoubleSpot> all = DoubleSpot.find(sites, REACH, DoubleSpotMode.ALL_SITES);
-		assertEquals(3, all.size());
+		// Three pairs are within reach of each other; the far site pairs with nothing.
+		List<DoubleSpot> spots = DoubleSpot.find(sites, REACH);
+		assertEquals(3, spots.size());
 		int withStump = 0;
-		for (DoubleSpot spot : all)
+		for (DoubleSpot spot : spots)
 		{
-			if (spot.activeCount() == 1)
+			if (spot.label().contains("Small"))
 			{
 				withStump++;
-				assertTrue(spot.label().contains("Small"));
 			}
 		}
-		assertEquals(2, withStump);
+		assertEquals("the sunk Small wreck still makes two double spots", 2, withStump);
+	}
+
+	@Test
+	public void aDoubleSpotStaysWhileOneWreckIsDown()
+	{
+		WreckTracker tracker = new WreckTracker();
+		tracker.observe(new WorldPoint(100, 100, 0), ObjectID.SAILING_MERCENARY_SHIPWRECK, 0);
+		tracker.observe(new WorldPoint(110, 100, 0), ObjectID.SAILING_MERCENARY_SHIPWRECK, 0);
+		assertEquals(1, DoubleSpot.find(tracker.presentSites(), REACH).size());
+		// One sinks: its wreck leaves and its stump takes the same tile.
+		tracker.despawn(new WorldPoint(110, 100, 0), ObjectID.SAILING_MERCENARY_SHIPWRECK, 1);
+		tracker.observe(new WorldPoint(110, 100, 0), ObjectID.SAILING_MERCENARY_SHIPWRECK_STUMP, 1);
+		List<DoubleSpot> spots = DoubleSpot.find(tracker.presentSites(), REACH);
+		assertEquals(1, spots.size());
+		assertEquals("2 x Mercenary", spots.get(0).label());
+	}
+
+	@Test
+	public void aStumpAddedBeforeTheWreckIsRemovedKeepsTheSpot()
+	{
+		WreckTracker tracker = new WreckTracker();
+		tracker.observe(new WorldPoint(100, 100, 0), ObjectID.SAILING_MERCENARY_SHIPWRECK, 0);
+		tracker.observe(new WorldPoint(110, 100, 0), ObjectID.SAILING_MERCENARY_SHIPWRECK, 0);
+		// The other order within one tick: stump first, then the sunk wreck leaves.
+		tracker.observe(new WorldPoint(110, 100, 0), ObjectID.SAILING_MERCENARY_SHIPWRECK_STUMP, 1);
+		tracker.despawn(new WorldPoint(110, 100, 0), ObjectID.SAILING_MERCENARY_SHIPWRECK, 1);
+		assertEquals(2, tracker.presentSites().size());
+		assertEquals(1, DoubleSpot.find(tracker.presentSites(), REACH).size());
 	}
 
 	@Test
@@ -106,9 +127,10 @@ public class DoubleSpotTest
 		WreckTracker tracker = new WreckTracker();
 		tracker.observe(new WorldPoint(100, 100, 0), ObjectID.SAILING_BARRACUDA_SHIPWRECK, 0);
 		tracker.observe(new WorldPoint(110, 100, 0), ObjectID.SAILING_BARRACUDA_SHIPWRECK, 0);
-		assertEquals(1, DoubleSpot.find(tracker.presentSites(), REACH, DoubleSpotMode.ACTIVE_WRECKS).size());
+		assertEquals(1, DoubleSpot.find(tracker.presentSites(), REACH).size());
+		// Out of the loaded scene altogether, with no stump seen either.
 		tracker.despawn(new WorldPoint(110, 100, 0), ObjectID.SAILING_BARRACUDA_SHIPWRECK, 1);
 		assertEquals(1, tracker.presentSites().size());
-		assertTrue(DoubleSpot.find(tracker.presentSites(), REACH, DoubleSpotMode.ACTIVE_WRECKS).isEmpty());
+		assertTrue(DoubleSpot.find(tracker.presentSites(), REACH).isEmpty());
 	}
 }

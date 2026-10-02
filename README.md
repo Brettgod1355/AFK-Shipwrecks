@@ -139,8 +139,7 @@ everywhere); the alch threshold; keep instead when the GE price beats the alch v
 the four colours. Under Salvage spots, "Only docks I can use" turns the dock requirements check off.
 
 **Salvage spots**: show the sidebar; wreck reach boxes and their
-colour (yellow); double spot boxes (off, only pairs of wrecks that are both up, or every pair of
-sites in view with the sunk ones dimmer), their colour (green) and the colour they change to once
+colour (yellow); double spot boxes (on or off), their colour (green) and the colour they change to once
 you are parked (white); whether to label the double spot boxes; show the nearest dock; and auto
 route when boarding (the spot itself is marked in the sidebar). Favourites are kept per account;
 the dropdown choices and the Auto spot are kept with the plugin's settings.
@@ -173,9 +172,9 @@ changes to the parked colour and says "Parked"; with only one of two in, the lab
 colour stays. Nudge the boat until it changes. The honest caveat: the reach is taken as 8 tiles from other plugins'
 observations and has not been confirmed from the game's own code, so a box edge may be a tile off.
 If your hook sits in a box and only one wreck is being worked, tell me and I will fix the number.
-With "All sites" the green boxes also appear around sunk wrecks, since the next wreck rises on the
-same tile, so you can park before it does; sunk wrecks' yellow boxes are drawn dimmer for the same
-reason.
+A double spot is a place, not a moment: the green box shows whenever its two wreck sites are in
+view, whether both wrecks are up, only one, or neither, since the next wreck rises on the same tile.
+So you can park in it and wait. Sunk wrecks' yellow boxes are drawn dimmer.
 
 ## What it can and cannot know
 

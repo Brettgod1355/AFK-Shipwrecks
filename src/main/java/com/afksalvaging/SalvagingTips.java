@@ -22,8 +22,9 @@ public final class SalvagingTips
 		"Reach is taken as " + AfkSession.HOOK_RANGE + " tiles, from other plugins' observations rather than the "
 			+ "game's code, so a box edge may be a tile off. If a hook sits in a box and only one wreck is worked, "
 			+ "report it and the number gets fixed.",
-		"Sunk wrecks keep a dimmer box because the next wreck rises on the same tile; with \"All sites\" the green "
-			+ "boxes show for them too, so you can park before it does.",
+		"A double spot is a place, not a moment: the green box shows even while one or both of its wrecks are down, "
+			+ "because the next wreck rises on the same tile, so you can park and wait. Sunk wrecks' yellow boxes are "
+			+ "dimmer.",
 		"Map pans the world map while it is open. With it closed, press Map, then open the map and it jumps there.",
 		"Route asks the Shortest Path plugin to draw the way. The line above the list says if it is missing or "
 			+ "switched off.",

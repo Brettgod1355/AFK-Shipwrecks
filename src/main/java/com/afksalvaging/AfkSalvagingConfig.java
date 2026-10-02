@@ -560,16 +560,16 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "doubleSpotMode",
+		keyName = "doubleSpotBoxes",
 		name = "Double spot boxes",
-		description = "Box the water where one hook reaches two wrecks at once: park so a hook sits in the box and it "
-			+ "lights up. Active wrecks: only pairs that are both up. All sites: every pair in view, sunk ones dimmer.",
+		description = "Box the water where one hook reaches two wreck sites at once, whether or not both wrecks are up "
+			+ "right now. Park so every hook sits in the box and it changes colour and says Parked.",
 		section = SPOTS,
 		position = 4
 	)
-	default DoubleSpotMode doubleSpotMode()
+	default boolean doubleSpotBoxes()
 	{
-		return DoubleSpotMode.ACTIVE_WRECKS;
+		return true;
 	}
 
 	@Alpha

@@ -153,7 +153,10 @@ public final class WreckTracker
 	public void despawn(WorldPoint point, int objectId, long now)
 	{
 		Site site = point == null ? null : sites.get(point);
-		if (site != null && ShipwreckType.fromObjectId(objectId) == site.type)
+		// Only the object the site shows now can take it out of view. When a wreck sinks, its stump
+		// may be added before the wreck is removed; that late removal must not hide the stump.
+		if (site != null && ShipwreckType.fromObjectId(objectId) == site.type
+			&& ShipwreckType.isActiveWreck(objectId) == site.active)
 		{
 			site.present = false;
 			site.lastSeenAt = now;

@@ -59,9 +59,9 @@ public class SalvageBoxOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		DoubleSpotMode mode = config.doubleSpotMode();
+		boolean doubleSpots = config.doubleSpotBoxes();
 		boolean reachBoxes = config.wreckReachBoxes();
-		if (mode == DoubleSpotMode.OFF && !reachBoxes)
+		if (!doubleSpots && !reachBoxes)
 		{
 			return null;
 		}
@@ -87,11 +87,11 @@ public class SalvageBoxOverlay extends Overlay
 			}
 		}
 
-		if (mode != DoubleSpotMode.OFF)
+		if (doubleSpots)
 		{
 			Color colour = config.doubleSpotColor();
 			List<WorldPoint> hooks = plugin.hookPoints();
-			for (DoubleSpot spot : DoubleSpot.find(sites, reach, mode))
+			for (DoubleSpot spot : DoubleSpot.find(sites, reach))
 			{
 				DoubleSpot.Box box = spot.getBox();
 				int inside = 0;
@@ -104,7 +104,8 @@ public class SalvageBoxOverlay extends Overlay
 				}
 				// Parked means every hook the boat has is in the box: both on a sloop, the one on a raft or skiff.
 				boolean parked = !hooks.isEmpty() && inside == hooks.size();
-				Color drawn = parked ? config.doubleSpotParkedColor() : (spot.activeCount() == 2 ? colour : dim(colour));
+				// The spot is a place: full colour whether or not its wrecks are up right now.
+				Color drawn = parked ? config.doubleSpotParkedColor() : colour;
 				String label = null;
 				if (config.doubleSpotLabels())
 				{

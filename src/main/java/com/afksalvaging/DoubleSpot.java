@@ -119,12 +119,6 @@ public final class DoubleSpot
 		return box;
 	}
 
-	/** How many of the two wrecks are up right now: 0, 1 or 2. */
-	public int activeCount()
-	{
-		return (first.isActive() ? 1 : 0) + (second.isActive() ? 1 : 0);
-	}
-
 	/** The two wrecks by name, for example {@code Barracuda + Small}. */
 	public String label()
 	{
@@ -156,15 +150,16 @@ public final class DoubleSpot
 
 	/**
 	 * Every double spot among these wreck sites, west to east then south to north, so the drawing
-	 * order is stable from tick to tick.
+	 * order is stable from tick to tick. A double spot is a place, not a moment: any two sites whose
+	 * wrecks one hook could reach together count, whether zero, one or both wrecks are up right now
+	 * (owner, 2026-10-02).
 	 *
 	 * @param sites the wreck sites to pair up; sites that are not in view are skipped
 	 * @param reach the hook's reach in tiles
-	 * @param mode  which pairs count: both wrecks up, or any two sites
 	 */
-	public static List<DoubleSpot> find(List<WreckTracker.Site> sites, int reach, DoubleSpotMode mode)
+	public static List<DoubleSpot> find(List<WreckTracker.Site> sites, int reach)
 	{
-		if (mode == null || mode == DoubleSpotMode.OFF || sites == null || sites.size() < 2)
+		if (sites == null || sites.size() < 2)
 		{
 			return Collections.emptyList();
 		}
@@ -180,10 +175,6 @@ public final class DoubleSpot
 			{
 				WreckTracker.Site b = sites.get(j);
 				if (b == null || !b.isPresent())
-				{
-					continue;
-				}
-				if (mode == DoubleSpotMode.ACTIVE_WRECKS && !(a.isActive() && b.isActive()))
 				{
 					continue;
 				}
