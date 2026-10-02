@@ -58,6 +58,7 @@ import net.runelite.api.events.WorldViewUnloaded;
 import net.runelite.api.gameval.DBTableID;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.Notifier;
@@ -192,6 +193,8 @@ public class AfkSalvagingPlugin extends Plugin
 
 	/** The player's keep / hold / alch / drop marks, from the settings. */
 	private final SalvageSorter.Lists sortLists = new SalvageSorter.Lists();
+	/** What the cargo hold accepts: the wiki's list, corrected by what the game says while it is open. */
+	private final HoldWhitelist holdWhitelist = new HoldWhitelist();
 	/** The box decided for each item id, cleared when the marks or the thresholds change and now and then for prices. */
 	private final Map<Integer, SortRule> sortCache = new HashMap<>();
 	/** Ticks between clearing the sort cache so Grand Exchange price changes show up. */
@@ -624,6 +627,7 @@ public class AfkSalvagingPlugin extends Plugin
 			readInterfaceNextTick = false;
 			readCargoInterface();
 		}
+		learnHoldWhitelist();
 		if (mapFocusTicks > 0 && --mapFocusTicks == 0 && pendingMapTarget != null)
 		{
 			WorldPoint target = pendingMapTarget;
@@ -907,23 +911,25 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			return null;
 		}
-		SortRule rule = sortCache.get(itemId);
-		if (rule == null)
+		// Null is a real answer here (no box), so look it up by key.
+		if (sortCache.containsKey(itemId))
 		{
-			rule = SalvageSorter.rule(itemFacts(itemId), sortLists, config.alchThreshold(), config.geOverAlchPercent());
-			sortCache.put(itemId, rule);
+			return sortCache.get(itemId);
 		}
+		SortRule rule = SalvageSorter.rule(itemFacts(itemId), sortLists, config.alchThreshold(), config.geOverAlchPercent());
+		sortCache.put(itemId, rule);
 		return rule;
 	}
 
 	private SalvageSorter.ItemFacts itemFacts(int itemId)
 	{
 		ItemComposition item = itemManager.getItemComposition(itemId);
-		// A noted item stacks and is worth what the real one is worth.
+		// A noted item is worth what the real one is worth; the hold refuses it either way.
 		int real = itemManager.canonicalize(itemId);
 		ItemComposition realItem = real == itemId ? item : itemManager.getItemComposition(real);
-		boolean stackable = item.isStackable() || item.getNote() != -1;
-		return new SalvageSorter.ItemFacts(itemId, stackable, realItem.getHaPrice(), itemManager.getItemPrice(real));
+		boolean noted = item.getNote() != -1;
+		return new SalvageSorter.ItemFacts(itemId, noted, realItem.isTradeable(), holdWhitelist.takes(real),
+			realItem.getHaPrice(), itemManager.getItemPrice(real));
 	}
 
 	/**
@@ -1014,15 +1020,55 @@ public class AfkSalvagingPlugin extends Plugin
 		}
 	}
 
-	/** Reads the four lists from the settings and forgets the decided boxes. */
+	/** Reads the four lists and what the hold accepts from the settings, and forgets the decided boxes. */
 	private void reloadSortLists()
 	{
 		sortLists.decode(SortRule.KEEP, config.sortKeepIds());
 		sortLists.decode(SortRule.HOLD, config.sortHoldIds());
 		sortLists.decode(SortRule.ALCH, config.sortAlchIds());
 		sortLists.decode(SortRule.DROP, config.sortDropIds());
+		holdWhitelist.decode(config.holdAcceptedIds(), config.holdRefusedIds());
 		sortCache.clear();
 		pushSortLists();
+	}
+
+	/**
+	 * While the cargo hold is open, the game marks each inventory slot it will accept in a varp
+	 * (its own side panel greys out the rest). Learn from it, by unnoted item id. Client thread.
+	 */
+	private void learnHoldWhitelist()
+	{
+		if (!isCargoInterfaceOpen())
+		{
+			holdWhitelist.resetObservation();
+			return;
+		}
+		ItemContainer inventory = client.getItemContainer(InventoryID.INV);
+		if (inventory == null)
+		{
+			return;
+		}
+		Item[] items = inventory.getItems();
+		int[] slots = new int[items.length];
+		for (int slot = 0; slot < items.length; slot++)
+		{
+			Item item = items[slot];
+			boolean present = item != null && item.getId() > 0 && item.getQuantity() > 0;
+			// A noted item is refused whatever it is, so it says nothing about the item itself.
+			slots[slot] = present && itemManager.getItemComposition(item.getId()).getNote() == -1 ? item.getId() : -1;
+		}
+		int bits = client.getVarpValue(VarPlayerID.SAILING_BOAT_CARGOHOLD_SIDE_WHITELIST);
+		CargoHoldMonitor monitor = session.monitor();
+		boolean hasRoom = monitor.hasCount() && monitor.getUsed() < monitor.getCapacity();
+		if (holdWhitelist.observe(slots, bits, hasRoom))
+		{
+			// Encode both first: saving one fires a settings reload that reads the other back.
+			String accepted = holdWhitelist.encodeAccepted();
+			String refused = holdWhitelist.encodeRefused();
+			configManager.setConfiguration(AfkSalvagingConfig.GROUP, "holdRefusedIds", refused);
+			configManager.setConfiguration(AfkSalvagingConfig.GROUP, "holdAcceptedIds", accepted);
+			sortCache.clear();
+		}
 	}
 
 	/** Sends the lists, with item names, to the sidebar. Names need the client thread. */

@@ -16,9 +16,9 @@ import net.runelite.api.gameval.ItemID;
 
 /**
  * Decides which box an inventory item gets. The player's own marks come first; anything unmarked
- * is sorted by what the item is: a stackable goes to the hold (one slot for the whole stack), an
- * item that alchs for at least the threshold is alched, the rest is dropped. Pure, so it can be
- * tested without a client.
+ * is sorted by what the item is: an untradeable item gets no box, an item the cargo hold accepts
+ * goes to the hold (never a noted one, which the hold refuses), an item that alchs for at least the
+ * threshold is alched, the rest is dropped. Pure, so it can be tested without a client.
  */
 public final class SalvageSorter
 {
@@ -26,14 +26,19 @@ public final class SalvageSorter
 	public static final class ItemFacts
 	{
 		public final int id;
-		public final boolean stackable;
+		public final boolean noted;
+		public final boolean tradeable;
+		/** Whether the cargo hold accepts the unnoted item ({@link HoldWhitelist}). */
+		public final boolean holdTakes;
 		public final int alchValue;
 		public final long gePrice;
 
-		public ItemFacts(int id, boolean stackable, int alchValue, long gePrice)
+		public ItemFacts(int id, boolean noted, boolean tradeable, boolean holdTakes, int alchValue, long gePrice)
 		{
 			this.id = id;
-			this.stackable = stackable;
+			this.noted = noted;
+			this.tradeable = tradeable;
+			this.holdTakes = holdTakes;
 			this.alchValue = alchValue;
 			this.gePrice = gePrice;
 		}
@@ -133,7 +138,7 @@ public final class SalvageSorter
 	}
 
 	/**
-	 * The box for an item.
+	 * The box for an item, or null for none (an unmarked untradeable).
 	 *
 	 * @param alchThreshold     high-alch value from which an unmarked item is alched
 	 * @param geOverAlchPercent keep instead when the GE price beats the alch value by this much; 0 never
@@ -145,7 +150,12 @@ public final class SalvageSorter
 		{
 			return marked;
 		}
-		if (facts.stackable)
+		if (!facts.tradeable)
+		{
+			// Untradeables are left alone unless the player marks them (owner, 2026-10-02).
+			return null;
+		}
+		if (facts.holdTakes && !facts.noted)
 		{
 			return SortRule.HOLD;
 		}

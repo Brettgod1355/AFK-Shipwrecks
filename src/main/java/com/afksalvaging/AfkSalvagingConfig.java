@@ -672,8 +672,9 @@ public interface AfkSalvagingConfig extends Config
 		keyName = "inventorySort",
 		name = "Box inventory items",
 		description = "Draw a coloured box round each item in your inventory: keep (yellow), hold (cyan), alch (green) "
-			+ "or drop (red). Unmarked items are sorted by what they are: stackables to the hold, items that alch "
-			+ "for at least the threshold to alch, the rest to drop. Shift-right-click an item to mark it.",
+			+ "or drop (red). Unmarked items are sorted by what they are: items the cargo hold accepts (never noted) "
+			+ "to the hold, items that alch for at least the threshold to alch, the rest to drop. Untradeable items "
+			+ "get no box unless you mark them. Shift-right-click an item to mark it.",
 		section = SORTING,
 		position = 0
 	)
@@ -795,6 +796,20 @@ public interface AfkSalvagingConfig extends Config
 
 	@ConfigItem(keyName = "sortDropIds", name = "", description = "", hidden = true)
 	default String sortDropIds()
+	{
+		return "";
+	}
+
+	/** Item ids the game has said the cargo hold accepts, learned while it is open. */
+	@ConfigItem(keyName = "holdAcceptedIds", name = "", description = "", hidden = true)
+	default String holdAcceptedIds()
+	{
+		return "";
+	}
+
+	/** Item ids the game has said the cargo hold refuses, learned while it is open. */
+	@ConfigItem(keyName = "holdRefusedIds", name = "", description = "", hidden = true)
+	default String holdRefusedIds()
 	{
 		return "";
 	}

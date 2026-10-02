@@ -65,10 +65,13 @@ stopped, and the fact that your own hook does not restart itself.
   Read the section below before trusting them to the tile.
 
 - **Sorts your inventory for you to act on.** On your boat at a salvaging spot, every inventory
-  item gets a coloured box: yellow keep, cyan hold (a stack takes one slot in the cargo hold),
-  green alch (its alch value is at or above a threshold you set, 1,000 by default), red drop.
-  Unmarked items sort themselves by what they are; shift-right-click an item to mark it, or add it
-  by name in the sidebar, and take it off again there. The boxes are only ever boxes: nothing is
+  item gets a coloured box: yellow keep, cyan hold, green alch (its alch value is at or above a
+  threshold you set, 1,000 by default), red drop. Unmarked items sort themselves by what they are.
+  Hold only goes on things the cargo hold actually takes: the plugin starts from the wiki's list
+  (Sailing kit, repair kits, cannonballs, drinks, fish and fishing gear) and learns the game's own
+  answer every time you open the hold, which greys out the rest. Noted items never get it, since
+  the hold refuses them. Untradeable items get no box at all unless you mark them. Shift-right-click
+  an item to mark it, or add it by name in the sidebar, and take it off again there. The boxes are only ever boxes: nothing is
   dropped, alched or moved for you, and the menu entries they add send nothing to the game.
 - **Says when it was updated.** The first time you log in after the Plugin Hub has updated the
   plugin, one line in chat says what the new version brings. A setting turns it off.
