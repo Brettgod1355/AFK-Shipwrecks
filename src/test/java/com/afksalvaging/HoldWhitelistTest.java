@@ -55,7 +55,11 @@ public class HoldWhitelistTest
 		for (int id : cannonballs)
 		{
 			assertTrue("cannonball " + id, hold.takes(id));
+			assertTrue("cannonball " + id, HoldWhitelist.isCannonball(id));
 		}
+		assertEquals(cannonballs.length, HoldWhitelist.CANNONBALLS.size());
+		assertTrue("every cannonball is also in the seed", HoldWhitelist.SEED.containsAll(HoldWhitelist.CANNONBALLS));
+		assertFalse("a repair kit is taken but is no cannonball", HoldWhitelist.isCannonball(KIT));
 	}
 
 	@Test

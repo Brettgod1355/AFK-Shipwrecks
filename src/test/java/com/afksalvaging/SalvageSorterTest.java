@@ -15,50 +15,69 @@ import static org.junit.Assert.assertTrue;
 
 public class SalvageSorterTest
 {
-	/** A tradeable, unnoted item; {@code holdTakes} says whether the cargo hold accepts it. */
-	private static SalvageSorter.ItemFacts item(int id, boolean holdTakes, int alch, long ge)
+	/** A tradeable, unnoted item the cargo hold does not take. */
+	private static SalvageSorter.ItemFacts item(int id, int alch, long ge)
 	{
-		return new SalvageSorter.ItemFacts(id, false, true, holdTakes, alch, ge);
+		return new SalvageSorter.ItemFacts(id, false, true, false, false, alch, ge);
+	}
+
+	/** A tradeable ship cannonball, noted or not. */
+	private static SalvageSorter.ItemFacts cannonball(int id, boolean noted)
+	{
+		return new SalvageSorter.ItemFacts(id, noted, true, true, true, 5, 100);
+	}
+
+	/** A tradeable item the hold takes that is not a cannonball, such as a repair kit. */
+	private static SalvageSorter.ItemFacts holdItem(int id, int alch)
+	{
+		return new SalvageSorter.ItemFacts(id, false, true, true, false, alch, 0);
 	}
 
 	@Test
 	public void unmarkedItemsSortThemselves()
 	{
 		SalvageSorter.Lists none = new SalvageSorter.Lists();
-		assertEquals("the hold takes it", SortRule.HOLD, SalvageSorter.rule(item(1, true, 5, 100), none, 1000, 0));
-		assertEquals("alchs for the threshold", SortRule.ALCH, SalvageSorter.rule(item(2, false, 1000, 100), none, 1000, 0));
-		assertEquals("alchs for less", SortRule.DROP, SalvageSorter.rule(item(3, false, 999, 100), none, 1000, 0));
-		assertEquals("GE rule off: still alch", SortRule.ALCH, SalvageSorter.rule(item(4, false, 1000, 5000), none, 1000, 0));
-		assertEquals("GE beats alch by 50%: keep", SortRule.KEEP, SalvageSorter.rule(item(4, false, 1000, 1500), none, 1000, 50));
-		assertEquals("GE beats alch by less than 50%: alch", SortRule.ALCH, SalvageSorter.rule(item(4, false, 1000, 1499), none, 1000, 50));
+		assertEquals("alchs for the threshold", SortRule.ALCH, SalvageSorter.rule(item(2, 1000, 100), none, 1000, 0));
+		assertNull("alchs for less: no box, nothing is a drop by default", SalvageSorter.rule(item(3, 999, 100), none, 1000, 0));
+		assertEquals("GE rule off: still alch", SortRule.ALCH, SalvageSorter.rule(item(4, 1000, 5000), none, 1000, 0));
+		assertEquals("GE beats alch by 50%: keep", SortRule.KEEP, SalvageSorter.rule(item(4, 1000, 1500), none, 1000, 50));
+		assertEquals("GE beats alch by less than 50%: alch", SortRule.ALCH, SalvageSorter.rule(item(4, 1000, 1499), none, 1000, 50));
 	}
 
 	@Test
-	public void theHoldNeverGetsANotedItem()
+	public void onlyCannonballsAreADepositByDefault()
 	{
 		SalvageSorter.Lists none = new SalvageSorter.Lists();
-		SalvageSorter.ItemFacts notedKits = new SalvageSorter.ItemFacts(5, true, true, true, 10, 50);
-		assertEquals("noted, so not hold; cheap, so drop", SortRule.DROP, SalvageSorter.rule(notedKits, none, 1000, 0));
-		SalvageSorter.ItemFacts notedValuable = new SalvageSorter.ItemFacts(6, true, true, true, 5000, 100);
-		assertEquals(SortRule.ALCH, SalvageSorter.rule(notedValuable, none, 1000, 0));
+		assertEquals(SortRule.HOLD, SalvageSorter.rule(cannonball(1, false), none, 1000, 0));
+		assertNull("a noted cannonball is refused by the hold: no box", SalvageSorter.rule(cannonball(1, true), none, 1000, 0));
+		assertNull("a cheap repair kit is not called a drop", SalvageSorter.rule(holdItem(5, 10), none, 1000, 0));
+		assertNull("nor an alch, nor a deposit", SalvageSorter.rule(holdItem(6, 5000), none, 1000, 0));
 	}
 
 	@Test
-	public void aStackableTheHoldRefusesIsNotHold()
+	public void theHoldTakesWhatThePlayerMarks()
+	{
+		SalvageSorter.Lists lists = new SalvageSorter.Lists();
+		lists.mark(5, SortRule.HOLD);
+		assertEquals(SortRule.HOLD, SalvageSorter.rule(holdItem(5, 10), lists, 1000, 0));
+	}
+
+	@Test
+	public void aStackableTheHoldRefusesIsNotADeposit()
 	{
 		SalvageSorter.Lists none = new SalvageSorter.Lists();
 		// Runes or nails: stackable, but not on the hold's list.
-		assertEquals(SortRule.DROP, SalvageSorter.rule(item(8, false, 5, 10), none, 1000, 0));
+		assertNull(SalvageSorter.rule(item(8, 5, 10), none, 1000, 0));
 	}
 
 	@Test
 	public void untradeablesGetNoBoxUnlessMarked()
 	{
 		SalvageSorter.Lists lists = new SalvageSorter.Lists();
-		SalvageSorter.ItemFacts cheap = new SalvageSorter.ItemFacts(9, false, false, false, 0, 0);
-		SalvageSorter.ItemFacts heldAndAlchable = new SalvageSorter.ItemFacts(10, false, false, true, 5000, 0);
+		SalvageSorter.ItemFacts cheap = new SalvageSorter.ItemFacts(9, false, false, false, false, 0, 0);
+		SalvageSorter.ItemFacts heldAndAlchable = new SalvageSorter.ItemFacts(10, false, false, true, false, 5000, 0);
 		assertNull("never dropped by default", SalvageSorter.rule(cheap, lists, 1000, 0));
-		assertNull("nor held or alched by default", SalvageSorter.rule(heldAndAlchable, lists, 1000, 0));
+		assertNull("nor deposited or alched by default", SalvageSorter.rule(heldAndAlchable, lists, 1000, 0));
 		lists.mark(9, SortRule.DROP);
 		assertEquals("the player's own mark still applies", SortRule.DROP, SalvageSorter.rule(cheap, lists, 1000, 0));
 	}
@@ -68,13 +87,13 @@ public class SalvageSorterTest
 	{
 		SalvageSorter.Lists lists = new SalvageSorter.Lists();
 		lists.mark(7, SortRule.KEEP);
-		assertEquals(SortRule.KEEP, SalvageSorter.rule(item(7, true, 0, 0), lists, 1000, 0));
+		assertEquals(SortRule.KEEP, SalvageSorter.rule(cannonball(7, false), lists, 1000, 0));
 		lists.mark(7, SortRule.DROP);
 		assertEquals(SortRule.DROP, lists.markOf(7));
 		assertTrue(lists.ids(SortRule.KEEP).isEmpty());
 		lists.mark(7, null);
 		assertNull(lists.markOf(7));
-		assertEquals(SortRule.HOLD, SalvageSorter.rule(item(7, true, 0, 0), lists, 1000, 0));
+		assertEquals(SortRule.HOLD, SalvageSorter.rule(cannonball(7, false), lists, 1000, 0));
 	}
 
 	@Test

@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
@@ -930,7 +929,7 @@ public class AfkSalvagingPlugin extends Plugin
 		ItemComposition realItem = real == itemId ? item : itemManager.getItemComposition(real);
 		boolean noted = item.getNote() != -1;
 		return new SalvageSorter.ItemFacts(itemId, noted, realItem.isTradeable(), holdWhitelist.takes(real),
-			realItem.getHaPrice(), itemManager.getItemPrice(real));
+			HoldWhitelist.isCannonball(real), realItem.getHaPrice(), itemManager.getItemPrice(real));
 	}
 
 	/**
@@ -1096,18 +1095,8 @@ public class AfkSalvagingPlugin extends Plugin
 				}
 				named.put(rule, rows);
 			}
-			// Count items, not ids: versions of the same item (a crate's two states) share a name.
-			Set<String> depositNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-			for (int id : holdWhitelist.knownAccepted())
-			{
-				String name = itemManager.getItemComposition(id).getName();
-				if (name != null && !name.isEmpty() && !"null".equals(name))
-				{
-					depositNames.add(name);
-				}
-			}
 			SalvagingSpotPanel.SortDefaults defaults = new SalvagingSpotPanel.SortDefaults(
-				depositNames.size(), config.alchThreshold(), config.geOverAlchPercent());
+				config.alchThreshold(), config.geOverAlchPercent());
 			if (spotsPanel != null)
 			{
 				spotsPanel.setSortLists(named, defaults);

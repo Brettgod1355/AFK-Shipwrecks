@@ -66,13 +66,14 @@ stopped, and the fact that your own hook does not restart itself.
   colour, and the parked colour is its own setting too.
   Read the section below before trusting them to the tile.
 
-- **Sorts your inventory for you to act on.** On your boat at a salvaging spot, every inventory
-  item gets a coloured box: yellow keep, cyan deposit (into the cargo hold), green alch (its alch
-  value is at or above a threshold you set, 1,000 by default), red drop. Unmarked items sort
-  themselves by what they are. Deposit only goes on things the cargo hold actually takes: the plugin starts from the wiki's list
-  (Sailing kit, repair kits, cannonballs, drinks, fish and fishing gear) and learns the game's own
-  answer every time you open the hold, which greys out the rest. Noted items never get it, since
-  the hold refuses them. Untradeable items get no box at all unless you mark them. Shift-right-click
+- **Sorts your inventory for you to act on.** On your boat at a salvaging spot, inventory items
+  get a coloured box: yellow keep, cyan deposit (into the cargo hold), green alch, red drop. With
+  nothing marked, only two kinds get a box: ship cannonballs are Deposit (never noted ones, which
+  the hold refuses), and items whose alch value is at or above a threshold you set (1,000 by
+  default) are Alch. Everything else gets no box, and nothing is ever Drop until you mark it.
+  Repair kits, fish and the other things the hold takes are never called an alch either; the
+  plugin knows them from the wiki's list and learns the game's own answer every time you open the
+  hold. Shift-right-click
   an item to mark it, or add it by name in the Sorting tab, and take it off again there. The boxes are only ever boxes: nothing is
   dropped, alched or moved for you, and the menu entries they add send nothing to the game.
 - **Says when it was updated.** The first time you log in after the Plugin Hub has updated the

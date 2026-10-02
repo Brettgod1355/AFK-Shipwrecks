@@ -328,19 +328,16 @@ public class SalvagingSpotPanel extends PluginPanel
 	/** What each list does for items nobody marked, for showing under the marks. */
 	public static final class SortDefaults
 	{
-		/** How many different items the cargo hold is known to accept. */
-		final int depositCount;
 		final int alchThreshold;
 		final int geOverAlchPercent;
 
-		public SortDefaults(int depositCount, int alchThreshold, int geOverAlchPercent)
+		public SortDefaults(int alchThreshold, int geOverAlchPercent)
 		{
-			this.depositCount = depositCount;
 			this.alchThreshold = alchThreshold;
 			this.geOverAlchPercent = geOverAlchPercent;
 		}
 
-		static final SortDefaults NONE = new SortDefaults(0, 0, 0);
+		static final SortDefaults NONE = new SortDefaults(0, 0);
 	}
 
 	/** The default rule of one list, in words. */
@@ -354,14 +351,13 @@ public class SalvagingSpotPanel extends PluginPanel
 						+ defaults.geOverAlchPercent + "% or more."
 					: "By default: nothing; only what you mark.";
 			case HOLD:
-				return "By default: the " + defaults.depositCount + " items the cargo hold is known to take: Sailing "
-					+ "kit, repair kits, every ship cannonball, drinks, fish and fishing gear. It learns more each time "
-					+ "you open the hold. Never noted items.";
+				return "By default: every ship cannonball, never noted. Other things the hold takes, such as repair "
+					+ "kits or fish, get no box unless you mark them here.";
 			case ALCH:
 				return "By default: tradeable items that alch for at least "
 					+ String.format("%,d", defaults.alchThreshold) + " coins.";
 			default:
-				return "By default: every other tradeable item. Untradeable items get no box unless you mark them.";
+				return "By default: nothing; only what you mark. Unmarked items that fit no list get no box.";
 		}
 	}
 

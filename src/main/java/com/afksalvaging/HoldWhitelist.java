@@ -46,6 +46,7 @@ public final class HoldWhitelist
 		ItemID.BOAT_REPAIR_KIT_MAHOGANY, ItemID.BOAT_REPAIR_KIT_CAMPHOR, ItemID.BOAT_REPAIR_KIT_IRONWOOD,
 		ItemID.BOAT_REPAIR_KIT_ROSEWOOD,
 		// Ship cannonballs: regular (steel is the multicannon's MCANNONBALL), granite, chainshot, incendiary.
+		// Kept in step with CANNONBALLS below; HoldWhitelistTest checks that every one is here.
 		ItemID.BRONZE_CANNONBALL, ItemID.IRON_CANNONBALL, ItemID.MCANNONBALL, ItemID.MITHRIL_CANNONBALL,
 		ItemID.ADAMANT_CANNONBALL, ItemID.RUNE_CANNONBALL, ItemID.DRAGON_CANNONBALL, ItemID.GRANITE_CANNONBALL,
 		ItemID.BRONZE_CHAINSHOT_CANNONBALL, ItemID.IRON_CHAINSHOT_CANNONBALL, ItemID.STEEL_CHAINSHOT_CANNONBALL,
@@ -76,6 +77,28 @@ public final class HoldWhitelist
 		ItemID.RAW_LOBSTER, ItemID.LOBSTER, ItemID.TBWT_RAW_KARAMBWAN, ItemID.TBWT_COOKED_KARAMBWAN,
 		ItemID.RAW_ANGLERFISH, ItemID.ANGLERFISH, ItemID.RAW_MONKFISH, ItemID.MONKFISH, ItemID.RAW_SHARK, ItemID.SHARK
 	)));
+
+	/**
+	 * Every ship cannonball: the only items the Deposit box goes on by default (owner, 2026-10-02:
+	 * "just all the cballs by default"). The rest of {@link #SEED} keeps its items from being
+	 * called drops, but they are only deposits when the player marks them.
+	 */
+	static final Set<Integer> CANNONBALLS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+		ItemID.BRONZE_CANNONBALL, ItemID.IRON_CANNONBALL, ItemID.MCANNONBALL, ItemID.MITHRIL_CANNONBALL,
+		ItemID.ADAMANT_CANNONBALL, ItemID.RUNE_CANNONBALL, ItemID.DRAGON_CANNONBALL, ItemID.GRANITE_CANNONBALL,
+		ItemID.BRONZE_CHAINSHOT_CANNONBALL, ItemID.IRON_CHAINSHOT_CANNONBALL, ItemID.STEEL_CHAINSHOT_CANNONBALL,
+		ItemID.MITHRIL_CHAINSHOT_CANNONBALL, ItemID.ADAMANT_CHAINSHOT_CANNONBALL, ItemID.RUNE_CHAINSHOT_CANNONBALL,
+		ItemID.DRAGON_CHAINSHOT_CANNONBALL,
+		ItemID.BRONZE_INCENDIARY_CANNONBALL, ItemID.IRON_INCENDIARY_CANNONBALL, ItemID.STEEL_INCENDIARY_CANNONBALL,
+		ItemID.MITHRIL_INCENDIARY_CANNONBALL, ItemID.ADAMANT_INCENDIARY_CANNONBALL, ItemID.RUNE_INCENDIARY_CANNONBALL,
+		ItemID.DRAGON_INCENDIARY_CANNONBALL
+	)));
+
+	/** Whether this unnoted item is a ship cannonball. */
+	public static boolean isCannonball(int itemId)
+	{
+		return CANNONBALLS.contains(itemId);
+	}
 
 	private final Set<Integer> accepted = new LinkedHashSet<>();
 	private final Set<Integer> refused = new LinkedHashSet<>();
@@ -139,15 +162,6 @@ public final class HoldWhitelist
 			}
 		}
 		return changed;
-	}
-
-	/** Every item id the hold is known to take now: the wiki list and what the game said, minus its refusals. */
-	public Set<Integer> knownAccepted()
-	{
-		Set<Integer> known = new TreeSet<>(SEED);
-		known.addAll(accepted);
-		known.removeAll(refused);
-		return known;
 	}
 
 	/** Forgets the half-seen look, for example when the hold closes. */
