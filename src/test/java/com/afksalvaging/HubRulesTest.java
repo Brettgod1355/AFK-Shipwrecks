@@ -106,6 +106,33 @@ public class HubRulesTest
 	}
 
 	@Test
+	public void theStandardBuildFindsEverythingItNeedsAndNothingItRejects() throws IOException
+	{
+		// The packager (plugin-hub-tooling, 2026-09-28 to 10-01) copies only src/main/java, src/main/resources and
+		// lombok.config into a standard build, rejects class files and a runelite_plugin.json under resources,
+		// and rejects a jar manifest that sets Class-Path.
+		try (Stream<Path> dirs = Files.list(Paths.get("src", "main")))
+		{
+			List<String> extra = new ArrayList<>();
+			dirs.map(p -> p.getFileName().toString())
+				.filter(name -> !name.equals("java") && !name.equals("resources"))
+				.forEach(extra::add);
+			assertTrue("src/main holds directories the standard build never sees: " + extra, extra.isEmpty());
+		}
+		try (Stream<Path> all = Files.walk(MAIN_RESOURCES))
+		{
+			List<String> bad = new ArrayList<>();
+			all.filter(p -> p.toString().endsWith(".class") || p.getFileName().toString().equals("runelite_plugin.json"))
+				.forEach(p -> bad.add(p.toString()));
+			assertTrue("resources the packager rejects: " + bad, bad.isEmpty());
+		}
+		String gradle = new String(Files.readAllBytes(Paths.get("build.gradle")), StandardCharsets.UTF_8);
+		assertFalse("the jar manifest must not set Class-Path (packager)", gradle.contains("Class-Path"));
+		String properties = new String(Files.readAllBytes(Paths.get("runelite-plugin.properties")), StandardCharsets.UTF_8);
+		assertTrue("build=standard keeps the review bot (reviewers, many PRs)", properties.contains("build=standard"));
+	}
+
+	@Test
 	public void iconIsARealPngWithinTheHubLimits() throws IOException
 	{
 		Path icon = Paths.get("icon.png");
