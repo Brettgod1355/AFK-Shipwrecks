@@ -196,6 +196,8 @@ public class AfkSalvagingPlugin extends Plugin
 	private final Map<Integer, SortRule> sortCache = new HashMap<>();
 	/** Ticks between clearing the sort cache so Grand Exchange price changes show up. */
 	private static final int SORT_CACHE_TICKS = 500;
+	/** Whether the inventory boxes are drawn, decided once per tick rather than per item per frame. */
+	private boolean sortActive;
 
 	private HoldInfoBox infoBox;
 
@@ -698,6 +700,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			sortCache.clear();
 		}
+		sortActive = decideSortActive();
 		if (spotsPanel != null && tick % SIDEBAR_REFRESH_TICKS == 0)
 		{
 			spotsPanel.setPosition(in.playerPoint);
@@ -868,8 +871,14 @@ public class AfkSalvagingPlugin extends Plugin
 
 	// ---- Inventory sorting: boxes round items, marks, the sidebar lists ----
 
-	/** Whether the inventory boxes are drawn right now, by the "Show boxes" setting. */
+	/** Whether the inventory boxes are drawn right now, as decided on the last game tick. */
 	public boolean inventorySortActive()
+	{
+		return sortActive;
+	}
+
+	/** The "Show boxes" setting applied to where the player is. */
+	private boolean decideSortActive()
 	{
 		if (!config.inventorySort() || client.getGameState() != GameState.LOGGED_IN)
 		{
@@ -965,6 +974,12 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			String key = sortListKey(each);
 			String encoded = sortLists.encode(each);
+			String stored = configManager.getConfiguration(AfkSalvagingConfig.GROUP, key);
+			if (encoded.equals(stored == null ? "" : stored))
+			{
+				// Unchanged: writing it would only fire another settings refresh.
+				continue;
+			}
 			if (encoded.isEmpty())
 			{
 				configManager.unsetConfiguration(AfkSalvagingConfig.GROUP, key);
@@ -1479,6 +1494,7 @@ public class AfkSalvagingPlugin extends Plugin
 		lastSailing = false;
 		lastOwnBoat = false;
 		ticksSinceLogin = 0;
+		sortActive = false;
 	}
 
 	private void forgetBoat()

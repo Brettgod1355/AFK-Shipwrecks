@@ -205,7 +205,7 @@ Here is the honest version, because a countdown invites more trust than a counte
 
 Search for **AFK Salvaging** in the RuneLite Plugin Hub.
 
-To run it from source, clone the repo and use `./gradlew run` for a dev client or
+For development: clone the repo and use `./gradlew run` for a development client or
 `./gradlew test` for the tests. In IntelliJ, run `AfkSalvagingPluginTest`.
 
 ## Found a bug? Want something?
