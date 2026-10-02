@@ -664,9 +664,9 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "inventorySort",
 		name = "Box inventory items",
-		description = "Draw a coloured box round each item in your inventory: keep (yellow), hold (cyan), alch (green) "
+		description = "Draw a coloured box round each item in your inventory: keep (yellow), deposit (cyan), alch (green) "
 			+ "or drop (red). Unmarked items are sorted by what they are: items the cargo hold accepts (never noted) "
-			+ "to the hold, items that alch for at least the threshold to alch, the rest to drop. Untradeable items "
+			+ "to deposit, items that alch for at least the threshold to alch, the rest to drop. Untradeable items "
 			+ "get no box unless you mark them. Shift-right-click an item to mark it.",
 		section = SORTING,
 		position = 0
@@ -750,7 +750,7 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@Alpha
-	@ConfigItem(keyName = "holdColor", name = "Hold colour", description = "", section = SORTING, position = 7)
+	@ConfigItem(keyName = "holdColor", name = "Deposit colour", description = "", section = SORTING, position = 7)
 	default Color holdColor()
 	{
 		return new Color(60, 220, 230, 220);

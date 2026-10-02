@@ -33,8 +33,29 @@ public class HoldWhitelistTest
 	@Test
 	public void theSeedListHoldsEveryWikiItem()
 	{
-		// 76 named items with their versions (85 ids), 20 ship cannonballs and granite, 7 repair kits.
-		assertEquals(112, HoldWhitelist.SEED.size());
+		// 76 named items with their versions (85 ids), 22 ship cannonballs (granite and the two dragon
+		// specials included), 7 repair kits.
+		assertEquals(114, HoldWhitelist.SEED.size());
+	}
+
+	@Test
+	public void everyShipCannonballIsADeposit()
+	{
+		HoldWhitelist hold = new HoldWhitelist();
+		int[] cannonballs = {
+			ItemID.BRONZE_CANNONBALL, ItemID.IRON_CANNONBALL, ItemID.MCANNONBALL, ItemID.MITHRIL_CANNONBALL,
+			ItemID.ADAMANT_CANNONBALL, ItemID.RUNE_CANNONBALL, ItemID.DRAGON_CANNONBALL, ItemID.GRANITE_CANNONBALL,
+			ItemID.BRONZE_CHAINSHOT_CANNONBALL, ItemID.IRON_CHAINSHOT_CANNONBALL, ItemID.STEEL_CHAINSHOT_CANNONBALL,
+			ItemID.MITHRIL_CHAINSHOT_CANNONBALL, ItemID.ADAMANT_CHAINSHOT_CANNONBALL, ItemID.RUNE_CHAINSHOT_CANNONBALL,
+			ItemID.DRAGON_CHAINSHOT_CANNONBALL,
+			ItemID.BRONZE_INCENDIARY_CANNONBALL, ItemID.IRON_INCENDIARY_CANNONBALL, ItemID.STEEL_INCENDIARY_CANNONBALL,
+			ItemID.MITHRIL_INCENDIARY_CANNONBALL, ItemID.ADAMANT_INCENDIARY_CANNONBALL, ItemID.RUNE_INCENDIARY_CANNONBALL,
+			ItemID.DRAGON_INCENDIARY_CANNONBALL,
+		};
+		for (int id : cannonballs)
+		{
+			assertTrue("cannonball " + id, hold.takes(id));
+		}
 	}
 
 	@Test

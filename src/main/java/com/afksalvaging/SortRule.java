@@ -11,7 +11,7 @@ public enum SortRule
 	/** Stays in the inventory: nails, runes, dart tips, the things you came aboard with. */
 	KEEP("Keep"),
 	/** Goes in the cargo hold, where a stack takes one slot. */
-	HOLD("Hold"),
+	HOLD("Deposit"),
 	/** Worth casting High Level Alchemy on. */
 	ALCH("Alch"),
 	/** Not worth the slot. */

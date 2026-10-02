@@ -44,7 +44,7 @@ public final class SalvagingTips
 			+ "notification (Reminders settings: how long before, or never). It cannot press a key for you.",
 		"\"Countdown infobox\" in the Overlay settings puts the time to a full hold in a small box among RuneLite's "
 			+ "infoboxes, with the detail on hover, for when the overlay is hidden.",
-		"Inventory sorting boxes each item on your boat at a salvaging spot: yellow keep, cyan hold (only items the "
+		"Inventory sorting boxes each item on your boat at a salvaging spot: yellow keep, cyan deposit (only items the "
 			+ "cargo hold accepts, never noted), green alch (at or above the \"Alch from\" value), red drop. Untradeables "
 			+ "get no box unless you mark them. Shift-right-click an item to mark it, or type its name in the Sorting tab. "
 			+ "Nothing is dropped or alched for you.",

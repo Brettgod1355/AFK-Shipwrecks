@@ -1096,18 +1096,18 @@ public class AfkSalvagingPlugin extends Plugin
 				}
 				named.put(rule, rows);
 			}
-			// One name per item, versions of the same item folded together, alphabetical.
-			Set<String> holdNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+			// Count items, not ids: versions of the same item (a crate's two states) share a name.
+			Set<String> depositNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 			for (int id : holdWhitelist.knownAccepted())
 			{
 				String name = itemManager.getItemComposition(id).getName();
 				if (name != null && !name.isEmpty() && !"null".equals(name))
 				{
-					holdNames.add(name);
+					depositNames.add(name);
 				}
 			}
 			SalvagingSpotPanel.SortDefaults defaults = new SalvagingSpotPanel.SortDefaults(
-				new ArrayList<>(holdNames), config.alchThreshold(), config.geOverAlchPercent());
+				depositNames.size(), config.alchThreshold(), config.geOverAlchPercent());
 			if (spotsPanel != null)
 			{
 				spotsPanel.setSortLists(named, defaults);

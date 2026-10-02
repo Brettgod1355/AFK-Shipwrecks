@@ -284,7 +284,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		title.setForeground(Color.WHITE);
 		title.setAlignmentX(LEFT_ALIGNMENT);
 		block.add(title);
-		JLabel note = new JLabel(html("Boxes round inventory items on your boat at a salvaging spot: keep, hold, alch or "
+		JLabel note = new JLabel(html("Boxes round inventory items on your boat at a salvaging spot: keep, deposit, alch or "
 			+ "drop. Unmarked items sort themselves by the defaults under each list; mark one by "
 			+ "shift-right-clicking it, or type its name here.", TOP_TEXT_WIDTH));
 		small(note);
@@ -328,19 +328,19 @@ public class SalvagingSpotPanel extends PluginPanel
 	/** What each list does for items nobody marked, for showing under the marks. */
 	public static final class SortDefaults
 	{
-		/** Names of the items the cargo hold is known to accept, sorted. */
-		final List<String> holdNames;
+		/** How many different items the cargo hold is known to accept. */
+		final int depositCount;
 		final int alchThreshold;
 		final int geOverAlchPercent;
 
-		public SortDefaults(List<String> holdNames, int alchThreshold, int geOverAlchPercent)
+		public SortDefaults(int depositCount, int alchThreshold, int geOverAlchPercent)
 		{
-			this.holdNames = holdNames;
+			this.depositCount = depositCount;
 			this.alchThreshold = alchThreshold;
 			this.geOverAlchPercent = geOverAlchPercent;
 		}
 
-		static final SortDefaults NONE = new SortDefaults(new ArrayList<>(), 0, 0);
+		static final SortDefaults NONE = new SortDefaults(0, 0, 0);
 	}
 
 	/** The default rule of one list, in words. */
@@ -354,8 +354,9 @@ public class SalvagingSpotPanel extends PluginPanel
 						+ defaults.geOverAlchPercent + "% or more."
 					: "By default: nothing; only what you mark.";
 			case HOLD:
-				return "By default: the " + defaults.holdNames.size() + " items the cargo hold is known to take. "
-					+ "The list grows as the game answers each time you open the hold. Never noted items.";
+				return "By default: the " + defaults.depositCount + " items the cargo hold is known to take: Sailing "
+					+ "kit, repair kits, every ship cannonball, drinks, fish and fishing gear. It learns more each time "
+					+ "you open the hold. Never noted items.";
 			case ALCH:
 				return "By default: tradeable items that alch for at least "
 					+ String.format("%,d", defaults.alchThreshold) + " coins.";
@@ -410,16 +411,6 @@ public class SalvagingSpotPanel extends PluginPanel
 				ruleText.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 				ruleText.setAlignmentX(LEFT_ALIGNMENT);
 				sortLists.add(ruleText);
-				if (rule == SortRule.HOLD && !defaults.holdNames.isEmpty())
-				{
-					// Whole names separated by commas; the label wraps between words, never inside one.
-					String joined = String.join(", ", defaults.holdNames).replace("&", "&amp;").replace("<", "&lt;");
-					JLabel names = new JLabel(html(joined + ".", TOP_TEXT_WIDTH));
-					small(names);
-					names.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-					names.setAlignmentX(LEFT_ALIGNMENT);
-					sortLists.add(names);
-				}
 				sortLists.add(Box.createVerticalStrut(8));
 			}
 			sortLists.revalidate();

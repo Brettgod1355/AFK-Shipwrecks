@@ -49,7 +49,8 @@ development tooling is not included in the plugin JAR.
   `HoldWhitelist` starts from ([Cargo hold](https://oldschool.runescape.wiki/w/Cargo_hold), with
   [Cannonball](https://oldschool.runescape.wiki/w/Cannonball) and
   [Repair kits](https://oldschool.runescape.wiki/w/Repair_kits) for the ship cannonballs and kits it links
-  to, item ids from the wiki's item data, read 2026-10-02),
+  to, item ids from the wiki's item data, read 2026-10-02; the dragon chainshot and incendiary
+  cannonballs, which that table lacks, were added from RuneLite's own item list),
   shipwreck levels, lifetimes, salvaging and sorting XP, spawn mechanics and the crew and player roll
   cadence ([Shipwreck salvaging](https://oldschool.runescape.wiki/w/Shipwreck_salvaging) and the
   individual shipwreck pages, whose success charts give the per-hook chance out of 256 at levels 1
