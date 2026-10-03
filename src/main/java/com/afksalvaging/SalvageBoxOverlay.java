@@ -11,7 +11,6 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
 import java.awt.Stroke;
-import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 import net.runelite.api.Client;
@@ -78,7 +77,8 @@ public class SalvageBoxOverlay extends Overlay
 		}
 		int reach = AfkSession.HOOK_RANGE;
 		List<WorldPoint> hooks = plugin.hookPoints();
-		List<DoubleSpot> doubles = doubleSpots ? DoubleSpot.find(sites, reach) : Collections.emptyList();
+		// Found whether or not the green boxes are drawn: parked is parked either way.
+		List<DoubleSpot> doubles = DoubleSpot.find(sites, reach);
 		int[] hooksInside = new int[doubles.size()];
 		boolean parkedSomewhere = false;
 		for (int i = 0; i < doubles.size(); i++)

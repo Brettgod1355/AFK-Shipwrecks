@@ -28,7 +28,8 @@ public final class SalvagingTips
 		"Map pans the world map while it is open. With it closed, press Map, then open the map and it jumps there.",
 		"Route asks the Shortest Path plugin to draw the way. The line above the list says if it is missing or "
 			+ "switched off. A route to a spot, sent by Route or by Auto, is cleared for you once you pull up to one "
-			+ "of its wrecks or step off your boat.",
+			+ "of its wrecks or step off your boat. Shortest Path does not tell plugins when you set a target of your "
+			+ "own, so if you replace the plugin's route yourself, that one is cleared then instead.",
 		"The star pins a spot to the top of every list and to the Favourites filter. Auto marks one spot to be "
 			+ "routed to by itself whenever you board your boat from a dock. Favourites, the Auto spot and the "
 			+ "dropdowns are kept per character, under the account's own id, so a name change keeps them.",

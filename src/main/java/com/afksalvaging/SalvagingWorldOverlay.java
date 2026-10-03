@@ -26,12 +26,16 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 public class SalvagingWorldOverlay extends Overlay
 {
 	private static final long FLASH_PERIOD_MS = 500;
+	/** How long the spot has to have been bare before the notice starts: a wreck often rises again within seconds. */
+	static final long AFTER_MS = 15_000;
 	private static final int PADDING = 12;
 	private static final int LINE_GAP = 4;
 
 	private final Client client;
 	private final AfkSalvagingPlugin plugin;
 	private final AfkSalvagingConfig config;
+	/** When the spot was first seen bare on this world, or -1 while it is not. */
+	private long bareSince = -1;
 
 	@Inject
 	SalvagingWorldOverlay(Client client, AfkSalvagingPlugin plugin, AfkSalvagingConfig config)
@@ -47,12 +51,22 @@ public class SalvagingWorldOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		if (!config.worldAlert() || plugin.isSalvagingWorld() || !plugin.isOwnBoat())
+		// At a spot means a wreck site is in view; bare means no wreck the player can work is up.
+		// Nothing else is asked, so it shows with or without crew and before the hold was ever opened.
+		AfkSession.View view = plugin.getSession().view();
+		boolean bare = config.worldAlert() && !plugin.isSalvagingWorld() && plugin.isOwnBoat()
+			&& !plugin.getSession().wrecks().presentSites().isEmpty() && view.wrecksUp == 0;
+		long now = System.currentTimeMillis();
+		if (!bare)
 		{
+			bareSince = -1;
 			return null;
 		}
-		AfkSession.View view = plugin.getSession().view();
-		if (view.estimate.getState() != AfkEstimate.State.WAITING_FOR_WRECK)
+		if (bareSince < 0)
+		{
+			bareSince = now;
+		}
+		if (now - bareSince < AFTER_MS)
 		{
 			return null;
 		}
@@ -74,7 +88,7 @@ public class SalvagingWorldOverlay extends Overlay
 		int y = (client.getCanvasHeight() - height) / 2;
 
 		Color background = config.warningBannerColor();
-		if ((System.currentTimeMillis() / FLASH_PERIOD_MS) % 2 == 1)
+		if ((now / FLASH_PERIOD_MS) % 2 == 1)
 		{
 			background = new Color(background.getRed(), background.getGreen(), background.getBlue(), background.getAlpha() / 3);
 		}

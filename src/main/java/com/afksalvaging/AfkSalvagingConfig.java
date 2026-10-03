@@ -183,9 +183,9 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "worldAlert",
 		name = "Salvaging world alert",
-		description = "While you sit at a spot with no wreck up on a world that is not a salvaging world, flash a notice "
-			+ "in the middle of the screen with the worlds to hop to. It goes when a wreck is up or you hop. The tip "
-			+ "above says it once in chat; this keeps saying it.",
+		description = "While you sit at a spot with no wreck up for a quarter of a minute on a world that is not a "
+			+ "salvaging world, flash a notice in the middle of the screen with the worlds to hop to. It goes when a "
+			+ "wreck is up or you hop. The tip above says it once in chat; this keeps saying it.",
 		section = TIMER,
 		position = 6
 	)
@@ -784,7 +784,6 @@ public interface AfkSalvagingConfig extends Config
 		return true;
 	}
 
-	@Alpha
 	@ConfigItem(
 		keyName = "highlightCargoHold",
 		name = "Highlight the cargo hold",
@@ -798,6 +797,7 @@ public interface AfkSalvagingConfig extends Config
 		return false;
 	}
 
+	@Alpha
 	@ConfigItem(keyName = "keepColor", name = "Keep colour", description = "", section = SORTING, position = 6)
 	default Color keepColor()
 	{

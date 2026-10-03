@@ -247,6 +247,8 @@ public class AfkSalvagingPlugin extends Plugin
 	/** The sea cell the distances were last worked out from, so they are only redone when the player moves on. */
 	private int seaFromCell = Integer.MIN_VALUE;
 	private Future<?> seaRequest;
+	/** Bumped for every search and on shutdown, so a search that finishes late publishes nothing. */
+	private volatile int seaGeneration;
 
 	/** The sidebar entry and its panel, present while the setting is on. */
 	private NavigationButton spotsButton;
@@ -352,6 +354,7 @@ public class AfkSalvagingPlugin extends Plugin
 			seaRequest.cancel(false);
 			seaRequest = null;
 		}
+		seaGeneration++;
 		seaFromCell = Integer.MIN_VALUE;
 		seaToDocks = Collections.emptyMap();
 		removeSidebar();
@@ -1287,6 +1290,8 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			return;
 		}
+		// A new panel knows no distances yet: have them worked out again even if the boat has not moved.
+		seaFromCell = Integer.MIN_VALUE;
 		spotsPanel = new SalvagingSpotPanel(new SalvagingSpotPanel.Actions()
 		{
 			@Override
@@ -1340,7 +1345,10 @@ public class AfkSalvagingPlugin extends Plugin
 			@Override
 			public void autoRouteChanged(SalvagingSpot spot)
 			{
-				saveProfileChoice(AUTO_ROUTE_KEY, spot == null ? null : spot.name());
+				if (!saveProfileChoice(AUTO_ROUTE_KEY, spot == null ? null : spot.name()))
+				{
+					return;
+				}
 				setSpotStatus(spot == null ? "Auto route off." : "Auto route: " + spot.getSalvageName() + ", " + spot.getWhere()
 					+ ". It is sent to Shortest Path when you board your boat from a dock.", false);
 			}
@@ -1504,6 +1512,7 @@ public class AfkSalvagingPlugin extends Plugin
 			return;
 		}
 		boolean onTheWater = seaMap.isSea(from);
+		int generation = ++seaGeneration;
 		seaRequest = executor.submit(() ->
 		{
 			List<WorldPoint> targets = new ArrayList<>();
@@ -1526,6 +1535,11 @@ public class AfkSalvagingPlugin extends Plugin
 			for (Mooring dock : Mooring.values())
 			{
 				docks.put(dock, tiles[i++]);
+			}
+			if (generation != seaGeneration)
+			{
+				// The plugin was shut down, or a newer search is on its way: this one is stale.
+				return;
 			}
 			seaToDocks = Collections.unmodifiableMap(docks);
 			panel.setSeaDistances(Collections.unmodifiableMap(spots), seaToDocks, onTheWater);
@@ -1574,8 +1588,19 @@ public class AfkSalvagingPlugin extends Plugin
 		return configManager.getRSProfileConfiguration(AfkSalvagingConfig.GROUP, key);
 	}
 
-	private void saveProfileChoice(String key, String value)
+	/**
+	 * Saves a sidebar choice for the character logged in. Logged out there is nobody to file it
+	 * under (RuneLite would drop it silently), so the sidebar says so and nothing is saved.
+	 *
+	 * @return whether it was saved
+	 */
+	private boolean saveProfileChoice(String key, String value)
 	{
+		if (configManager.getRSProfileKey() == null)
+		{
+			setSpotStatus("Log in first: the sidebar's choices are kept per character.", true);
+			return false;
+		}
 		if (value == null || value.isEmpty())
 		{
 			configManager.unsetRSProfileConfiguration(AfkSalvagingConfig.GROUP, key);
@@ -1584,6 +1609,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			configManager.setRSProfileConfiguration(AfkSalvagingConfig.GROUP, key, value);
 		}
+		return true;
 	}
 
 	private SalvagingSpot autoRouteSpot()
