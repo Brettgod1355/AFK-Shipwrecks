@@ -146,8 +146,10 @@ the four colours. Under Salvage spots, "Only docks I can use" turns the dock req
 **Salvage spots**: show the sidebar; wreck reach boxes and their
 colour (yellow); double spot boxes (on or off), their colour (green) and the colour they change to once
 you are parked (white); whether to label the double spot boxes; show the nearest dock; and auto
-route when boarding (the spot itself is marked in the sidebar). Favourites are kept per account;
-the dropdown choices and the Auto spot are kept with the plugin's settings.
+route when boarding (the spot itself is marked in the sidebar). Favourites, the dropdown choices
+and the Auto spot are kept per character, filed against the id Jagex gives the account rather than
+its name, so a name change keeps them and two characters on one RuneLite account do not share an
+Auto spot. Which items you mark Keep, Deposit, Alch or Drop is shared across your characters.
 
 ## Salvage spots and double spots
 

@@ -862,36 +862,4 @@ public interface AfkSalvagingConfig extends Config
 		return "";
 	}
 
-	@ConfigItem(
-		keyName = "spotFilter",
-		name = "",
-		description = "",
-		hidden = true
-	)
-	default String spotFilter()
-	{
-		return SpotList.FILTER_ALL;
-	}
-
-	@ConfigItem(
-		keyName = "spotNearestFirst",
-		name = "",
-		description = "",
-		hidden = true
-	)
-	default boolean spotNearestFirst()
-	{
-		return false;
-	}
-
-	@ConfigItem(
-		keyName = "autoRouteSpot",
-		name = "",
-		description = "",
-		hidden = true
-	)
-	default String autoRouteSpot()
-	{
-		return "";
-	}
 }

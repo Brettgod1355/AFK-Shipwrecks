@@ -29,8 +29,9 @@ public final class SalvagingTips
 		"Route asks the Shortest Path plugin to draw the way. The line above the list says if it is missing or "
 			+ "switched off. A route to a spot, sent by Route or by Auto, is cleared for you once you pull up to one "
 			+ "of its wrecks or step off your boat.",
-		"The star pins a spot to the top of every list and to the Favourites filter; favourites are kept per "
-			+ "account. Auto marks one spot to be routed to by itself whenever you board your boat from a dock.",
+		"The star pins a spot to the top of every list and to the Favourites filter. Auto marks one spot to be "
+			+ "routed to by itself whenever you board your boat from a dock. Favourites, the Auto spot and the "
+			+ "dropdowns are kept per character, under the account's own id, so a name change keeps them.",
 		"The distances are sailing distances: the way round the land by sea, worked out over a map of the water "
 			+ "taken from the game's own map data, give or take a few tiles. They show once you are on the water or "
 			+ "standing at a dock, and Sort: nearest first uses them too. The nearest dock block at the top "

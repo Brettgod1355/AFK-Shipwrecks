@@ -129,6 +129,14 @@ public class AfkSalvagingPlugin extends Plugin
 	private static final long MEMORY_FLUSH_MILLIS = 5 * 60_000L;
 	/** RuneScape-profile config key for the spots pinned in the sidebar. */
 	private static final String FAVOURITES_KEY = "spots.favourites";
+	/**
+	 * The other choices made in the sidebar, kept per character like the favourites (owner,
+	 * 2026-10-03): RuneLite files them under the account's own id, so a name change keeps them and
+	 * two characters on one RuneLite account do not share an Auto spot.
+	 */
+	private static final String FILTER_KEY = "spotFilter";
+	private static final String NEAREST_FIRST_KEY = "spotNearestFirst";
+	private static final String AUTO_ROUTE_KEY = "autoRouteSpot";
 	/** Ticks between updates of the sidebar's distances and session line. */
 	private static final int SIDEBAR_REFRESH_TICKS = 4;
 	/** Ticks after login before boarding counts as boarding: logging in aboard is not. */
@@ -404,7 +412,10 @@ public class AfkSalvagingPlugin extends Plugin
 		reloadHold();
 		if (spotsPanel != null)
 		{
+			// Another character: their own favourites, dropdowns and Auto spot.
 			spotsPanel.setFavourites(loadFavourites());
+			spotsPanel.setChoices(spotFilterChoice(), nearestFirstChoice());
+			spotsPanel.setAutoRoute(autoRouteSpot());
 		}
 	}
 
@@ -1279,7 +1290,7 @@ public class AfkSalvagingPlugin extends Plugin
 			addSidebar();
 			applyPalette();
 			spotsPanel.setDockShown(config.nearestDock());
-			spotsPanel.setAutoRoute(SpotList.spotNamed(config.autoRouteSpot()));
+			spotsPanel.setAutoRoute(autoRouteSpot());
 		}
 		else
 		{
@@ -1328,13 +1339,13 @@ public class AfkSalvagingPlugin extends Plugin
 			@Override
 			public void filterChanged(String filterKey)
 			{
-				configManager.setConfiguration(AfkSalvagingConfig.GROUP, "spotFilter", filterKey);
+				saveProfileChoice(FILTER_KEY, filterKey);
 			}
 
 			@Override
 			public void sortChanged(boolean nearestFirst)
 			{
-				configManager.setConfiguration(AfkSalvagingConfig.GROUP, "spotNearestFirst", nearestFirst);
+				saveProfileChoice(NEAREST_FIRST_KEY, Boolean.toString(nearestFirst));
 			}
 
 			@Override
@@ -1346,14 +1357,7 @@ public class AfkSalvagingPlugin extends Plugin
 			@Override
 			public void autoRouteChanged(SalvagingSpot spot)
 			{
-				if (spot == null)
-				{
-					configManager.unsetConfiguration(AfkSalvagingConfig.GROUP, "autoRouteSpot");
-				}
-				else
-				{
-					configManager.setConfiguration(AfkSalvagingConfig.GROUP, "autoRouteSpot", spot.name());
-				}
+				saveProfileChoice(AUTO_ROUTE_KEY, spot == null ? null : spot.name());
 				setSpotStatus(spot == null ? "Auto route off." : "Auto route: " + spot.getSalvageName() + ", " + spot.getWhere()
 					+ ". It is sent to Shortest Path when you board your boat from a dock.", false);
 			}
@@ -1387,10 +1391,10 @@ public class AfkSalvagingPlugin extends Plugin
 				});
 			}
 		});
-		spotsPanel.setChoices(config.spotFilter(), config.spotNearestFirst());
+		spotsPanel.setChoices(spotFilterChoice(), nearestFirstChoice());
 		pushSortLists();
 		spotsPanel.setFavourites(loadFavourites());
-		spotsPanel.setAutoRoute(SpotList.spotNamed(config.autoRouteSpot()));
+		spotsPanel.setAutoRoute(autoRouteSpot());
 		spotsPanel.setDockShown(config.nearestDock());
 		spotsPanel.setSailingLevel(sailingLevelForSpots());
 		spotsPanel.setPicked(pickedSpot);
@@ -1581,10 +1585,44 @@ public class AfkSalvagingPlugin extends Plugin
 		setSpotStatus(end.getStatus(), false);
 	}
 
+	/** A sidebar choice saved for the character logged in, or null when none is or nobody is. */
+	private String profileChoice(String key)
+	{
+		return configManager.getRSProfileConfiguration(AfkSalvagingConfig.GROUP, key);
+	}
+
+	private void saveProfileChoice(String key, String value)
+	{
+		if (value == null || value.isEmpty())
+		{
+			configManager.unsetRSProfileConfiguration(AfkSalvagingConfig.GROUP, key);
+		}
+		else
+		{
+			configManager.setRSProfileConfiguration(AfkSalvagingConfig.GROUP, key, value);
+		}
+	}
+
+	private SalvagingSpot autoRouteSpot()
+	{
+		return SpotList.spotNamed(profileChoice(AUTO_ROUTE_KEY));
+	}
+
+	private String spotFilterChoice()
+	{
+		String filter = profileChoice(FILTER_KEY);
+		return filter == null || filter.isEmpty() ? SpotList.FILTER_ALL : filter;
+	}
+
+	private boolean nearestFirstChoice()
+	{
+		return Boolean.parseBoolean(profileChoice(NEAREST_FIRST_KEY));
+	}
+
 	/** The player has just stepped from a dock onto their own boat: send the marked spot, if any. */
 	private void boarded()
 	{
-		SalvagingSpot spot = SpotList.spotNamed(config.autoRouteSpot());
+		SalvagingSpot spot = autoRouteSpot();
 		if (spot == null || !config.autoRouteOnBoarding())
 		{
 			return;
