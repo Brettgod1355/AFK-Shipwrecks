@@ -22,7 +22,8 @@ stopped, and the fact that your own hook does not restart itself.
   add) every wreck site is being worked, so a sunk wreck near you is replaced quickly. Elsewhere
   your crew can sit idle for a long time. The plugin measures how much of the time a wreck has
   been up and folds that into the estimate. If you have been waiting a while on an ordinary
-  world it mentions the salvaging worlds, once.
+  world it mentions the salvaging worlds once in chat, and a flashing notice sits in the middle of
+  the screen until a wreck is up or you hop (a setting, on by default).
 - **Counts you too.** Salvage you hook yourself goes to your inventory first; the plugin counts
   it as bound for the hold and knows you stop when your inventory is full or the wreck sinks.
   Salvage you withdraw to sort is never counted, and sorting shows its own little countdown.
@@ -116,7 +117,8 @@ while waiting for a wreck, carries a "~". Other lines you may see:
 
 **Timer**: show timer (turning it off hides the countdown lines; the status lines, such as waiting
 for a wreck, stay); show clock time; clock format (12-hour or 24-hour); count salvage you hooked; salvaging worlds (default
-`596, 597`); salvaging world tip.
+`596, 597`); salvaging world tip; salvaging world alert (a flashing notice mid-screen while you wait for a
+wreck off those worlds, on by default).
 
 **Reminders**: four RuneLite notifications you can shape separately (hook empty with a crewmate
 free; your hook is idle; crew stopped because your level is too low; idle logout coming), the
@@ -137,7 +139,8 @@ and the chat lines use fixed colours, to keep the settings short.
 
 **Inventory sorting**: box inventory items; where (on my boat at a salvaging spot, whenever aboard,
 everywhere); the alch threshold; keep instead when the GE price beats the alch value by a margin
-(off by default); the shift-right-click AFK Salvaging menu, shown only on your own boat; whether kept items get a box at all; and
+(off by default); the shift-right-click AFK Salvaging menu, shown only on your own boat; whether kept items get a box at all;
+highlighting the cargo hold itself in the Deposit colour (off by default); and
 the four colours. Under Salvage spots, "Only docks I can use" turns the dock requirements check off.
 
 **Salvage spots**: show the sidebar; wreck reach boxes and their

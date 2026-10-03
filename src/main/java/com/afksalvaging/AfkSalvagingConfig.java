@@ -167,6 +167,20 @@ public interface AfkSalvagingConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "worldAlert",
+		name = "Salvaging world alert",
+		description = "While you sit at a spot with no wreck up on a world that is not a salvaging world, flash a notice "
+			+ "in the middle of the screen with the worlds to hop to. It goes when a wreck is up or you hop. The tip "
+			+ "above says it once in chat; this keeps saying it.",
+		section = TIMER,
+		position = 6
+	)
+	default boolean worldAlert()
+	{
+		return true;
+	}
+
 	// ---- Reminders ----
 
 	@ConfigItem(
@@ -745,6 +759,19 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@Alpha
+	@ConfigItem(
+		keyName = "highlightCargoHold",
+		name = "Highlight the cargo hold",
+		description = "Outline the cargo hold on your boat in the Deposit colour, so where the cyan-boxed items go is marked "
+			+ "the same way.",
+		section = SORTING,
+		position = 10
+	)
+	default boolean highlightCargoHold()
+	{
+		return false;
+	}
+
 	@ConfigItem(keyName = "keepColor", name = "Keep colour", description = "", section = SORTING, position = 6)
 	default Color keepColor()
 	{

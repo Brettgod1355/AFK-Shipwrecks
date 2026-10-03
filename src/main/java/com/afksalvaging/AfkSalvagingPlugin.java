@@ -220,6 +220,12 @@ public class AfkSalvagingPlugin extends Plugin
 	@Inject
 	private SalvageBoxOverlay boxOverlay;
 
+	@Inject
+	private CargoHoldOverlay holdOverlay;
+
+	@Inject
+	private SalvagingWorldOverlay worldOverlay;
+
 	/** The spot last sent to the map or routed to; the sidebar highlights it. */
 	private SalvagingSpot pickedSpot;
 	/** The route to a salvaging spot that Shortest Path is drawing for us, or null. */
@@ -243,6 +249,8 @@ public class AfkSalvagingPlugin extends Plugin
 	private final AfkSession session = new AfkSession(new ProfileMemory());
 	/** Cargo hold object id seen in each boat's world view. */
 	private final Map<Integer, Integer> cargoHoldByWorldView = new HashMap<>();
+	/** The cargo hold object itself, by world view, for the highlight. */
+	private final Map<Integer, GameObject> cargoHoldObjects = new HashMap<>();
 	/** Capacity read from the cargo hold interface, indexed by boat slot 1 to 5. */
 	private final int[] capacityFromInterface = new int[CargoHoldContainers.BOAT_SLOTS + 1];
 	/** Hook objects on the followed boat, by object hash. */
@@ -295,6 +303,8 @@ public class AfkSalvagingPlugin extends Plugin
 		}
 		overlayManager.add(overlay);
 		overlayManager.add(boxOverlay);
+		overlayManager.add(holdOverlay);
+		overlayManager.add(worldOverlay);
 		overlayManager.add(sortOverlay);
 		reloadSortLists();
 		applySpotSettings();
@@ -313,6 +323,8 @@ public class AfkSalvagingPlugin extends Plugin
 	{
 		overlayManager.remove(overlay);
 		overlayManager.remove(boxOverlay);
+		overlayManager.remove(holdOverlay);
+		overlayManager.remove(worldOverlay);
 		overlayManager.remove(sortOverlay);
 		removeInfoBox();
 		if (worldRequest != null)
@@ -411,6 +423,7 @@ public class AfkSalvagingPlugin extends Plugin
 		if (tracked != null && tracked == resolveObjectId(object.getId()))
 		{
 			cargoHoldByWorldView.remove(worldViewId);
+			cargoHoldObjects.remove(worldViewId);
 		}
 		session.boat().remove(worldViewId, object.getHash());
 		if (worldViewId == session.boat().getWorldViewId())
@@ -440,6 +453,7 @@ public class AfkSalvagingPlugin extends Plugin
 	{
 		int worldViewId = event.getWorldEntity().getWorldView().getId();
 		cargoHoldByWorldView.remove(worldViewId);
+			cargoHoldObjects.remove(worldViewId);
 		if (session.boat().getWorldViewId() == worldViewId)
 		{
 			session.boat().clear();
@@ -522,7 +536,13 @@ public class AfkSalvagingPlugin extends Plugin
 			session.monitor().reset();
 			monitoredSlot = slot;
 		}
-		session.holdCount(CargoHoldMonitor.countUsed(event.getItemContainer().getItems()), client.getTickCount());
+		int used = CargoHoldMonitor.countUsed(event.getItemContainer().getItems());
+		if (session.monitor().hasCount() && session.monitor().getUsed() != used)
+		{
+			// With --debug, how far the tally had drifted by the time the hold was opened.
+			log.debug("Hold read {} where the tally said {}", used, session.monitor().getUsed());
+		}
+		session.holdCount(used, client.getTickCount());
 		saveUsed();
 		refreshCapacity();
 	}
@@ -608,6 +628,11 @@ public class AfkSalvagingPlugin extends Plugin
 		else if (CrewSpeech.isGhostSpeech(text))
 		{
 			session.ghostLine(tick);
+		}
+		else
+		{
+			// A line the tally does not understand; with --debug these show where a count can go astray.
+			log.debug("Overhead line aboard not counted: \"{}\" from {}", text, actor.getName());
 		}
 	}
 
@@ -786,6 +811,14 @@ public class AfkSalvagingPlugin extends Plugin
 	public boolean isSalvagingWorld()
 	{
 		return salvagingWorld;
+	}
+
+	/** The cargo hold on the boat the player is aboard, or null ashore or before it has been seen. */
+	public GameObject cargoHoldObject()
+	{
+		Player me = client.getLocalPlayer();
+		WorldView view = me == null ? null : me.getWorldView();
+		return view == null ? null : cargoHoldObjects.get(view.getId());
 	}
 
 	/** Where our own boat's hooks are in the top-level world right now; empty ashore or on another boat. */
@@ -1667,6 +1700,7 @@ public class AfkSalvagingPlugin extends Plugin
 	{
 		session.reset();
 		cargoHoldByWorldView.clear();
+		cargoHoldObjects.clear();
 		Arrays.fill(capacityFromInterface, CargoHoldCapacity.UNKNOWN);
 		hookObjects.clear();
 		monitoredSlot = 0;
@@ -1686,6 +1720,7 @@ public class AfkSalvagingPlugin extends Plugin
 	private void forgetBoat()
 	{
 		cargoHoldByWorldView.clear();
+		cargoHoldObjects.clear();
 		session.boat().clear();
 		hookObjects.clear();
 	}
@@ -1832,6 +1867,7 @@ public class AfkSalvagingPlugin extends Plugin
 		if (CargoHoldCapacity.isCargoHold(resolved))
 		{
 			cargoHoldByWorldView.put(worldViewId, resolved);
+			cargoHoldObjects.put(worldViewId, object);
 		}
 		if (session.boat().add(worldViewId, object.getHash(), id))
 		{
