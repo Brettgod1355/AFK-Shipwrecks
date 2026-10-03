@@ -1333,7 +1333,7 @@ public class AfkSalvagingPlugin extends Plugin
 		String problem = ShortestPathPresence.check(pluginManager).problem();
 		spotsPanel.setStatus(problem, problem != null);
 		spotsButton = NavigationButton.builder()
-			.tooltip("Salvaging spots")
+			.tooltip("AFK Salvaging")
 			.icon(ImageUtil.loadImageResource(getClass(), "spots_icon.png"))
 			.priority(7)
 			.panel(spotsPanel)

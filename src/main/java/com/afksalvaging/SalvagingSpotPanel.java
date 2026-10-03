@@ -135,7 +135,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
 		top.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-		JLabel title = new JLabel("Salvaging spots");
+		JLabel title = new JLabel("AFK Salvaging");
 		title.setFont(FontManager.getRunescapeBoldFont());
 		title.setForeground(Color.WHITE);
 		title.setAlignmentX(LEFT_ALIGNMENT);
@@ -640,7 +640,7 @@ public class SalvagingSpotPanel extends PluginPanel
 
 	private static String tiles(int tiles)
 	{
-		return String.format("%,d tiles", tiles);
+		return tiles == 1 ? "1 tile" : String.format("%,d tiles", tiles);
 	}
 
 	private void rebuild()
