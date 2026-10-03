@@ -140,6 +140,8 @@ public final class AfkSession
 		HOLD_NEARLY_FULL,
 		HOOK_EMPTY,
 		HOOK_IDLE,
+		/** A stronger crewmate is idle while a weaker one works a hook. */
+		BETTER_CREW,
 		BOOST_DROPPED,
 		WORLD_TIP,
 		/** The game will log the player out for idling soon, and they are aboard their own boat. */
@@ -160,6 +162,8 @@ public final class AfkSession
 		public int spareCrew;
 		public boolean spareCrewCannotUseHook;
 		public HookWatch.Reason reminder;
+		/** A swap already suggested and still worth making, or null. */
+		public CrewSwapWatch.Suggestion betterCrew;
 		/** Usable wrecks up in reach. */
 		public int wrecksUp;
 		/** Wrecks up in reach that the player's level is too low for. */
@@ -183,6 +187,7 @@ public final class AfkSession
 	private final WreckTracker wrecks = new WreckTracker();
 	private final SalvageEvents events = new SalvageEvents();
 	private final HookWatch hookWatch = new HookWatch();
+	private final CrewSwapWatch crewSwap = new CrewSwapWatch();
 	private final PlayerActivity.Detector activity = new PlayerActivity.Detector();
 	private final SmoothedCountdown countdown = new SmoothedCountdown();
 	private final MemoryStore memory;
@@ -478,6 +483,7 @@ public final class AfkSession
 	{
 		wrecks.clear();
 		hookWatch.reset();
+		crewSwap.reset();
 		activity.reset();
 		waitingSince = -1;
 		worldTipGiven = false;
@@ -495,6 +501,7 @@ public final class AfkSession
 		wrecks.clear();
 		events.reset();
 		hookWatch.reset();
+		crewSwap.reset();
 		activity.reset();
 		countdown.reset();
 		rate = new SalvageRateModel();
@@ -800,6 +807,14 @@ public final class AfkSession
 			notices.add(hookWatch.getReason() == HookWatch.Reason.PLAYER_NEEDED ? Notice.HOOK_IDLE : Notice.HOOK_EMPTY);
 		}
 
+		// Only once every hook is manned: an empty hook is the thing to fix first, and the hook watch says so.
+		boolean hooksAllManned = situation.parked && !confirmedFull && boat.hookCount() > 0
+			&& HookWatch.emptyHooks(boat.hookCount(), hookSlots.size(), playerAtHook) == 0;
+		if (crewSwap.update(now, hooksAllManned ? betterCrew(tick) : null) != null)
+		{
+			notices.add(Notice.BETTER_CREW);
+		}
+
 		if (estimate.getState() == AfkEstimate.State.LEVEL_TOO_LOW && crewOnHooks)
 		{
 			if (!boostDropNotified)
@@ -853,6 +868,7 @@ public final class AfkSession
 		view.spareCrew = spare;
 		view.spareCrewCannotUseHook = spare == 0 && !roster.idle(tick).isEmpty();
 		view.reminder = hookWatch.getReason();
+		view.betterCrew = crewSwap.standing();
 		view.wrecksUp = eligible.size();
 		view.higherWrecksUp = higherWrecksUp;
 		view.wreckWindowMillis = est.wreckWindowMillis;
@@ -869,6 +885,63 @@ public final class AfkSession
 	}
 
 	/** The message for a hold alert, with the count when it is known and not just the game's word. */
+	/** The swap to suggest, in words, or null when none stands. */
+	public String betterCrewMessage()
+	{
+		CrewSwapWatch.Suggestion swap = crewSwap.standing();
+		if (swap == null)
+		{
+			return null;
+		}
+		return swap.in.getName() + " (deckhandiness " + swap.inDeckhandiness + ") is free: put them on the hook instead of "
+			+ swap.out.getName() + " (" + swap.outDeckhandiness + ").";
+	}
+
+	/**
+	 * The weakest crewmate on a hook and the strongest idle crewmate who could take that hook, when
+	 * the idle one is deckhandier; null otherwise. A crewmate must meet the hook's deckhandiness to
+	 * work it, and a keg of whirlpool surprise lifts everyone to at least 2.
+	 */
+	private CrewSwapWatch.Suggestion betterCrew(int tick)
+	{
+		int floor = boat.hasWhirlpoolKeg() ? 2 : 0;
+		Crewmate weakest = null;
+		int weakestDeckhandiness = Integer.MAX_VALUE;
+		SalvagingHookTier tier = null;
+		for (int slot : roster.hookSlots(tick))
+		{
+			Crewmate crewmate = roster.getCrewmate(slot);
+			if (crewmate == null)
+			{
+				continue;
+			}
+			int d = effectiveDeckhandiness(crewmate);
+			if (d < weakestDeckhandiness)
+			{
+				weakest = crewmate;
+				weakestDeckhandiness = d;
+				tier = boat.tierForAssignment(roster.getPosition(slot));
+			}
+		}
+		if (weakest == null)
+		{
+			return null;
+		}
+		int needed = tier == null ? 1 : tier.getDeckhandiness();
+		Crewmate best = null;
+		int bestDeckhandiness = weakestDeckhandiness;
+		for (Crewmate crewmate : roster.idle(tick))
+		{
+			int d = effectiveDeckhandiness(crewmate);
+			if (d > bestDeckhandiness && Math.max(floor, crewmate.effectiveDeckhandiness()) >= needed)
+			{
+				best = crewmate;
+				bestDeckhandiness = d;
+			}
+		}
+		return best == null ? null : new CrewSwapWatch.Suggestion(weakest, best, weakestDeckhandiness, bestDeckhandiness);
+	}
+
 	public String holdMessage(Notice notice)
 	{
 		String count = "";

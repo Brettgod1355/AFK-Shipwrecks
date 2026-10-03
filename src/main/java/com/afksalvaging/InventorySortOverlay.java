@@ -48,6 +48,11 @@ public class InventorySortOverlay extends WidgetItemOverlay
 		{
 			return;
 		}
+		// With the hold open only the deposits are boxed: that is what the panel beside it is for (owner, 2026-10-03).
+		if (rule != SortRule.HOLD && plugin.isCargoInterfaceOpen())
+		{
+			return;
+		}
 		Rectangle bounds = item.getCanvasBounds();
 		if (bounds == null)
 		{

@@ -236,18 +236,32 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "betterCrewNotification",
+		name = "Better crewmate free",
+		description = "A crewmate with more deckhandiness is sitting idle while a weaker one works a hook: say who to "
+			+ "swap, once, after the pair has stood for ten seconds. Only when every hook is manned; an empty hook "
+			+ "gets its own reminder first.",
+		section = REMINDERS,
+		position = 3
+	)
+	default Notification betterCrewNotification()
+	{
+		return Notification.ON;
+	}
+
+	@ConfigItem(
 		keyName = "reminderGraceSeconds",
 		name = "Grace period",
 		description = "How long a hook may stand empty before the first reminder. Using the cargo hold buys a "
 			+ "little extra; settling in to sort shortens it.",
 		section = REMINDERS,
-		position = 3
+		position = 4
 	)
 	@Range(min = 3, max = 60)
 	@Units(Units.SECONDS)
 	default int reminderGraceSeconds()
 	{
-		return 15;
+		return 10;
 	}
 
 	@ConfigItem(
@@ -255,7 +269,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Repeat every",
 		description = "Remind again this often while the hook stays empty. 0 reminds once.",
 		section = REMINDERS,
-		position = 4
+		position = 5
 	)
 	@Range(min = 0, max = 600)
 	@Units(Units.SECONDS)
@@ -270,7 +284,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Notify shortly before the game logs you out for idling while you are on your own boat, so a "
 			+ "full-hold alert does not arrive after you are gone.",
 		section = REMINDERS,
-		position = 5
+		position = 6
 	)
 	default Notification idleLogoutNotification()
 	{
@@ -282,7 +296,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Warn before logout",
 		description = "How long before the idle logout to warn. 0 never warns.",
 		section = REMINDERS,
-		position = 6
+		position = 7
 	)
 	@Range(min = 0, max = 600)
 	@Units(Units.SECONDS)

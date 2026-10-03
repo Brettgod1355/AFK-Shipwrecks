@@ -337,6 +337,53 @@ public class AfkSessionTest
 	}
 
 	@Test
+	public void aStrongerIdleCrewmateIsSuggestedOnceForAWeakerOneOnAHook()
+	{
+		session.roster().setCrewmate(0, ADA);
+		session.roster().setPosition(0, CrewAssignment.HOOK_SLOOP_1);
+		session.roster().setCrewmate(1, JOLLY);
+		session.roster().setPosition(1, CrewAssignment.HOOK_SLOOP_2);
+		session.roster().setCrewmate(2, JENKINS);
+		AfkSession.View view = ticks(10);
+		// Ten seconds of grace first, in case the crew are only being shuffled (the boat also has to
+		// settle as parked before the watch starts counting).
+		assertEquals(0, count(Notice.BETTER_CREW));
+		assertNull(view.betterCrew);
+		view = ticks(20);
+		assertEquals(1, count(Notice.BETTER_CREW));
+		assertEquals(JENKINS, view.betterCrew.in);
+		assertEquals(ADA, view.betterCrew.out);
+		assertTrue(session.betterCrewMessage().startsWith("Cabin Boy Jenkins (deckhandiness 4) is free"));
+		// Said once; it stands on the overlay but is not repeated.
+		ticks(40);
+		assertEquals(1, count(Notice.BETTER_CREW));
+		// Once swapped, nothing more to say.
+		session.roster().setPosition(0, CrewAssignment.NONE);
+		session.roster().setPosition(2, CrewAssignment.HOOK_SLOOP_1);
+		view = ticks(2);
+		assertNull(view.betterCrew);
+		assertNull(session.betterCrewMessage());
+	}
+
+	@Test
+	public void noSwapIsSuggestedWhileAHookIsEmptyOrTheIdleCrewmateIsNoBetter()
+	{
+		// One hook empty: filling it comes first, and the hook watch says so.
+		session.roster().setCrewmate(0, ADA);
+		session.roster().setPosition(0, CrewAssignment.HOOK_SLOOP_1);
+		session.roster().setCrewmate(2, JENKINS);
+		ticks(40);
+		assertEquals(0, count(Notice.BETTER_CREW));
+		// Both hooks manned by the strong pair, a weak one idle: nothing to gain.
+		session.roster().setPosition(0, CrewAssignment.NONE);
+		session.roster().setPosition(2, CrewAssignment.HOOK_SLOOP_1);
+		session.roster().setCrewmate(1, JOLLY);
+		session.roster().setPosition(1, CrewAssignment.HOOK_SLOOP_2);
+		ticks(40);
+		assertEquals(0, count(Notice.BETTER_CREW));
+	}
+
+	@Test
 	public void theWreckSinksAndTheTimerWaits()
 	{
 		twoCrewOnHooks();

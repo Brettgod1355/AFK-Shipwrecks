@@ -1864,6 +1864,13 @@ public class AfkSalvagingPlugin extends Plugin
 				reminderShownAt = now;
 				notifier.notify(resolved(config.hookIdleNotification()), "Your salvaging hook is idle and a wreck is up. Click the hook, or assign a crewmate.");
 				break;
+			case BETTER_CREW:
+				String swap = session.betterCrewMessage();
+				if (swap != null)
+				{
+					notifier.notify(resolved(config.betterCrewNotification()), swap);
+				}
+				break;
 			case BOOST_DROPPED:
 				int needed = session.view().levelNeeded;
 				notifier.notify(resolved(config.boostDroppedNotification()), "Your crew stopped salvaging: your Sailing level is too low for this wreck"

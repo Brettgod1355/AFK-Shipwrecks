@@ -31,6 +31,9 @@ stopped, and the fact that your own hook does not restart itself.
   grace period it reminds you: "A salvaging hook is empty. Assign a crewmate to it." If nobody
   aboard can take the hook (a crewmate needs enough deckhandiness for it) and a wreck is up, it
   asks you to click the hook instead, because unlike your crew you do not restart by yourself.
+  And if a crewmate with more deckhandiness is sitting idle while a weaker one works a hook, it
+  says who to swap, once the pair has stood ten seconds, and the overlay shows a Swap line until
+  you do. That one only speaks when every hook is manned; an empty hook comes first.
 - **Crew stopped.** Crew salvage on your level, boosted or not. If it drops below what the wreck
   needs they stop; the plugin says so.
 - **Full-hold alert.** Sound, tray popup, screen flash, focus, whatever you set up in RuneLite,
@@ -80,9 +83,9 @@ stopped, and the fact that your own hook does not restart itself.
   plugin knows them from the wiki's list and learns the game's own answer every time you open the
   hold. Shift-right-click an item and its AFK Salvaging entry opens to Keep, Deposit, Alch, Drop and Unmark; pick one
   to mark it, or add it by name in the Sorting tab, and take it off again there. The boxes are only ever boxes: nothing is
-  dropped, alched or moved for you, and the menu entries they add send nothing to the game. The boxes
-  also show in the cargo hold's own inventory panel while the hold is open, so what to deposit
-  stands out right where you deposit it.
+  dropped, alched or moved for you, and the menu entries they add send nothing to the game. While
+  the cargo hold is open only the Deposit boxes show, in the inventory panel beside it, so what to
+  deposit stands out right where you deposit it and nothing else gets in the way.
 - **Says when it was updated.** The first time you log in after the Plugin Hub has updated the
   plugin, one line in chat says what the new version brings. A setting turns it off.
 
@@ -126,9 +129,10 @@ for a wreck, stay); show clock time; clock format (12-hour or 24-hour); count sa
 `596, 597`); salvaging world tip; salvaging world alert (a flashing notice mid-screen while you wait for a
 wreck off those worlds, on by default).
 
-**Reminders**: four RuneLite notifications you can shape separately (hook empty with a crewmate
-free; your hook is idle; crew stopped because your level is too low; idle logout coming), the
-grace period before the first reminder (15 s by default; using the hold buys a little more,
+**Reminders**: five RuneLite notifications you can shape separately (hook empty with a crewmate
+free; your hook is idle; a better crewmate is free; crew stopped because your level is too low;
+idle logout coming), the
+grace period before the first reminder (10 s by default; using the hold buys a little more,
 settling in to sort shortens it), how often to repeat, and how long before the idle logout to
 warn (60 s; 0 never).
 

@@ -111,6 +111,11 @@ public class AfkSalvagingOverlay extends OverlayPanel
 		if (aboardOwnBoat && config.showHooks() && view.hookCount > 0)
 		{
 			lines.add(hooksLine(view));
+			if (view.betterCrew != null)
+			{
+				lines.add(new Line("Swap", view.betterCrew.in.shortName() + " for " + view.betterCrew.out.shortName()
+					+ " (" + view.betterCrew.inDeckhandiness + " vs " + view.betterCrew.outDeckhandiness + ")", amber));
+			}
 		}
 		if (aboardOwnBoat && config.showWrecks() && view.hookCount > 0)
 		{
