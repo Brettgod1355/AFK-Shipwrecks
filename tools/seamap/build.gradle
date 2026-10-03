@@ -1,0 +1,31 @@
+// Builds the sea map the plugin uses for sailing distances. Run from the repository root:
+//   ./gradlew -p tools/seamap run --args="<cache dir> <output dir> [keys.json]"
+// It reads the game cache with RuneLite's cache library and writes src/main/resources/seamap.bin
+// plus a preview image to look at. See SeaMapDumper.java for what the map means.
+plugins {
+    id 'java'
+    id 'application'
+}
+
+repositories {
+    maven {
+        url = 'https://repo.runelite.net'
+        content { includeGroupByRegex("net[.]runelite.*") }
+    }
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'net.runelite:cache:1.13.1'
+    runtimeOnly 'org.slf4j:slf4j-simple:1.7.25'
+}
+
+application {
+    mainClass = 'SeaMapDumper'
+    applicationDefaultJvmArgs = ['-Xmx2g']
+}
+
+// The tool reads the spot and dock lists straight from the plugin's sources.
+run {
+    workingDir = file('../..')
+}

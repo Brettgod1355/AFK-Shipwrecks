@@ -11,6 +11,20 @@ build/runtime dependency and is not bundled in the plugin JAR. Game identifiers
 (item containers, objects, NPCs, animations, varbits, database tables and interfaces)
 are referenced from the RuneLite API's `net.runelite.api.gameval` classes at compile time.
 
+## The sea map (game data, read with RuneLite's cache library)
+
+`src/main/resources/com/afksalvaging/seamap.bin` records which four-tile cells of the game's
+surface are open water a boat can reach, and is what the sidebar's sailing distances are measured
+over. It is generated, not drawn: `tools/seamap/SeaMapDumper.java` reads the Old School RuneScape
+game cache (the same files the client downloads) with RuneLite's `cache` library
+([runelite/runelite](https://github.com/runelite/runelite), module `cache`, version 1.13.1,
+BSD 2-Clause) and the per-region XTEA keys published by the
+[OpenRS2 Archive](https://archive.openrs2.org/), and floods outward from the salvaging spots over
+every unblocked tile whose ground overlay is water. The map data itself is Jagex's; this file
+holds only one bit per cell derived from it. The approach, flooding the cache's tile flags, follows
+what the [Shortest Path](https://github.com/Skretzo/shortest-path) plugin does for its walking
+collision map; no code was copied from it.
+
 ## Data taken from RuneLite's World Map plugin (BSD 2-Clause)
 
 The salvaging hotspot list in `SalvagingSpot.java` (29 world points and the eight salvage names)

@@ -6,6 +6,7 @@
 package com.afksalvaging;
 
 import java.util.function.Function;
+import java.util.function.ToIntFunction;
 import net.runelite.api.Quest;
 import net.runelite.api.QuestState;
 import net.runelite.api.coords.WorldPoint;
@@ -153,7 +154,16 @@ public enum Mooring
 	/** The nearest dock the player can disembark at, or null when none is. */
 	public static Mooring nearestUsable(WorldPoint from, int realSailingLevel, Function<Quest, QuestState> questState)
 	{
-		if (from == null)
+		return nearestUsable(from == null ? null : mooring -> mooring.tilesFrom(from), realSailingLevel, questState);
+	}
+
+	/**
+	 * The nearest usable dock by whatever measure the caller has, by sea or in a straight line; a
+	 * dock at {@link Integer#MAX_VALUE} is out of reach and never chosen. Null when none is.
+	 */
+	public static Mooring nearestUsable(ToIntFunction<Mooring> distance, int realSailingLevel, Function<Quest, QuestState> questState)
+	{
+		if (distance == null)
 		{
 			return null;
 		}
@@ -161,7 +171,7 @@ public enum Mooring
 		int bestDistance = Integer.MAX_VALUE;
 		for (Mooring mooring : values())
 		{
-			int d = mooring.tilesFrom(from);
+			int d = distance.applyAsInt(mooring);
 			if (d < bestDistance && mooring.usable(realSailingLevel, questState))
 			{
 				best = mooring;
@@ -194,7 +204,13 @@ public enum Mooring
 	/** The dock nearest a point, or null when there is no point. */
 	public static Mooring nearest(WorldPoint from)
 	{
-		if (from == null)
+		return nearest(from == null ? null : mooring -> mooring.tilesFrom(from));
+	}
+
+	/** The nearest dock by the caller's measure, docks at {@link Integer#MAX_VALUE} never chosen; null when there is none. */
+	public static Mooring nearest(ToIntFunction<Mooring> distance)
+	{
+		if (distance == null)
 		{
 			return null;
 		}
@@ -202,7 +218,7 @@ public enum Mooring
 		int bestDistance = Integer.MAX_VALUE;
 		for (Mooring mooring : values())
 		{
-			int d = mooring.tilesFrom(from);
+			int d = distance.applyAsInt(mooring);
 			if (d < bestDistance)
 			{
 				best = mooring;

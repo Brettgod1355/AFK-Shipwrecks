@@ -42,7 +42,7 @@ public class MooringTest
 		assertEquals(10, Mooring.PORT_SARIM.tilesFrom(new WorldPoint(3060, 3195, 0)));
 		// Out at the Unkah Barracuda spot, the ruins are the nearest dock.
 		assertEquals(Mooring.RUINS_OF_UNKAH, Mooring.nearest(SalvagingSpot.BARRACUDA_UNKAH.getPoint()));
-		assertNull(Mooring.nearest(null));
+		assertNull(Mooring.nearest((WorldPoint) null));
 	}
 
 	@Test
@@ -87,7 +87,7 @@ public class MooringTest
 		assertTrue(usable != Mooring.PRIFDDINAS);
 		assertTrue(usable.usable(99, nothingDone));
 		assertNull("nothing at level 0", Mooring.nearestUsable(nearPrifddinas, 0, nothingDone));
-		assertNull(Mooring.nearestUsable(null, 99, nothingDone));
+		assertNull(Mooring.nearestUsable((WorldPoint) null, 99, nothingDone));
 	}
 
 	@Test

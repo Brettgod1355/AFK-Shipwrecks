@@ -7,7 +7,9 @@ package com.afksalvaging;
 
 import com.google.inject.Provides;
 import java.awt.Color;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.EnumMap;
@@ -17,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.ToIntFunction;
 import javax.inject.Inject;
 import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
@@ -83,6 +86,8 @@ import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 import net.runelite.client.util.ImageUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import net.runelite.client.util.Text;
 import net.runelite.http.api.item.ItemPrice;
 import net.runelite.http.api.worlds.World;
@@ -112,6 +117,8 @@ import org.slf4j.LoggerFactory;
 )
 public class AfkSalvagingPlugin extends Plugin
 {
+	private static final Logger log = LoggerFactory.getLogger(AfkSalvagingPlugin.class);
+
 	private static final Logger LOG = LoggerFactory.getLogger(AfkSalvagingPlugin.class);
 
 	/** RuneScape-profile config key prefix for the remembered count of each boat slot. */
@@ -217,6 +224,13 @@ public class AfkSalvagingPlugin extends Plugin
 	private SalvagingSpot pickedSpot;
 	/** The route to a salvaging spot that Shortest Path is drawing for us, or null. */
 	private SpotRoute spotRoute;
+	/** The sea, for sailing distances; null when its map could not be read. */
+	private SeaMap seaMap;
+	/** Sailing distances to every dock from where the player last stood by the water, for the nearest dock. */
+	private volatile Map<Mooring, Integer> seaToDocks = Collections.emptyMap();
+	/** The sea cell the distances were last worked out from, so they are only redone when the player moves on. */
+	private int seaFromCell = Integer.MIN_VALUE;
+	private Future<?> seaRequest;
 
 	/** The sidebar entry and its panel, present while the setting is on. */
 	private NavigationButton spotsButton;
@@ -270,6 +284,15 @@ public class AfkSalvagingPlugin extends Plugin
 	{
 		clearState();
 		noteVersion();
+		try
+		{
+			seaMap = SeaMap.load();
+		}
+		catch (IOException ex)
+		{
+			log.warn("The sea map could not be read; the sidebar will give no sailing distances", ex);
+			seaMap = null;
+		}
 		overlayManager.add(overlay);
 		overlayManager.add(boxOverlay);
 		overlayManager.add(sortOverlay);
@@ -297,6 +320,13 @@ public class AfkSalvagingPlugin extends Plugin
 			worldRequest.cancel(false);
 			worldRequest = null;
 		}
+		if (seaRequest != null)
+		{
+			seaRequest.cancel(false);
+			seaRequest = null;
+		}
+		seaFromCell = Integer.MIN_VALUE;
+		seaToDocks = Collections.emptyMap();
 		removeSidebar();
 		pendingMapTarget = null;
 		spotRoute = null;
@@ -714,9 +744,11 @@ public class AfkSalvagingPlugin extends Plugin
 		if (spotsPanel != null && tick % SIDEBAR_REFRESH_TICKS == 0)
 		{
 			spotsPanel.setPosition(in.playerPoint);
-			Mooring nearest = Mooring.nearest(in.playerPoint);
+			updateSeaDistances(in.playerPoint);
+			ToIntFunction<Mooring> toDock = dockDistance(in.playerPoint);
+			Mooring nearest = Mooring.nearest(toDock);
 			Mooring usable = config.dockRequirements()
-				? Mooring.nearestUsable(in.playerPoint, client.getRealSkillLevel(Skill.SAILING), quest -> quest.getState(client))
+				? Mooring.nearestUsable(toDock, client.getRealSkillLevel(Skill.SAILING), quest -> quest.getState(client))
 				: nearest;
 			spotsPanel.setDock(usable, nearest);
 			spotsPanel.setStats(statsLine());
@@ -1426,6 +1458,77 @@ public class AfkSalvagingPlugin extends Plugin
 			spotRoute = spot == null ? null : new SpotRoute(spot);
 			setSpotStatus(sent + what + ".", false);
 		});
+	}
+
+	/**
+	 * Works the sailing distances out again once the player has moved to another cell of the sea
+	 * map, off the client thread: one search over the sea finds every spot and dock at once.
+	 */
+	private void updateSeaDistances(WorldPoint from)
+	{
+		SalvagingSpotPanel panel = spotsPanel;
+		if (seaMap == null || panel == null)
+		{
+			return;
+		}
+		int cell = from == null ? -1 : seaMap.nearestCell(from);
+		if (cell == seaFromCell || (seaRequest != null && !seaRequest.isDone()))
+		{
+			return;
+		}
+		seaFromCell = cell;
+		if (cell < 0)
+		{
+			seaToDocks = Collections.emptyMap();
+			panel.setSeaDistances(Collections.emptyMap(), Collections.emptyMap(), false);
+			return;
+		}
+		boolean onTheWater = seaMap.isSea(from);
+		seaRequest = executor.submit(() ->
+		{
+			List<WorldPoint> targets = new ArrayList<>();
+			for (SalvagingSpot spot : SalvagingSpot.values())
+			{
+				targets.add(spot.getPoint());
+			}
+			for (Mooring dock : Mooring.values())
+			{
+				targets.add(dock.getPoint());
+			}
+			int[] tiles = seaMap.distances(from, targets);
+			Map<SalvagingSpot, Integer> spots = new EnumMap<>(SalvagingSpot.class);
+			Map<Mooring, Integer> docks = new EnumMap<>(Mooring.class);
+			int i = 0;
+			for (SalvagingSpot spot : SalvagingSpot.values())
+			{
+				spots.put(spot, tiles[i++]);
+			}
+			for (Mooring dock : Mooring.values())
+			{
+				docks.put(dock, tiles[i++]);
+			}
+			seaToDocks = Collections.unmodifiableMap(docks);
+			panel.setSeaDistances(Collections.unmodifiableMap(spots), seaToDocks, onTheWater);
+		});
+	}
+
+	/** How far each dock is from the player: sailed when they are on the water, walked, as a straight line, when not. */
+	private ToIntFunction<Mooring> dockDistance(WorldPoint from)
+	{
+		if (from == null)
+		{
+			return null;
+		}
+		Map<Mooring, Integer> bySea = seaToDocks;
+		if (seaMap != null && seaMap.isSea(from) && !bySea.isEmpty())
+		{
+			return dock ->
+			{
+				Integer tiles = bySea.get(dock);
+				return tiles == null || tiles < 0 ? Integer.MAX_VALUE : tiles;
+			};
+		}
+		return dock -> dock.tilesFrom(from);
 	}
 
 	/** Takes a route to a salvaging spot off the screen once the player is there or has left the boat. */

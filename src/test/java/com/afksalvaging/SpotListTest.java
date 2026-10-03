@@ -22,7 +22,7 @@ public class SpotListTest
 	@Test
 	public void allListsEverySpotInCatalogueOrder()
 	{
-		List<SalvagingSpot> spots = SpotList.arrange(SpotList.FILTER_ALL, 0, NONE, false, null);
+		List<SalvagingSpot> spots = SpotList.arrange(SpotList.FILTER_ALL, 0, NONE, false, (WorldPoint) null);
 		assertEquals(SalvagingSpot.values().length, spots.size());
 		assertEquals(SalvagingSpot.SMALL_PANDEMONIUM, spots.get(0));
 	}
@@ -30,7 +30,7 @@ public class SpotListTest
 	@Test
 	public void aWreckFilterKeepsOnlyThatWreck()
 	{
-		List<SalvagingSpot> spots = SpotList.arrange("BARRACUDA", 0, NONE, false, null);
+		List<SalvagingSpot> spots = SpotList.arrange("BARRACUDA", 0, NONE, false, (WorldPoint) null);
 		assertEquals(6, spots.size());
 		for (SalvagingSpot spot : spots)
 		{
@@ -41,23 +41,23 @@ public class SpotListTest
 	@Test
 	public void myLevelKeepsWhatTheLevelAllowsAndNothingWhenLoggedOut()
 	{
-		for (SalvagingSpot spot : SpotList.arrange(SpotList.FILTER_MY_LEVEL, 35, NONE, false, null))
+		for (SalvagingSpot spot : SpotList.arrange(SpotList.FILTER_MY_LEVEL, 35, NONE, false, (WorldPoint) null))
 		{
 			assertTrue(spot.name(), spot.getSailingLevel() <= 35);
 		}
-		assertEquals(11, SpotList.arrange(SpotList.FILTER_MY_LEVEL, 35, NONE, false, null).size());
-		assertTrue(SpotList.arrange(SpotList.FILTER_MY_LEVEL, 0, NONE, false, null).isEmpty());
+		assertEquals(11, SpotList.arrange(SpotList.FILTER_MY_LEVEL, 35, NONE, false, (WorldPoint) null).size());
+		assertTrue(SpotList.arrange(SpotList.FILTER_MY_LEVEL, 0, NONE, false, (WorldPoint) null).isEmpty());
 	}
 
 	@Test
 	public void favouritesComeFirstAndCanBeTheWholeList()
 	{
 		Set<SalvagingSpot> favourites = EnumSet.of(SalvagingSpot.MERCHANT_SUNBLEAK_ISLAND, SalvagingSpot.LARGE_WEISS);
-		List<SalvagingSpot> all = SpotList.arrange(SpotList.FILTER_ALL, 0, favourites, false, null);
+		List<SalvagingSpot> all = SpotList.arrange(SpotList.FILTER_ALL, 0, favourites, false, (WorldPoint) null);
 		assertEquals(SalvagingSpot.LARGE_WEISS, all.get(0));
 		assertEquals(SalvagingSpot.MERCHANT_SUNBLEAK_ISLAND, all.get(1));
 		assertEquals(SalvagingSpot.SMALL_PANDEMONIUM, all.get(2));
-		assertEquals(2, SpotList.arrange(SpotList.FILTER_FAVOURITES, 0, favourites, false, null).size());
+		assertEquals(2, SpotList.arrange(SpotList.FILTER_FAVOURITES, 0, favourites, false, (WorldPoint) null).size());
 	}
 
 	@Test
@@ -73,7 +73,7 @@ public class SpotListTest
 		Set<SalvagingSpot> favourite = EnumSet.of(SalvagingSpot.LARGE_WEISS);
 		assertEquals(SalvagingSpot.LARGE_WEISS, SpotList.arrange(SpotList.FILTER_ALL, 0, favourite, true, atUnkah).get(0));
 		// Without a position, nearest first falls back to the catalogue order.
-		assertEquals(SalvagingSpot.SMALL_PANDEMONIUM, SpotList.arrange(SpotList.FILTER_ALL, 0, NONE, true, null).get(0));
+		assertEquals(SalvagingSpot.SMALL_PANDEMONIUM, SpotList.arrange(SpotList.FILTER_ALL, 0, NONE, true, (WorldPoint) null).get(0));
 	}
 
 	@Test

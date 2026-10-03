@@ -10,6 +10,7 @@ import java.util.EnumSet;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.ToIntFunction;
 import net.runelite.api.coords.WorldPoint;
 
 /**
@@ -63,6 +64,19 @@ public final class SpotList
 	public static List<SalvagingSpot> arrange(String filterKey, int sailingLevel, Set<SalvagingSpot> favourites,
 		boolean nearestFirst, WorldPoint from)
 	{
+		return arrange(filterKey, sailingLevel, favourites, nearestFirst,
+			from == null ? null : s -> Mooring.distance(from, s.getPoint()));
+	}
+
+	/**
+	 * The spots to list, in order, with the distance measured however the caller likes: by sea
+	 * when the player is on it, in a straight line otherwise.
+	 *
+	 * @param distance tiles to each spot, or null when unknown (then the order is by wreck)
+	 */
+	public static List<SalvagingSpot> arrange(String filterKey, int sailingLevel, Set<SalvagingSpot> favourites,
+		boolean nearestFirst, ToIntFunction<SalvagingSpot> distance)
+	{
 		List<SalvagingSpot> spots = new ArrayList<>();
 		ShipwreckType wreck = wreckOf(filterKey);
 		for (SalvagingSpot spot : SalvagingSpot.values())
@@ -82,9 +96,9 @@ public final class SpotList
 			spots.add(spot);
 		}
 		Comparator<SalvagingSpot> order = Comparator.comparing((SalvagingSpot s) -> favourites.contains(s) ? 0 : 1);
-		if (nearestFirst && from != null)
+		if (nearestFirst && distance != null)
 		{
-			order = order.thenComparingInt(s -> Mooring.distance(from, s.getPoint()));
+			order = order.thenComparingInt(distance);
 		}
 		spots.sort(order.thenComparingInt(Enum::ordinal));
 		return spots;

@@ -161,10 +161,15 @@ plugin message bus. If Shortest Path is not installed, or is installed but switc
 says so in red and the same line appears in your chat, with what to do about it. With a spot
 marked Auto, stepping from a dock onto your own boat sends that spot to Shortest Path by itself and
 says so in chat; logging in aboard, hopping worlds and leaving the boat at sea do not count as
-boarding. The nearest dock is the nearest of the same moorings the World Map plugin draws, measured
-as the crow flies from where you stand, and so is the "tiles in a straight line" under each spot and
-the nearest-first order: none of them know about the land in the way, so a spot on the far side of
-a peninsula reads much closer than the voyage really is. A route to a spot, whether you pressed
+boarding. The "tiles by sea" under each spot is a sailing distance: the plugin carries a small map
+of the water (the surface cut into four-tile cells, each marked sea or not, built from the game's
+own map data by the tool in `tools/seamap`) and finds the shortest way over it from where you are,
+so a spot on the far side of a peninsula reads as the voyage round it rather than the crow's flight
+across. It is a few tiles out at most, and it shows once you are on the water or at a dock; inland
+there is no sea to measure from, so the rows show no distance. Sort: nearest first uses the same
+distances. The nearest dock is the nearest of the same moorings the World Map plugin draws: by sea
+when you are afloat, and as the crow flies when you are ashore, since then you walk to it. A route
+to a spot, whether you pressed
 Route or it was the Auto spot, is cleared again once you pull up to one of the spot's wrecks or
 step off your boat, so the line does not hang about after it has done its job.
 

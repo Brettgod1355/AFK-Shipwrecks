@@ -11,6 +11,7 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
@@ -119,6 +120,11 @@ public class SalvagingSpotPanel extends PluginPanel
 	private Mooring dock;
 	private Mooring nearestDock;
 	private WorldPoint position;
+	/** Sailing distances from the player to each spot and dock; empty when the sea is out of reach. */
+	private Map<SalvagingSpot, Integer> seaToSpots = Collections.emptyMap();
+	private Map<Mooring, Integer> seaToDocks = Collections.emptyMap();
+	/** Whether the player is on the water, when the way to a dock is sailed rather than walked. */
+	private boolean atSea;
 	private boolean dockShownSetting = true;
 	/** Set while the dropdowns are being put to a stored value, so that does not count as a choice. */
 	private boolean loading;
@@ -551,6 +557,30 @@ public class SalvagingSpotPanel extends PluginPanel
 		});
 	}
 
+	/**
+	 * Sailing distances from where the player is, in tiles, {@link SeaMap#UNREACHABLE} where no sea
+	 * joins them; empty maps when the player is too far from the water for any. Safe to call from
+	 * any thread.
+	 */
+	public void setSeaDistances(Map<SalvagingSpot, Integer> spots, Map<Mooring, Integer> docks, boolean onTheWater)
+	{
+		SwingUtilities.invokeLater(() ->
+		{
+			seaToSpots = spots;
+			seaToDocks = docks;
+			atSea = onTheWater;
+			refreshDock();
+			if (nearestFirst() && !arranged().equals(shown))
+			{
+				rebuild();
+			}
+			else
+			{
+				refreshDistances();
+			}
+		});
+	}
+
 	/** Whether the nearest dock block is shown at all (a setting). */
 	public void setDockShown(boolean shown)
 	{
@@ -583,7 +613,19 @@ public class SalvagingSpotPanel extends PluginPanel
 
 	private List<SalvagingSpot> arranged()
 	{
+		if (nearestFirst() && !seaToSpots.isEmpty())
+		{
+			return SpotList.arrange(filterKey(), sailingLevel, favourites, true, this::seaOrder);
+		}
+		// Off the water the sea distances are unknown, so the order falls back to the straight line.
 		return SpotList.arrange(filterKey(), sailingLevel, favourites, nearestFirst(), position);
+	}
+
+	/** Sailing distance for ordering: spots the sea does not reach go last. */
+	private int seaOrder(SalvagingSpot spot)
+	{
+		Integer bySea = seaToSpots.get(spot);
+		return bySea == null || bySea < 0 ? Integer.MAX_VALUE : bySea;
 	}
 
 	private void withDock(Consumer<Mooring> action)
@@ -605,7 +647,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		if (dock != null)
 		{
 			text.append("<b>Nearest dock you can use:</b> ").append(dock.getDisplayName())
-				.append("<br>").append(tiles(dock.tilesFrom(position))).append(" in a straight line");
+				.append("<br>").append(dockDistance(dock));
 		}
 		else
 		{
@@ -614,7 +656,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		if (nearestDock != null && nearestDock != dock)
 		{
 			text.append("<br><i>Nearer but not yet: ").append(nearestDock.getDisplayName()).append(", ")
-				.append(tiles(nearestDock.tilesFrom(position))).append(": needs ")
+				.append(dockDistance(nearestDock)).append(": needs ")
 				.append(nearestDock.requirementText()).append(".</i>");
 		}
 		dockLabel.setText(html(text.toString(), ROW_TEXT_WIDTH));
@@ -633,9 +675,18 @@ public class SalvagingSpotPanel extends PluginPanel
 		}
 	}
 
+	/** The sailing distance to a spot, or nothing when the player is too far from the sea to have one. */
 	private String distanceText(SalvagingSpot spot)
 	{
-		return position == null ? "" : tiles(Mooring.distance(position, spot.getPoint())) + " in a straight line";
+		Integer bySea = seaToSpots.get(spot);
+		return bySea == null || bySea < 0 ? "" : tiles(bySea) + " by sea";
+	}
+
+	/** On the water a dock is so many tiles' sailing away; on land it is walked to, so a straight line has to do. */
+	private String dockDistance(Mooring dock)
+	{
+		Integer bySea = atSea ? seaToDocks.get(dock) : null;
+		return bySea != null && bySea >= 0 ? tiles(bySea) + " by sea" : tiles(dock.tilesFrom(position)) + " in a straight line";
 	}
 
 	private static String tiles(int tiles)
