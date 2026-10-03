@@ -5,36 +5,33 @@
  */
 package com.afksalvaging;
 
-import static org.junit.Assert.assertArrayEquals;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 public class MarkStoreTest
 {
 	@Test
-	public void aCharactersStoredKeySplitsIntoProfileAndSetting()
+	public void everyListAndTheExcludedSetHaveTheirOwnSetting()
 	{
-		assertArrayEquals(new String[]{"rsprofile.eLGRJxqN", "sortDropIds"},
-			MarkStore.profileAndKey("cargofull.rsprofile.eLGRJxqN.sortDropIds"));
-		assertNull("a plugin-wide key", MarkStore.profileAndKey("cargofull.sortDropIds"));
-		assertNull("another plugin's key", MarkStore.profileAndKey("sailing.rsprofile.eLGRJxqN.sortDropIds"));
-		assertNull("no setting after the profile", MarkStore.profileAndKey("cargofull.rsprofile.eLGRJxqN."));
-		assertNull("no setting at all", MarkStore.profileAndKey("cargofull.rsprofile.eLGRJxqN"));
-	}
-
-	@Test
-	public void everyListHasItsOwnSettingAndBack()
-	{
+		List<String> keys = MarkStore.allKeys();
+		assertEquals(SortRule.values().length + 1, keys.size());
+		assertEquals(new HashSet<>(keys).size(), keys.size());
 		for (SortRule rule : SortRule.values())
 		{
-			assertEquals(rule, MarkStore.ruleFor(MarkStore.keyFor(rule)));
+			assertTrue(keys.contains(MarkStore.keyFor(rule)));
 		}
-		assertNull(MarkStore.ruleFor("spots.favourites"));
-		assertTrue(MarkStore.isListKey(MarkStore.EXCLUDED_KEY));
-		assertNull(MarkStore.ruleFor(MarkStore.EXCLUDED_KEY));
-		assertFalse(MarkStore.isListKey("spots.favourites"));
+		assertTrue(keys.contains(MarkStore.EXCLUDED_KEY));
+		// The names the 1.0 and early 2.0 settings used, so the migration finds them.
+		Set<String> expected = new HashSet<>();
+		expected.add("sortKeepIds");
+		expected.add("sortHoldIds");
+		expected.add("sortAlchIds");
+		expected.add("sortDropIds");
+		expected.add("sortNoneIds");
+		assertEquals(expected, new HashSet<>(keys));
 	}
 }

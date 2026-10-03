@@ -893,8 +893,15 @@ public final class AfkSession
 		{
 			return null;
 		}
-		return swap.in.getName() + " (deckhandiness " + swap.inDeckhandiness + ") is free: put them on the hook instead of "
-			+ swap.out.getName() + " (" + swap.outDeckhandiness + ").";
+		return crewName(swap.in) + " (deckhandiness " + swap.inDeckhandiness + ") is free: put them on the hook instead of "
+			+ crewName(swap.out) + " (" + swap.outDeckhandiness + ").";
+	}
+
+	/** A crewmate's name, or a stand-in when the crew table could not be read for them. */
+	private static String crewName(Crewmate crewmate)
+	{
+		String name = crewmate.getName();
+		return name == null || name.trim().isEmpty() ? "A crewmate" : name;
 	}
 
 	/**
@@ -932,6 +939,11 @@ public final class AfkSession
 		int bestDeckhandiness = weakestDeckhandiness;
 		for (Crewmate crewmate : roster.idle(tick))
 		{
+			if (crewmate.getDeckhandiness() <= 0 && Crewmate.knownDeckhandiness(crewmate.getName()) <= 0)
+			{
+				// Only a guess at this one's deckhandiness: not grounds to send someone off a hook.
+				continue;
+			}
 			int d = effectiveDeckhandiness(crewmate);
 			if (d > bestDeckhandiness && Math.max(floor, crewmate.effectiveDeckhandiness()) >= needed)
 			{

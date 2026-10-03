@@ -8,7 +8,8 @@ package com.afksalvaging;
 /**
  * Says, once, when a stronger crewmate sits idle while a weaker one works a hook (owner,
  * 2026-10-03). The pair has to stand for {@link #GRACE_MILLIS} first, since crew change jobs for
- * a moment as the player shuffles them, and a new pair is a new suggestion.
+ * a moment as the player shuffles them. Once said, the same pair is never said again, however
+ * often the player steps off their hook to sort and comes back; a different pair is news.
  */
 public final class CrewSwapWatch
 {
@@ -36,50 +37,53 @@ public final class CrewSwapWatch
 		}
 	}
 
-	private Suggestion standing;
+	/** This tick's swap, or null. */
+	private Suggestion current;
+	/** The pair being timed towards an announcement, and since when. */
+	private String candidateKey;
 	private long since = -1;
-	private boolean told;
+	/** The pair last announced; it is not announced again. */
+	private String toldKey;
 
 	/**
 	 * Feeds this tick's best swap, or null when the hooks are as well crewed as they can be.
 	 *
 	 * @return the suggestion to announce now, or null
 	 */
-	public Suggestion update(long now, Suggestion current)
+	public Suggestion update(long now, Suggestion swap)
 	{
-		if (current == null)
+		current = swap;
+		if (swap == null)
 		{
-			reset();
+			candidateKey = null;
+			since = -1;
 			return null;
 		}
-		if (standing == null || !standing.key().equals(current.key()))
+		String key = swap.key();
+		if (!key.equals(candidateKey))
 		{
-			standing = current;
+			candidateKey = key;
 			since = now;
-			told = false;
 		}
-		else
+		if (key.equals(toldKey) || now - since < GRACE_MILLIS)
 		{
-			standing = current;
+			return null;
 		}
-		if (!told && now - since >= GRACE_MILLIS)
-		{
-			told = true;
-			return current;
-		}
-		return null;
+		toldKey = key;
+		return swap;
 	}
 
 	/** The swap already announced and still worth making, for the overlay; null otherwise. */
 	public Suggestion standing()
 	{
-		return told ? standing : null;
+		return current != null && current.key().equals(toldKey) ? current : null;
 	}
 
 	public void reset()
 	{
-		standing = null;
+		current = null;
+		candidateKey = null;
 		since = -1;
-		told = false;
+		toldKey = null;
 	}
 }

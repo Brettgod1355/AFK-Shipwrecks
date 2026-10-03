@@ -95,12 +95,6 @@ public enum Mooring
 	private final String note;
 
 	/**
-	 * @param sailingLevel  Sailing level to disembark here, not boostable (wiki: Mooring point)
-	 * @param quest         the quest that gates the dock, or null
-	 * @param questComplete whether the quest must be finished (true) or only started (false)
-	 * @param note          a condition the client cannot check, shown to the player, or null
-	 */
-	/**
 	 * The docking points with a bank deposit box, where the first crewmate in the registry waits on
 	 * the dock to bank the cargo hold's contents when the player steps off; the wiki calls these
 	 * ports, as against islands, and says the service is never offered on an island, bank or no
@@ -112,6 +106,12 @@ public enum Mooring
 		CIVITAS_ILLA_FORTIS, CORSAIR_COVE, ALDARIN, RUINS_OF_UNKAH, VOID_KNIGHTS_OUTPOST, PORT_ROBERTS, RED_ROCK,
 		ETCETERIA, DEEPFIN_POINT, JATIZSO, NEITIZNOT, PRIFDDINAS, PISCATORIS, LUNAR_ISLE));
 
+	/**
+	 * @param sailingLevel  Sailing level to disembark here, not boostable (wiki: Mooring point)
+	 * @param quest         the quest that gates the dock, or null
+	 * @param questComplete whether the quest must be finished (true) or only started (false)
+	 * @param note          a condition the client cannot check, shown to the player, or null
+	 */
 	Mooring(String displayName, int x, int y, int sailingLevel, Quest quest, boolean questComplete, String note)
 	{
 		this.displayName = displayName;

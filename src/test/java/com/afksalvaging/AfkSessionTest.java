@@ -366,6 +366,24 @@ public class AfkSessionTest
 	}
 
 	@Test
+	public void aSwapNeedsTheIdleCrewmateToMeetTheHookAndToReallyBeBetter()
+	{
+		// The test boat's hooks are dragon, which need deckhandiness 4: a 3 cannot take one, however weak the 1 on it.
+		Crewmate tom = new Crewmate(11, "Test Tom", 3);
+		session.roster().setCrewmate(0, ADA);
+		session.roster().setPosition(0, CrewAssignment.HOOK_SLOOP_1);
+		session.roster().setCrewmate(1, JOLLY);
+		session.roster().setPosition(1, CrewAssignment.HOOK_SLOOP_2);
+		session.roster().setCrewmate(2, tom);
+		ticks(40);
+		assertEquals(0, count(Notice.BETTER_CREW));
+		// A crewmate whose deckhandiness is only guessed at is never offered either.
+		session.roster().setCrewmate(2, new Crewmate(12, "", 0));
+		ticks(40);
+		assertEquals(0, count(Notice.BETTER_CREW));
+	}
+
+	@Test
 	public void noSwapIsSuggestedWhileAHookIsEmptyOrTheIdleCrewmateIsNoBetter()
 	{
 		// One hook empty: filling it comes first, and the hook watch says so.

@@ -153,12 +153,12 @@ and the chat lines use fixed colours, to keep the settings short.
 **Inventory sorting**: box inventory items; where (on my boat at a salvaging spot, whenever aboard,
 everywhere); the alch threshold; keep instead when the GE price beats the alch value by a margin
 (off by default); the shift-right-click AFK Salvaging menu, shown only on your own boat; whether kept items get a box at all;
-highlighting the cargo hold itself in the Deposit colour (off by default); and
-the four colours. Under Salvage spots, "Only docks I can use" turns the dock requirements check off.
+highlighting the cargo hold itself in the Deposit colour (off by default); boxing the salvage
+inside the open hold so it is easy to find and click (on by default); and the four colours. Under Salvage spots, "Only docks I can use" turns the dock requirements check off.
 
 **Salvage spots**: show the sidebar; wreck reach boxes (hidden while you are parked, on by default) and their
 colour (yellow); double spot boxes (on or off), their colour (green) and the colour they change to once
-you are parked (white); whether to label the double spot boxes; show the nearest dock; and auto
+you are parked (white); whether to label the double spot boxes; show the nearest port and mooring; and auto
 route when boarding (the spot itself is marked in the sidebar). Favourites, the dropdown choices
 and the Auto spot are kept per character, filed against the id Jagex gives the account rather than
 its name, so a name change keeps them and two characters on one RuneLite account do not share an

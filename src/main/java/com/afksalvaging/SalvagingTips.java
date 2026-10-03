@@ -58,7 +58,8 @@ public final class SalvagingTips
 			+ "cannonballs by default, each listed in the Sorting tab with an × that takes it out), green alch (at or "
 			+ "above the \"Alch from\" value), red drop (only what you mark). "
 			+ "Anything else gets no box until you mark it. Shift-right-click an item to mark it, or type its name in the "
-			+ "Sorting tab. Nothing is dropped or alched for you.",
+			+ "Sorting tab. Nothing is dropped or alched for you. Inside the open hold, the salvage stacks get an amber "
+			+ "box so they are easy to find and click (a setting, on by default).",
 		"The overlay only appears while a wreck site is in view. \"Show overlay\" in the Overlay settings can make it "
 			+ "show whenever you are aboard."
 	));

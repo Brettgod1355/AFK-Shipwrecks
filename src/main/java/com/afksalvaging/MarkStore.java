@@ -10,6 +10,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.config.RuneScapeProfile;
 
 /**
  * Where the Keep / Deposit / Alch / Drop marks live. Each character's marks are kept under their
@@ -22,8 +23,6 @@ import net.runelite.client.config.ConfigManager;
  */
 final class MarkStore
 {
-	private static final String PROFILE_PREFIX = "rsprofile.";
-
 	private final ConfigManager configManager;
 
 	MarkStore(ConfigManager configManager)
@@ -50,27 +49,8 @@ final class MarkStore
 	/** The setting the items taken out of the defaults are kept under. */
 	static final String EXCLUDED_KEY = "sortNoneIds";
 
-	/** The list a stored key holds, or null for any other setting (the excluded set included). */
-	static SortRule ruleFor(String key)
-	{
-		for (SortRule rule : SortRule.values())
-		{
-			if (keyFor(rule).equals(key))
-			{
-				return rule;
-			}
-		}
-		return null;
-	}
-
-	/** Whether a stored key is one of ours: a list or the excluded set. */
-	static boolean isListKey(String key)
-	{
-		return ruleFor(key) != null || EXCLUDED_KEY.equals(key);
-	}
-
 	/** Every key an item can be filed under: the four lists and the excluded set. */
-	private static List<String> allKeys()
+	static List<String> allKeys()
 	{
 		List<String> keys = new ArrayList<>();
 		for (SortRule rule : SortRule.values())
@@ -79,25 +59,6 @@ final class MarkStore
 		}
 		keys.add(EXCLUDED_KEY);
 		return keys;
-	}
-
-	/**
-	 * Splits a whole stored key, {@code group.rsprofile.<id>.<key>}, into the profile part
-	 * ({@code rsprofile.<id>}) and the key, or returns null for a key that is not a character's.
-	 */
-	static String[] profileAndKey(String wholeKey)
-	{
-		String rest = wholeKey.startsWith(AfkSalvagingConfig.GROUP + ".") ? wholeKey.substring(AfkSalvagingConfig.GROUP.length() + 1) : null;
-		if (rest == null || !rest.startsWith(PROFILE_PREFIX))
-		{
-			return null;
-		}
-		int dot = rest.indexOf('.', PROFILE_PREFIX.length());
-		if (dot < 0 || dot == rest.length() - 1)
-		{
-			return null;
-		}
-		return new String[]{rest.substring(0, dot), rest.substring(dot + 1)};
 	}
 
 	/** Every character's lists folded into one; where two characters disagree, the one logged in wins. */
@@ -229,16 +190,20 @@ final class MarkStore
 		}
 	}
 
-	/** Every character with a list stored, in storage order. */
+	/**
+	 * Every character RuneLite knows, by the key its settings are filed under. The per-character
+	 * settings live in RuneLite's own store, not the plugin's, so {@code getConfigurationKeys}
+	 * never sees them (an adversarial review caught the first version using it, 2026-10-03);
+	 * {@code getRSProfiles} is the list to ask.
+	 */
 	private List<String> profiles()
 	{
 		List<String> profiles = new ArrayList<>();
-		for (String whole : configManager.getConfigurationKeys(AfkSalvagingConfig.GROUP + "." + PROFILE_PREFIX))
+		for (RuneScapeProfile profile : configManager.getRSProfiles())
 		{
-			String[] parts = profileAndKey(whole);
-			if (parts != null && isListKey(parts[1]) && !profiles.contains(parts[0]))
+			if (profile.getKey() != null && !profiles.contains(profile.getKey()))
 			{
-				profiles.add(parts[0]);
+				profiles.add(profile.getKey());
 			}
 		}
 		return profiles;

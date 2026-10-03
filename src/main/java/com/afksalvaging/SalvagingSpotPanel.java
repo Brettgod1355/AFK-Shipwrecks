@@ -124,7 +124,8 @@ public class SalvagingSpotPanel extends PluginPanel
 	private Mooring port;
 	private Mooring mooring;
 	private Mooring nearestDock;
-	/** The mooring's Map and Route buttons, hidden while the mooring is the port. */
+	/** The port's and the mooring's Map and Route buttons; a row is hidden when it has no dock to act on. */
+	private JPanel portButtons;
 	private JPanel mooringButtons;
 	private WorldPoint position;
 	/** Sailing distances from the player to each spot and dock; empty when the sea is out of reach. */
@@ -231,7 +232,8 @@ public class SalvagingSpotPanel extends PluginPanel
 		JPanel dockButtons = new JPanel();
 		dockButtons.setLayout(new BoxLayout(dockButtons, BoxLayout.Y_AXIS));
 		dockButtons.setOpaque(false);
-		dockButtons.add(dockButtonRow("Port", portMap, portRoute));
+		portButtons = dockButtonRow("Port", portMap, portRoute);
+		dockButtons.add(portButtons);
 		mooringButtons = dockButtonRow("Mooring", mooringMap, mooringRoute);
 		dockButtons.add(mooringButtons);
 		dockBlock.add(dockButtons, BorderLayout.SOUTH);
@@ -713,6 +715,7 @@ public class SalvagingSpotPanel extends PluginPanel
 				.append(dockDistance(nearestDock)).append(": needs ")
 				.append(nearestDock.requirementText()).append(".</i>");
 		}
+		portButtons.setVisible(port != null);
 		mooringButtons.setVisible(mooringShown);
 		dockLabel.setText(html(text.toString(), ROW_TEXT_WIDTH));
 		if (!dockBlock.isVisible() && dockShownSetting)

@@ -979,9 +979,10 @@ public class AfkSalvagingPlugin extends Plugin
 	private void noteVersion()
 	{
 		String last = config.lastVersion();
+		// Per-character settings live in RuneLite's own store, which getConfigurationKeys does not scan.
 		boolean installedBefore = !configManager.getConfigurationKeys(AfkSalvagingConfig.GROUP + ".").isEmpty()
-			|| configManager.getConfigurationKeys(ConfigManager.RSPROFILE_GROUP + ".").stream()
-				.anyMatch(key -> key.contains("." + AfkSalvagingConfig.GROUP + "."));
+			|| configManager.getRSProfiles().stream().anyMatch(profile -> profile.getKey() != null
+				&& !configManager.getRSProfileConfigurationKeys(AfkSalvagingConfig.GROUP, profile.getKey(), "").isEmpty());
 		updateMessage = WhatsNew.message(last, installedBefore);
 		if (!WhatsNew.VERSION.equals(last))
 		{
