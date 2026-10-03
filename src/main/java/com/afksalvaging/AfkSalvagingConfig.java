@@ -825,30 +825,6 @@ public interface AfkSalvagingConfig extends Config
 		return new Color(240, 80, 80, 220);
 	}
 
-	@ConfigItem(keyName = "sortKeepIds", name = "", description = "", hidden = true)
-	default String sortKeepIds()
-	{
-		return "";
-	}
-
-	@ConfigItem(keyName = "sortHoldIds", name = "", description = "", hidden = true)
-	default String sortHoldIds()
-	{
-		return "";
-	}
-
-	@ConfigItem(keyName = "sortAlchIds", name = "", description = "", hidden = true)
-	default String sortAlchIds()
-	{
-		return "";
-	}
-
-	@ConfigItem(keyName = "sortDropIds", name = "", description = "", hidden = true)
-	default String sortDropIds()
-	{
-		return "";
-	}
-
 	/** Item ids the game has said the cargo hold accepts, learned while it is open. */
 	@ConfigItem(keyName = "holdAcceptedIds", name = "", description = "", hidden = true)
 	default String holdAcceptedIds()

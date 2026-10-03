@@ -209,6 +209,8 @@ public class AfkSalvagingPlugin extends Plugin
 
 	/** The player's keep / hold / alch / drop marks, from the settings. */
 	private final SalvageSorter.Lists sortLists = new SalvageSorter.Lists();
+	/** Where the marks are kept: each character's own, read as one. */
+	private MarkStore markStore;
 	/** What the cargo hold accepts: the wiki's list, corrected by what the game says while it is open. */
 	private final HoldWhitelist holdWhitelist = new HoldWhitelist();
 	/** The box decided for each item id, cleared when the marks or the thresholds change and now and then for prices. */
@@ -314,6 +316,11 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.add(holdOverlay);
 		overlayManager.add(worldOverlay);
 		overlayManager.add(sortOverlay);
+		markStore = new MarkStore(configManager);
+		if (markStore.migrate())
+		{
+			log.debug("Moved the plugin-wide sorting marks under the character logged in");
+		}
 		reloadSortLists();
 		applySpotSettings();
 		applyInfoBox();
@@ -410,6 +417,10 @@ public class AfkSalvagingPlugin extends Plugin
 	{
 		session.flushMemory();
 		reloadHold();
+		// Marks saved plugin-wide by an older version move under whoever logs in first; then every
+		// character's lists are read together.
+		markStore.migrate();
+		reloadSortLists();
 		if (spotsPanel != null)
 		{
 			// Another character: their own favourites, dropdowns and Auto spot.
@@ -1066,57 +1077,29 @@ public class AfkSalvagingPlugin extends Plugin
 		}
 	}
 
-	/** Puts an item in one list (null: none), saves, and refreshes the boxes and the sidebar. Client thread. */
+	/**
+	 * Puts an item in one list (null: none) for the character logged in, saves, and refreshes the
+	 * boxes and the sidebar. Client thread. Nobody logged in: nothing to file it under, so say so.
+	 */
 	private void markItem(int itemId, SortRule rule)
 	{
-		sortLists.mark(itemId, rule);
-		for (SortRule each : SortRule.values())
-		{
-			String key = sortListKey(each);
-			String encoded = sortLists.encode(each);
-			String stored = configManager.getConfiguration(AfkSalvagingConfig.GROUP, key);
-			if (encoded.equals(stored == null ? "" : stored))
-			{
-				// Unchanged: writing it would only fire another settings refresh.
-				continue;
-			}
-			if (encoded.isEmpty())
-			{
-				configManager.unsetConfiguration(AfkSalvagingConfig.GROUP, key);
-			}
-			else
-			{
-				configManager.setConfiguration(AfkSalvagingConfig.GROUP, key, encoded);
-			}
-		}
-		sortCache.clear();
 		String name = itemManager.getItemComposition(itemId).getName();
+		if (!markStore.mark(itemId, rule))
+		{
+			setSpotStatus("Log in first: marks are kept per character.", true);
+			return;
+		}
+		// Saving fires ConfigChanged, which reloads the lists; this keeps the boxes right until then.
+		sortLists.mark(itemId, rule);
+		sortCache.clear();
 		setSpotStatus(rule == null ? name + " unmarked; it is sorted by what it is again." : name + " marked: " + rule.getLabel() + ".", false);
 		pushSortLists();
 	}
 
-	private static String sortListKey(SortRule rule)
-	{
-		switch (rule)
-		{
-			case KEEP:
-				return "sortKeepIds";
-			case HOLD:
-				return "sortHoldIds";
-			case ALCH:
-				return "sortAlchIds";
-			default:
-				return "sortDropIds";
-		}
-	}
-
-	/** Reads the four lists and what the hold accepts from the settings, and forgets the decided boxes. */
+	/** Reads every character's lists and what the hold accepts from the settings, and forgets the decided boxes. */
 	private void reloadSortLists()
 	{
-		sortLists.decode(SortRule.KEEP, config.sortKeepIds());
-		sortLists.decode(SortRule.HOLD, config.sortHoldIds());
-		sortLists.decode(SortRule.ALCH, config.sortAlchIds());
-		sortLists.decode(SortRule.DROP, config.sortDropIds());
+		sortLists.replaceWith(markStore.load());
 		holdWhitelist.decode(config.holdAcceptedIds(), config.holdRefusedIds());
 		sortCache.clear();
 		pushSortLists();

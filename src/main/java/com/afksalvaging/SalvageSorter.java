@@ -94,43 +94,65 @@ public final class SalvageSorter
 			return Collections.unmodifiableList(new ArrayList<>(lists.get(rule)));
 		}
 
-		/** One list as stored: item ids joined with commas. */
-		public String encode(SortRule rule)
+		/** Adds items to one list, leaving alone any already marked somewhere: the first mark read wins. */
+		public void add(SortRule rule, List<Integer> ids)
+		{
+			for (int id : ids)
+			{
+				if (markOf(id) == null)
+				{
+					lists.get(rule).add(id);
+				}
+			}
+		}
+
+		/** Becomes a copy of another set of lists. */
+		public void replaceWith(Lists other)
+		{
+			for (SortRule rule : SortRule.values())
+			{
+				lists.get(rule).clear();
+				lists.get(rule).addAll(other.lists.get(rule));
+			}
+		}
+
+		/** Item ids as stored: joined with commas. */
+		public static String join(List<Integer> ids)
 		{
 			StringBuilder out = new StringBuilder();
-			for (int id : lists.get(rule))
+			for (int id : ids)
 			{
 				out.append(out.length() == 0 ? "" : ",").append(id);
 			}
 			return out.toString();
 		}
 
-		/** Replaces one list from storage; anything unreadable is dropped rather than failing. */
-		public void decode(SortRule rule, String stored)
+		/** Item ids from storage; anything unreadable is dropped rather than failing. */
+		public static List<Integer> parse(String stored)
 		{
-			Set<Integer> list = lists.get(rule);
-			list.clear();
+			List<Integer> ids = new ArrayList<>();
 			if (stored == null || stored.isEmpty())
 			{
-				return;
+				return ids;
 			}
 			for (String part : stored.split(","))
 			{
 				try
 				{
 					int id = Integer.parseInt(part.trim());
-					for (Set<Integer> other : lists.values())
+					if (!ids.contains(id))
 					{
-						other.remove(id);
+						ids.add(id);
 					}
-					list.add(id);
 				}
 				catch (NumberFormatException ignored)
 				{
 					// A hand-edited setting; skip the bad entry.
 				}
 			}
+			return ids;
 		}
+
 	}
 
 	private SalvageSorter()

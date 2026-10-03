@@ -102,17 +102,27 @@ public class SalvageSorterTest
 		SalvageSorter.Lists lists = new SalvageSorter.Lists();
 		lists.mark(10, SortRule.ALCH);
 		lists.mark(11, SortRule.ALCH);
-		assertEquals("10,11", lists.encode(SortRule.ALCH));
-		assertEquals("", lists.encode(SortRule.DROP));
-		SalvageSorter.Lists restored = new SalvageSorter.Lists();
-		restored.decode(SortRule.ALCH, "10, 11,junk,");
-		assertEquals(Arrays.asList(10, 11), restored.ids(SortRule.ALCH));
-		// Decoding a list pulls an id out of any other list, so a hand-edited setting cannot double-mark.
-		restored.decode(SortRule.DROP, "11");
-		assertEquals(Arrays.asList(10), restored.ids(SortRule.ALCH));
-		assertEquals(SortRule.DROP, restored.markOf(11));
-		restored.decode(SortRule.ALCH, null);
-		assertTrue(restored.ids(SortRule.ALCH).isEmpty());
+		assertEquals("10,11", SalvageSorter.Lists.join(lists.ids(SortRule.ALCH)));
+		assertEquals("", SalvageSorter.Lists.join(lists.ids(SortRule.DROP)));
+		assertEquals(Arrays.asList(10, 11), SalvageSorter.Lists.parse("10, 11,junk,,11"));
+		assertTrue(SalvageSorter.Lists.parse(null).isEmpty());
+		assertTrue(SalvageSorter.Lists.parse("").isEmpty());
+	}
+
+	@Test
+	public void listsReadTogetherKeepTheFirstMarkOfAnItem()
+	{
+		// One character's lists are read first, then another's: the first mark seen wins a disagreement.
+		SalvageSorter.Lists lists = new SalvageSorter.Lists();
+		lists.add(SortRule.ALCH, Arrays.asList(10, 11));
+		lists.add(SortRule.DROP, Arrays.asList(11, 12));
+		assertEquals(Arrays.asList(10, 11), lists.ids(SortRule.ALCH));
+		assertEquals(Arrays.asList(12), lists.ids(SortRule.DROP));
+		SalvageSorter.Lists copy = new SalvageSorter.Lists();
+		copy.mark(99, SortRule.KEEP);
+		copy.replaceWith(lists);
+		assertNull(copy.markOf(99));
+		assertEquals(SortRule.DROP, copy.markOf(12));
 	}
 
 	@Test

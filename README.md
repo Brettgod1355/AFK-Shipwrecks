@@ -152,7 +152,10 @@ you are parked (white); whether to label the double spot boxes; show the nearest
 route when boarding (the spot itself is marked in the sidebar). Favourites, the dropdown choices
 and the Auto spot are kept per character, filed against the id Jagex gives the account rather than
 its name, so a name change keeps them and two characters on one RuneLite account do not share an
-Auto spot. Which items you mark Keep, Deposit, Alch or Drop is shared across your characters.
+Auto spot. Which items you mark Keep, Deposit, Alch or Drop is shared across your characters:
+each character's marks are kept under their own id and the lists you see are all of them
+together, so two clients open at once never overwrite each other's marks (RuneLite only
+downloads settings when a client starts, so the other client shows a new mark after a restart).
 
 ## Salvage spots and double spots
 
