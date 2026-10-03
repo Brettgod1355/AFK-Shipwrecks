@@ -1168,8 +1168,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			if (infoBox == null)
 			{
-				infoBox = new HoldInfoBox(ImageUtil.loadImageResource(getClass(), "infobox_icon.png"), this,
-					session::view, () -> session.monitor().level(config.warnSlotsRemaining()));
+				infoBox = new HoldInfoBox(this, session::view, () -> session.monitor().level(config.warnSlotsRemaining()));
 				infoBoxManager.addInfoBox(infoBox);
 			}
 		}

@@ -13,17 +13,17 @@ import net.runelite.client.ui.overlay.infobox.InfoBox;
 
 /**
  * The time to a full hold as one of RuneLite's infoboxes, so it stays in view with the overlay
- * hidden. Shown only aboard the player's own boat with something to say.
+ * hidden. Shown only aboard the player's own boat with something to say. The box is just its text:
+ * the picture every infobox carries is left blank (owner, 2026-10-03).
  */
 public class HoldInfoBox extends InfoBox
 {
 	private final Supplier<AfkSession.View> view;
 	private final Supplier<CargoHoldMonitor.Level> holdLevel;
 
-	public HoldInfoBox(BufferedImage image, Plugin plugin, Supplier<AfkSession.View> view,
-		Supplier<CargoHoldMonitor.Level> holdLevel)
+	public HoldInfoBox(Plugin plugin, Supplier<AfkSession.View> view, Supplier<CargoHoldMonitor.Level> holdLevel)
 	{
-		super(image, plugin);
+		super(new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB), plugin);
 		this.view = view;
 		this.holdLevel = holdLevel;
 		setTooltip("AFK Salvaging");
