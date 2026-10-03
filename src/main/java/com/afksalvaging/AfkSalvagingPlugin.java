@@ -10,6 +10,7 @@ import java.awt.Color;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.EnumMap;
@@ -1099,6 +1100,24 @@ public class AfkSalvagingPlugin extends Plugin
 		pushSortLists();
 	}
 
+	/**
+	 * Takes a default deposit (a ship cannonball) out of the defaults for the character logged in,
+	 * so it gets no box until marked again. Client thread.
+	 */
+	private void excludeDefault(int itemId)
+	{
+		String name = itemManager.getItemComposition(itemId).getName();
+		if (!markStore.exclude(itemId))
+		{
+			setSpotStatus("Log in first: marks are kept per character.", true);
+			return;
+		}
+		sortLists.exclude(itemId);
+		sortCache.clear();
+		setSpotStatus(name + " gets no box now; mark it Deposit to bring it back.", false);
+		pushSortLists();
+	}
+
 	/** Reads every character's lists and what the hold accepts from the settings, and forgets the decided boxes. */
 	private void reloadSortLists()
 	{
@@ -1163,6 +1182,20 @@ public class AfkSalvagingPlugin extends Plugin
 				for (int id : sortLists.ids(rule))
 				{
 					rows.add(new String[]{String.valueOf(id), itemManager.getItemComposition(id).getName()});
+				}
+				if (rule == SortRule.HOLD)
+				{
+					// The default deposits, listed with an × like marks (owner, 2026-10-03); a third element says so.
+					List<String[]> defaults = new ArrayList<>();
+					for (int id : HoldWhitelist.CANNONBALLS)
+					{
+						if (sortLists.markOf(id) == null && !sortLists.isExcluded(id))
+						{
+							defaults.add(new String[]{String.valueOf(id), itemManager.getItemComposition(id).getName(), "default"});
+						}
+					}
+					defaults.sort(Comparator.comparing(row -> row[1]));
+					rows.addAll(defaults);
 				}
 				named.put(rule, rows);
 			}
@@ -1366,9 +1399,19 @@ public class AfkSalvagingPlugin extends Plugin
 			}
 
 			@Override
-			public void sortItemRemove(int itemId)
+			public void sortItemRemove(int itemId, boolean fromDefaults)
 			{
-				clientThread.invokeLater(() -> markItem(itemId, null));
+				clientThread.invokeLater(() ->
+				{
+					if (fromDefaults)
+					{
+						excludeDefault(itemId);
+					}
+					else
+					{
+						markItem(itemId, null);
+					}
+				});
 			}
 
 			@Override

@@ -47,7 +47,10 @@ final class MarkStore
 		}
 	}
 
-	/** The list a stored key holds, or null for any other setting. */
+	/** The setting the items taken out of the defaults are kept under. */
+	static final String EXCLUDED_KEY = "sortNoneIds";
+
+	/** The list a stored key holds, or null for any other setting (the excluded set included). */
 	static SortRule ruleFor(String key)
 	{
 		for (SortRule rule : SortRule.values())
@@ -58,6 +61,24 @@ final class MarkStore
 			}
 		}
 		return null;
+	}
+
+	/** Whether a stored key is one of ours: a list or the excluded set. */
+	static boolean isListKey(String key)
+	{
+		return ruleFor(key) != null || EXCLUDED_KEY.equals(key);
+	}
+
+	/** Every key an item can be filed under: the four lists and the excluded set. */
+	private static List<String> allKeys()
+	{
+		List<String> keys = new ArrayList<>();
+		for (SortRule rule : SortRule.values())
+		{
+			keys.add(keyFor(rule));
+		}
+		keys.add(EXCLUDED_KEY);
+		return keys;
 	}
 
 	/**
@@ -86,33 +107,50 @@ final class MarkStore
 		String own = configManager.getRSProfileKey();
 		if (own != null)
 		{
-			for (SortRule rule : SortRule.values())
-			{
-				lists.add(rule, SalvageSorter.Lists.parse(configManager.getConfiguration(AfkSalvagingConfig.GROUP, own, keyFor(rule))));
-			}
+			read(lists, own);
 		}
 		for (String profile : profiles())
 		{
-			if (profile.equals(own))
+			if (!profile.equals(own))
 			{
-				continue;
-			}
-			for (SortRule rule : SortRule.values())
-			{
-				lists.add(rule, SalvageSorter.Lists.parse(configManager.getConfiguration(AfkSalvagingConfig.GROUP, profile, keyFor(rule))));
+				read(lists, profile);
 			}
 		}
 		return lists;
 	}
 
+	private void read(SalvageSorter.Lists into, String profile)
+	{
+		for (SortRule rule : SortRule.values())
+		{
+			into.add(rule, SalvageSorter.Lists.parse(configManager.getConfiguration(AfkSalvagingConfig.GROUP, profile, keyFor(rule))));
+		}
+		into.addExcluded(SalvageSorter.Lists.parse(configManager.getConfiguration(AfkSalvagingConfig.GROUP, profile, EXCLUDED_KEY)));
+	}
+
 	/**
 	 * Marks an item for the character logged in (null unmarks it), taking it out of every
-	 * character's other lists. Does nothing when nobody is logged in, since there is no one to
-	 * file the mark under.
+	 * character's other lists and off their excluded sets. Does nothing when nobody is logged in,
+	 * since there is no one to file the mark under.
 	 *
 	 * @return whether anything was saved
 	 */
 	boolean mark(int itemId, SortRule rule)
+	{
+		return file(itemId, rule == null ? null : keyFor(rule));
+	}
+
+	/**
+	 * Takes an item out of the defaults for the character logged in: no box until it is marked
+	 * again. Same rules as {@link #mark}.
+	 */
+	boolean exclude(int itemId)
+	{
+		return file(itemId, EXCLUDED_KEY);
+	}
+
+	/** Puts the item under one key of the character logged in (null: nowhere) and nowhere else, for anyone. */
+	private boolean file(int itemId, String targetKey)
 	{
 		String own = configManager.getRSProfileKey();
 		if (own == null)
@@ -123,12 +161,11 @@ final class MarkStore
 		profiles.add(own);
 		for (String profile : profiles)
 		{
-			for (SortRule each : SortRule.values())
+			for (String key : allKeys())
 			{
-				String key = keyFor(each);
 				List<Integer> ids = new ArrayList<>(SalvageSorter.Lists.parse(configManager.getConfiguration(AfkSalvagingConfig.GROUP, profile, key)));
 				boolean changed = ids.remove(Integer.valueOf(itemId));
-				if (profile.equals(own) && each == rule)
+				if (profile.equals(own) && key.equals(targetKey))
 				{
 					ids.add(itemId);
 					changed = true;
@@ -199,7 +236,7 @@ final class MarkStore
 		for (String whole : configManager.getConfigurationKeys(AfkSalvagingConfig.GROUP + "." + PROFILE_PREFIX))
 		{
 			String[] parts = profileAndKey(whole);
-			if (parts != null && ruleFor(parts[1]) != null && !profiles.contains(parts[0]))
+			if (parts != null && isListKey(parts[1]) && !profiles.contains(parts[0]))
 			{
 				profiles.add(parts[0]);
 			}

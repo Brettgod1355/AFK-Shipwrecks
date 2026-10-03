@@ -54,6 +54,8 @@ public final class SalvageSorter
 	public static final class Lists
 	{
 		private final Map<SortRule, Set<Integer>> lists = new EnumMap<>(SortRule.class);
+		/** Items the player took out of the defaults: no box, whatever they are. */
+		private final Set<Integer> excluded = new LinkedHashSet<>();
 
 		public Lists()
 		{
@@ -76,17 +78,34 @@ public final class SalvageSorter
 			return null;
 		}
 
-		/** Marks an item, taking it out of any other list; null unmarks it. */
+		/** Marks an item, taking it out of any other list and off the excluded set; null unmarks it. */
 		public void mark(int itemId, SortRule rule)
 		{
 			for (Set<Integer> list : lists.values())
 			{
 				list.remove(itemId);
 			}
+			excluded.remove(itemId);
 			if (rule != null)
 			{
 				lists.get(rule).add(itemId);
 			}
+		}
+
+		/**
+		 * Takes an item out of the defaults: it gets no box until marked again. For the ship
+		 * cannonballs, which are Deposit by default and listed with an × like a mark (owner,
+		 * 2026-10-03: "so the default options look the same as manual options").
+		 */
+		public void exclude(int itemId)
+		{
+			mark(itemId, null);
+			excluded.add(itemId);
+		}
+
+		public boolean isExcluded(int itemId)
+		{
+			return excluded.contains(itemId);
 		}
 
 		public List<Integer> ids(SortRule rule)
@@ -94,14 +113,31 @@ public final class SalvageSorter
 			return Collections.unmodifiableList(new ArrayList<>(lists.get(rule)));
 		}
 
-		/** Adds items to one list, leaving alone any already marked somewhere: the first mark read wins. */
+		public List<Integer> excludedIds()
+		{
+			return Collections.unmodifiableList(new ArrayList<>(excluded));
+		}
+
+		/** Adds items to one list, leaving alone any already marked or excluded: the first mark read wins. */
 		public void add(SortRule rule, List<Integer> ids)
+		{
+			for (int id : ids)
+			{
+				if (markOf(id) == null && !excluded.contains(id))
+				{
+					lists.get(rule).add(id);
+				}
+			}
+		}
+
+		/** Adds items to the excluded set, leaving alone any already marked: the first mark read wins. */
+		public void addExcluded(List<Integer> ids)
 		{
 			for (int id : ids)
 			{
 				if (markOf(id) == null)
 				{
-					lists.get(rule).add(id);
+					excluded.add(id);
 				}
 			}
 		}
@@ -114,6 +150,8 @@ public final class SalvageSorter
 				lists.get(rule).clear();
 				lists.get(rule).addAll(other.lists.get(rule));
 			}
+			excluded.clear();
+			excluded.addAll(other.excluded);
 		}
 
 		/** Item ids as stored: joined with commas. */
@@ -178,6 +216,11 @@ public final class SalvageSorter
 		if (marked != null)
 		{
 			return marked;
+		}
+		if (lists.isExcluded(facts.id))
+		{
+			// Taken out of the defaults with the × in the sidebar.
+			return null;
 		}
 		if (!facts.tradeable)
 		{

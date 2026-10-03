@@ -76,7 +76,8 @@ public class SalvagingSpotPanel extends PluginPanel
 		/** Add an item typed by name to one of the sorting lists. */
 		void sortItemAdd(String name, SortRule rule);
 
-		void sortItemRemove(int itemId);
+		/** The × on a row: a mark comes off; a default entry is taken out of the defaults until marked again. */
+		void sortItemRemove(int itemId, boolean fromDefaults);
 	}
 
 	/** The sidebar's fixed colours; the sorting list headings follow the settings, see {@link #setSortColours}. */
@@ -357,8 +358,9 @@ public class SalvagingSpotPanel extends PluginPanel
 						+ defaults.geOverAlchPercent + "% or more."
 					: "By default: nothing; only what you mark.";
 			case HOLD:
-				return "By default: every ship cannonball, never noted. Other things the hold takes, such as repair "
-					+ "kits or fish, get no box unless you mark them here.";
+				return "By default: the ship cannonballs listed above, never noted; × takes one off, and marking it "
+					+ "Deposit again brings it back. Other things the hold takes, such as repair kits or fish, get no "
+					+ "box unless you mark them here.";
 			case ALCH:
 				return "By default: tradeable items that alch for at least "
 					+ String.format("%,d", defaults.alchThreshold) + " coins.";
@@ -382,7 +384,14 @@ public class SalvagingSpotPanel extends PluginPanel
 			for (SortRule rule : SortRule.values())
 			{
 				List<String[]> rows = lists.get(rule);
-				int count = rows == null ? 0 : rows.size();
+				int count = 0;
+				for (String[] row : rows == null ? Collections.<String[]>emptyList() : rows)
+				{
+					if (row.length == 2)
+					{
+						count++;
+					}
+				}
 				JLabel heading = new JLabel(rule.getLabel() + (count == 0 ? ": nothing marked" : ": " + count + " marked"));
 				heading.setFont(FontManager.getRunescapeBoldFont());
 				heading.setForeground(colours.getOrDefault(rule, Color.WHITE));
@@ -396,13 +405,16 @@ public class SalvagingSpotPanel extends PluginPanel
 						line.setOpaque(false);
 						line.setAlignmentX(LEFT_ALIGNMENT);
 						line.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
-						JLabel name = new JLabel(row[1]);
+						// A third element marks a default entry: listed like a mark, taken off like one.
+						boolean isDefault = row.length > 2;
+						JLabel name = new JLabel(isDefault ? row[1] + " · default" : row[1]);
 						small(name);
-						name.setForeground(Color.WHITE);
-						JButton remove = button("×", "Take " + row[1] + " off the list.");
+						name.setForeground(isDefault ? ColorScheme.LIGHT_GRAY_COLOR : Color.WHITE);
+						JButton remove = button("×", isDefault ? "Take " + row[1] + " out of the defaults; marking it again brings it back."
+							: "Take " + row[1] + " off the list.");
 						remove.setMargin(new Insets(0, 4, 0, 4));
 						int id = Integer.parseInt(row[0]);
-						remove.addActionListener(e -> actions.sortItemRemove(id));
+						remove.addActionListener(e -> actions.sortItemRemove(id, isDefault));
 						line.add(name, BorderLayout.CENTER);
 						line.add(remove, BorderLayout.EAST);
 						sortLists.add(line);

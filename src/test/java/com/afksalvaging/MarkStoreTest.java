@@ -7,7 +7,9 @@ package com.afksalvaging;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 public class MarkStoreTest
@@ -31,5 +33,8 @@ public class MarkStoreTest
 			assertEquals(rule, MarkStore.ruleFor(MarkStore.keyFor(rule)));
 		}
 		assertNull(MarkStore.ruleFor("spots.favourites"));
+		assertTrue(MarkStore.isListKey(MarkStore.EXCLUDED_KEY));
+		assertNull(MarkStore.ruleFor(MarkStore.EXCLUDED_KEY));
+		assertFalse(MarkStore.isListKey("spots.favourites"));
 	}
 }

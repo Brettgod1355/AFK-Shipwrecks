@@ -126,6 +126,30 @@ public class SalvageSorterTest
 	}
 
 	@Test
+	public void aCannonballTakenOutOfTheDefaultsGetsNoBoxUntilMarkedAgain()
+	{
+		SalvageSorter.Lists lists = new SalvageSorter.Lists();
+		assertEquals(SortRule.HOLD, SalvageSorter.rule(cannonball(7, false), lists, 1000, 0));
+		lists.exclude(7);
+		assertTrue(lists.isExcluded(7));
+		assertNull(SalvageSorter.rule(cannonball(7, false), lists, 1000, 0));
+		assertEquals(Arrays.asList(7), lists.excludedIds());
+		// Marking it again, in any list, ends the exclusion.
+		lists.mark(7, SortRule.HOLD);
+		assertTrue(lists.excludedIds().isEmpty());
+		assertEquals(SortRule.HOLD, SalvageSorter.rule(cannonball(7, false), lists, 1000, 0));
+		// Read together with another character's lists, an exclusion read first keeps its item out of their marks.
+		SalvageSorter.Lists together = new SalvageSorter.Lists();
+		together.addExcluded(Arrays.asList(7));
+		together.add(SortRule.DROP, Arrays.asList(7, 8));
+		assertTrue(together.isExcluded(7));
+		assertEquals(Arrays.asList(8), together.ids(SortRule.DROP));
+		SalvageSorter.Lists copy = new SalvageSorter.Lists();
+		copy.replaceWith(together);
+		assertTrue(copy.isExcluded(7));
+	}
+
+	@Test
 	public void coinsAndUnsortedSalvageAreNeverBoxed()
 	{
 		assertTrue(SalvageSorter.excluded(ItemID.COINS));

@@ -52,7 +52,8 @@ public final class SalvagingTips
 			+ "infoboxes, with the detail on hover, for when the overlay is hidden.",
 		"Inventory sorting boxes each item on your boat at a salvaging spot, in the cargo hold's own inventory panel "
 			+ "too while the hold is open: yellow keep, cyan deposit (ship "
-			+ "cannonballs by default), green alch (at or above the \"Alch from\" value), red drop (only what you mark). "
+			+ "cannonballs by default, each listed in the Sorting tab with an × that takes it out), green alch (at or "
+			+ "above the \"Alch from\" value), red drop (only what you mark). "
 			+ "Anything else gets no box until you mark it. Shift-right-click an item to mark it, or type its name in the "
 			+ "Sorting tab. Nothing is dropped or alched for you.",
 		"The overlay only appears while a wreck site is in view. \"Show overlay\" in the Overlay settings can make it "
