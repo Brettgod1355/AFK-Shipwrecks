@@ -1652,7 +1652,7 @@ public class AfkSalvagingPlugin extends Plugin
 		clientThread.invokeLater(() ->
 		{
 			testAlertAt = clock();
-			notifier.notify(config.notification(), "Test alert: this is the full cargo hold alert.");
+			notifier.notify(resolved(config.notification()), "Test alert: this is the full cargo hold alert.");
 			int seconds = config.bannerSeconds() > 0 ? config.bannerSeconds() : TEST_BANNER_SECONDS;
 			setSpotStatus("Test alert sent" + (config.showBanner() ? ", with the banner for " + seconds + " s." : "."), false);
 		});
@@ -1763,17 +1763,27 @@ public class AfkSalvagingPlugin extends Plugin
 		hookObjects.clear();
 	}
 
+	/**
+	 * How a notification is sent: its own setting when that is off or custom, otherwise the Default
+	 * notification (owner, 2026-10-03: "all notifications would be set to this unless a specific
+	 * category is disabled or set to custom").
+	 */
+	private Notification resolved(Notification setting)
+	{
+		return setting.isEnabled() && !setting.isOverride() ? config.defaultNotification() : setting;
+	}
+
 	private void give(AfkSession.Notice notice, long now)
 	{
 		switch (notice)
 		{
 			case HOLD_FULL:
 				alertShownAt = now;
-				notifier.notify(config.notification(), session.holdMessage(notice));
+				notifier.notify(resolved(config.notification()), session.holdMessage(notice));
 				break;
 			case HOLD_NEARLY_FULL:
 				alertShownAt = now;
-				Notification notification = config.notification();
+				Notification notification = resolved(config.notification());
 				if (!config.earlyWarningSound())
 				{
 					notification = withoutSound(notification);
@@ -1782,19 +1792,19 @@ public class AfkSalvagingPlugin extends Plugin
 				break;
 			case HOOK_EMPTY:
 				reminderShownAt = now;
-				notifier.notify(config.hookEmptyNotification(), "A salvaging hook is empty. Assign a crewmate to it.");
+				notifier.notify(resolved(config.hookEmptyNotification()), "A salvaging hook is empty. Assign a crewmate to it.");
 				break;
 			case HOOK_IDLE:
 				reminderShownAt = now;
-				notifier.notify(config.hookIdleNotification(), "Your salvaging hook is idle and a wreck is up. Click the hook, or assign a crewmate.");
+				notifier.notify(resolved(config.hookIdleNotification()), "Your salvaging hook is idle and a wreck is up. Click the hook, or assign a crewmate.");
 				break;
 			case BOOST_DROPPED:
 				int needed = session.view().levelNeeded;
-				notifier.notify(config.boostDroppedNotification(), "Your crew stopped salvaging: your Sailing level is too low for this wreck"
+				notifier.notify(resolved(config.boostDroppedNotification()), "Your crew stopped salvaging: your Sailing level is too low for this wreck"
 					+ (needed > 0 ? " (needs " + needed + ")." : "."));
 				break;
 			case IDLE_LOGOUT_SOON:
-				notifier.notify(config.idleLogoutNotification(), "You will be logged out for idling in about "
+				notifier.notify(resolved(config.idleLogoutNotification()), "You will be logged out for idling in about "
 					+ Durations.countdown(session.view().idleLogoutMillis) + ". Move the mouse or press a key.");
 				break;
 			case WORLD_TIP:
@@ -2049,7 +2059,7 @@ public class AfkSalvagingPlugin extends Plugin
 		if (!otherBoatFullNotified)
 		{
 			otherBoatFullNotified = true;
-			notifier.notify(config.notification(), "The cargo hold is full.");
+			notifier.notify(resolved(config.notification()), "The cargo hold is full.");
 		}
 	}
 

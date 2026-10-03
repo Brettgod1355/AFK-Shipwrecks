@@ -21,6 +21,19 @@ public interface AfkSalvagingConfig extends Config
 	/** Kept from the plugin's Cargo Hold Alert days so settings and remembered counts carry over. */
 	String GROUP = "cargofull";
 
+	@ConfigItem(
+		keyName = "defaultNotification",
+		name = "Default notification",
+		description = "How every notification in this plugin is sent, unless its own setting is switched off or set to "
+			+ "custom with the cog. Left plain, it is RuneLite's own notification settings; set it to custom once and "
+			+ "every category follows it. Switching it off silences every category that is not custom.",
+		position = 0
+	)
+	default Notification defaultNotification()
+	{
+		return Notification.ON;
+	}
+
 	@ConfigSection(
 		name = "Timer",
 		description = "The countdown to a full cargo hold",

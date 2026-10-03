@@ -126,7 +126,10 @@ grace period before the first reminder (15 s by default; using the hold buys a l
 settling in to sort shortens it), how often to repeat, and how long before the idle logout to
 warn (60 s; 0 never).
 
-**Cargo full** and **Early warning**: as before. **Banner**: as before, plus a colour for the
+**Default notification**, at the top of the settings: how every notification in the plugin is sent
+unless its own setting is off or set to custom with the cog. Left plain it is RuneLite's own
+notification settings; make it custom once and every category follows. **Cargo full** and **Early
+warning**: as before. **Banner**: as before, plus a colour for the
 reminder banner and a colour for the nearly-full banner. **Overlay**: when to show it (near
 wrecks, or always aboard), hiding it while the cargo hold is open (on by default, so it is not in
 the way when you withdraw), the cargo counter and what it shows (used of total, slots left or
