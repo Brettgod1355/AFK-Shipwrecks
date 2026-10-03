@@ -11,6 +11,7 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Stroke;
 import javax.inject.Inject;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.WidgetItem;
 import net.runelite.client.ui.overlay.WidgetItemOverlay;
 
@@ -31,6 +32,8 @@ public class InventorySortOverlay extends WidgetItemOverlay
 		this.plugin = plugin;
 		this.config = config;
 		showOnInventory();
+		// The cargo hold's own inventory panel too, so what to deposit stands out while the hold is open (owner, 2026-10-03).
+		showOnInterfaces(InterfaceID.SAILING_BOAT_CARGOHOLD_SIDE);
 	}
 
 	@Override

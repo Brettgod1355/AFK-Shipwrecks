@@ -76,7 +76,9 @@ stopped, and the fact that your own hook does not restart itself.
   plugin knows them from the wiki's list and learns the game's own answer every time you open the
   hold. Shift-right-click an item and its AFK Salvaging entry opens to Keep, Deposit, Alch, Drop and Unmark; pick one
   to mark it, or add it by name in the Sorting tab, and take it off again there. The boxes are only ever boxes: nothing is
-  dropped, alched or moved for you, and the menu entries they add send nothing to the game.
+  dropped, alched or moved for you, and the menu entries they add send nothing to the game. The boxes
+  also show in the cargo hold's own inventory panel while the hold is open, so what to deposit
+  stands out right where you deposit it.
 - **Says when it was updated.** The first time you log in after the Plugin Hub has updated the
   plugin, one line in chat says what the new version brings. A setting turns it off.
 
