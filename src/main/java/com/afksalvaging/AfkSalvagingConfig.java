@@ -560,13 +560,26 @@ public interface AfkSalvagingConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "hideReachWhenParked",
+		name = "Hide reach boxes once parked",
+		description = "Take the wreck reach boxes off the water while every hook on your boat is inside a double spot box. "
+			+ "They come back the moment you drift out.",
+		section = SPOTS,
+		position = 3
+	)
+	default boolean hideReachWhenParked()
+	{
+		return true;
+	}
+
 	@Alpha
 	@ConfigItem(
 		keyName = "wreckReachColor",
 		name = "Wreck reach colour",
 		description = "Outline colour of the wreck reach boxes. The fill is a fainter version of it.",
 		section = SPOTS,
-		position = 3
+		position = 4
 	)
 	default Color wreckReachColor()
 	{
@@ -579,7 +592,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Box the water where one hook reaches two wreck sites at once, whether or not both wrecks are up "
 			+ "right now. Park so every hook sits in the box and it changes colour and says Parked.",
 		section = SPOTS,
-		position = 4
+		position = 5
 	)
 	default boolean doubleSpotBoxes()
 	{
@@ -593,7 +606,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Outline colour of the double spot boxes while you are not parked in them. The fill is a fainter "
 			+ "version of it.",
 		section = SPOTS,
-		position = 5
+		position = 6
 	)
 	default Color doubleSpotColor()
 	{
@@ -607,7 +620,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "The colour a double spot box changes to once every hook on your boat is inside it: both hooks on a "
 			+ "sloop, the one hook on a raft or skiff.",
 		section = SPOTS,
-		position = 6
+		position = 7
 	)
 	default Color doubleSpotParkedColor()
 	{
@@ -620,7 +633,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Write \"Double spot\" on each box where to park, with how many of your hooks are in it, and "
 			+ "\"Parked\" once they all are.",
 		section = SPOTS,
-		position = 7
+		position = 8
 	)
 	default boolean doubleSpotLabels()
 	{
@@ -633,7 +646,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Name the dock nearest to you at the top of the sidebar, with buttons to show it on the world map "
 			+ "and to route there with the Shortest Path plugin.",
 		section = SPOTS,
-		position = 8
+		position = 9
 	)
 	default boolean nearestDock()
 	{
@@ -646,7 +659,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Name the nearest dock whose Sailing level (unboosted) and quest you meet, and say what the nearer "
 			+ "one needs when there is one. Off names the nearest dock whatever it needs.",
 		section = SPOTS,
-		position = 10
+		position = 11
 	)
 	default boolean dockRequirements()
 	{
@@ -660,7 +673,7 @@ public interface AfkSalvagingConfig extends Config
 			+ "Path plugin so the route is drawn without pressing anything. Only one spot can be marked. The route is "
 			+ "cleared when you reach the spot or leave your boat.",
 		section = SPOTS,
-		position = 9
+		position = 10
 	)
 	default boolean autoRouteOnBoarding()
 	{

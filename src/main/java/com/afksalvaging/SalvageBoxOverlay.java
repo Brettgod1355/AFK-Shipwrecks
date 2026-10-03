@@ -11,6 +11,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
 import java.awt.Stroke;
+import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 import net.runelite.api.Client;
@@ -76,8 +77,26 @@ public class SalvageBoxOverlay extends Overlay
 			return null;
 		}
 		int reach = AfkSession.HOOK_RANGE;
+		List<WorldPoint> hooks = plugin.hookPoints();
+		List<DoubleSpot> doubles = doubleSpots ? DoubleSpot.find(sites, reach) : Collections.emptyList();
+		int[] hooksInside = new int[doubles.size()];
+		boolean parkedSomewhere = false;
+		for (int i = 0; i < doubles.size(); i++)
+		{
+			DoubleSpot.Box box = doubles.get(i).getBox();
+			for (WorldPoint hook : hooks)
+			{
+				if (box.contains(hook))
+				{
+					hooksInside[i]++;
+				}
+			}
+			// Parked means every hook the boat has is in the box: both on a sloop, the one on a raft or skiff.
+			parkedSomewhere |= !hooks.isEmpty() && hooksInside[i] == hooks.size();
+		}
 
-		if (reachBoxes)
+		// Once parked the yellow boxes have done their job and only clutter the view (owner, 2026-10-03).
+		if (reachBoxes && !(parkedSomewhere && config.hideReachWhenParked()))
 		{
 			Color colour = config.wreckReachColor();
 			for (WreckTracker.Site site : sites)
@@ -90,19 +109,10 @@ public class SalvageBoxOverlay extends Overlay
 		if (doubleSpots)
 		{
 			Color colour = config.doubleSpotColor();
-			List<WorldPoint> hooks = plugin.hookPoints();
-			for (DoubleSpot spot : DoubleSpot.find(sites, reach))
+			for (int i = 0; i < doubles.size(); i++)
 			{
-				DoubleSpot.Box box = spot.getBox();
-				int inside = 0;
-				for (WorldPoint hook : hooks)
-				{
-					if (box.contains(hook))
-					{
-						inside++;
-					}
-				}
-				// Parked means every hook the boat has is in the box: both on a sloop, the one on a raft or skiff.
+				DoubleSpot.Box box = doubles.get(i).getBox();
+				int inside = hooksInside[i];
 				boolean parked = !hooks.isEmpty() && inside == hooks.size();
 				// The spot is a place: full colour whether or not its wrecks are up right now.
 				Color drawn = parked ? config.doubleSpotParkedColor() : colour;

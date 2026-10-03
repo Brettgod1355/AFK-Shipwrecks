@@ -18,7 +18,7 @@ public final class SalvagingTips
 			+ "reaches two wrecks at once.",
 		"Park so every hook on your boat is inside a green box: both on a sloop, the one on a raft or skiff. "
 			+ "The box changes to the parked colour and says \"Parked\" when they all are; with only some in, the "
-			+ "label counts them.",
+			+ "label counts them. Once parked, the yellow boxes go, to clear the view (a setting, on by default).",
 		"Reach is taken as " + AfkSession.HOOK_RANGE + " tiles, from other plugins' observations rather than the "
 			+ "game's code, so a box edge may be a tile off. If a hook sits in a box and only one wreck is worked, "
 			+ "report it and the number gets fixed.",
