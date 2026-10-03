@@ -95,4 +95,22 @@ public class MooringTest
 	{
 		assertEquals(0, Mooring.PORT_SARIM.tilesFrom(new WorldPoint(3050, 3192, 1)));
 	}
+
+	@Test
+	public void portsAreTheDocksWhereTheCrewBankTheHold()
+	{
+		int ports = 0;
+		for (Mooring mooring : Mooring.values())
+		{
+			if (mooring.banksCargo())
+			{
+				ports++;
+			}
+		}
+		assertEquals("the wiki's Bank deposit box column, 2026-10-03", 21, ports);
+		assertTrue(Mooring.PORT_SARIM.banksCargo());
+		assertTrue(Mooring.ETCETERIA.banksCargo());
+		assertTrue("an island with a bank is still not a port", !Mooring.RELLEKKA.banksCargo());
+		assertTrue(!Mooring.WYRMSCRAIG_CAVERN.banksCargo());
+	}
 }

@@ -35,10 +35,11 @@ public final class SalvagingTips
 			+ "dropdowns are kept per character, under the account's own id, so a name change keeps them.",
 		"The distances are sailing distances: the way round the land by sea, worked out over a map of the water "
 			+ "taken from the game's own map data, give or take a few tiles. They show once you are on the water or "
-			+ "standing at a dock, and Sort: nearest first uses them too. The nearest dock block at the top "
-			+ "follows you about: it names the nearest dock your Sailing level (unboosted) and quests let you use, and "
-			+ "says what a nearer one needs. Afloat, those are sailing distances as well; ashore, a straight line, "
-			+ "since you walk to a dock. The dropdowns are remembered between sessions.",
+			+ "standing at a dock, and Sort: nearest first uses them too. The dock block at the top follows you "
+			+ "about: it names the nearest port you can use, where your first crewmate banks the hold as you step "
+			+ "off, and the nearest mooring of any kind you can use, which is just the nearest place to get off, "
+			+ "and says what a nearer one needs. Afloat, those are sailing distances as well; ashore, a straight "
+			+ "line, since you walk to a dock. The dropdowns are remembered between sessions.",
 		"Test alert fires the full-hold notification and banner so you can check your set-up without filling a "
 			+ "hold. Forget rates throws away what the timer learned about your crew's speed on each wreck.",
 		"The timer and counter need one real look at the hold: open the cargo hold once and they follow from there. "

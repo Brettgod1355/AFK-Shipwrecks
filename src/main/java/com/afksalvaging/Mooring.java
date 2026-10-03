@@ -5,6 +5,9 @@
  */
 package com.afksalvaging;
 
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
 import net.runelite.api.Quest;
@@ -97,6 +100,18 @@ public enum Mooring
 	 * @param questComplete whether the quest must be finished (true) or only started (false)
 	 * @param note          a condition the client cannot check, shown to the player, or null
 	 */
+	/**
+	 * The docking points with a bank deposit box, where the first crewmate in the registry waits on
+	 * the dock to bank the cargo hold's contents when the player steps off; the wiki calls these
+	 * ports, as against islands, and says the service is never offered on an island, bank or no
+	 * bank. From the "Bank deposit box" column of the OSRS Wiki's Mooring point page, read
+	 * 2026-10-03: 21 of the 60 docking points listed there.
+	 */
+	private static final Set<Mooring> BANKS_CARGO = Collections.unmodifiableSet(EnumSet.of(
+		PORT_SARIM, THE_PANDEMONIUM, LANDS_END, PORT_PISCARILLIUS, CATHERBY, ARDOUGNE, PORT_KHAZARD,
+		CIVITAS_ILLA_FORTIS, CORSAIR_COVE, ALDARIN, RUINS_OF_UNKAH, VOID_KNIGHTS_OUTPOST, PORT_ROBERTS, RED_ROCK,
+		ETCETERIA, DEEPFIN_POINT, JATIZSO, NEITIZNOT, PRIFDDINAS, PISCATORIS, LUNAR_ISLE));
+
 	Mooring(String displayName, int x, int y, int sailingLevel, Quest quest, boolean questComplete, String note)
 	{
 		this.displayName = displayName;
@@ -184,6 +199,12 @@ public enum Mooring
 	public String getDisplayName()
 	{
 		return displayName;
+	}
+
+	/** Whether this is a port where the crew bank the hold's contents as the player steps off. */
+	public boolean banksCargo()
+	{
+		return BANKS_CARGO.contains(this);
 	}
 
 	/** The mooring in the top-level world. */

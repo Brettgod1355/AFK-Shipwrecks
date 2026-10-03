@@ -655,9 +655,10 @@ public interface AfkSalvagingConfig extends Config
 
 	@ConfigItem(
 		keyName = "nearestDock",
-		name = "Show nearest dock",
-		description = "Name the dock nearest to you at the top of the sidebar, with buttons to show it on the world map "
-			+ "and to route there with the Shortest Path plugin.",
+		name = "Show nearest port and mooring",
+		description = "Name the nearest port (where your crew bank the hold as you step off) and the nearest mooring of "
+			+ "any kind at the top of the sidebar, each with buttons to show it on the world map and to route there "
+			+ "with the Shortest Path plugin.",
 		section = SPOTS,
 		position = 9
 	)
@@ -669,8 +670,8 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "dockRequirements",
 		name = "Only docks I can use",
-		description = "Name the nearest dock whose Sailing level (unboosted) and quest you meet, and say what the nearer "
-			+ "one needs when there is one. Off names the nearest dock whatever it needs.",
+		description = "Name the nearest port and mooring whose Sailing level (unboosted) and quest you meet, and say what "
+			+ "a nearer one needs when there is one. Off names the nearest whatever they need.",
 		section = SPOTS,
 		position = 11
 	)
@@ -795,6 +796,19 @@ public interface AfkSalvagingConfig extends Config
 	default boolean highlightCargoHold()
 	{
 		return false;
+	}
+
+	@ConfigItem(
+		keyName = "boxHoldSalvage",
+		name = "Box salvage in the hold",
+		description = "While the cargo hold is open, box the salvage inside it so it is easy to see and click among the "
+			+ "cannonballs and kits. Nothing else in the hold is boxed.",
+		section = SORTING,
+		position = 11
+	)
+	default boolean boxHoldSalvage()
+	{
+		return true;
 	}
 
 	@Alpha

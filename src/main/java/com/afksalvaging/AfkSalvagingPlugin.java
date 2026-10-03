@@ -237,6 +237,9 @@ public class AfkSalvagingPlugin extends Plugin
 	@Inject
 	private SalvagingWorldOverlay worldOverlay;
 
+	@Inject
+	private HoldSalvageOverlay holdSalvageOverlay;
+
 	/** The spot last sent to the map or routed to; the sidebar highlights it. */
 	private SalvagingSpot pickedSpot;
 	/** The route to a salvaging spot that Shortest Path is drawing for us, or null. */
@@ -318,6 +321,7 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.add(boxOverlay);
 		overlayManager.add(holdOverlay);
 		overlayManager.add(worldOverlay);
+		overlayManager.add(holdSalvageOverlay);
 		overlayManager.add(sortOverlay);
 		markStore = new MarkStore(configManager);
 		if (markStore.migrate())
@@ -343,6 +347,7 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.remove(boxOverlay);
 		overlayManager.remove(holdOverlay);
 		overlayManager.remove(worldOverlay);
+		overlayManager.remove(holdSalvageOverlay);
 		overlayManager.remove(sortOverlay);
 		removeInfoBox();
 		if (worldRequest != null)
@@ -797,11 +802,20 @@ public class AfkSalvagingPlugin extends Plugin
 			spotsPanel.setPosition(in.playerPoint);
 			updateSeaDistances(in.playerPoint);
 			ToIntFunction<Mooring> toDock = dockDistance(in.playerPoint);
+			// Two answers (owner, 2026-10-03): the nearest port, where the crew bank the hold as you step
+			// off, and the nearest mooring of any kind, which is just the nearest place to get off.
+			ToIntFunction<Mooring> toPort = toDock == null ? null
+				: dock -> dock.banksCargo() ? toDock.applyAsInt(dock) : Integer.MAX_VALUE;
 			Mooring nearest = Mooring.nearest(toDock);
-			Mooring usable = config.dockRequirements()
-				? Mooring.nearestUsable(toDock, client.getRealSkillLevel(Skill.SAILING), quest -> quest.getState(client))
-				: nearest;
-			spotsPanel.setDock(usable, nearest);
+			Mooring mooring = nearest;
+			Mooring port = Mooring.nearest(toPort);
+			if (config.dockRequirements())
+			{
+				int level = client.getRealSkillLevel(Skill.SAILING);
+				mooring = Mooring.nearestUsable(toDock, level, quest -> quest.getState(client));
+				port = Mooring.nearestUsable(toPort, level, quest -> quest.getState(client));
+			}
+			spotsPanel.setDocks(port, mooring, nearest);
 			spotsPanel.setStats(statsLine());
 		}
 		if (session.monitor().isEstimate())
