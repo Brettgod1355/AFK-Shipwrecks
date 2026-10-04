@@ -240,7 +240,12 @@ public class AfkSalvagingOverlay extends OverlayPanel
 				break;
 			case WAITING_FOR_WRECK:
 				lines.add(new Line("Waiting for a wreck", view.waitingMillis >= 0 ? Durations.countdown(view.waitingMillis) + " so far" : "", amber));
-				if (view.nextWreck != null)
+				if (view.nextWreck != null && view.nextWreck.overdue)
+				{
+					lines.add(new Line("Next wreck here", (view.nextWreck.certain ? "any moment" : "likely any moment")
+						+ "; a wreck is outliving its clock", amber));
+				}
+				else if (view.nextWreck != null)
 				{
 					// One rises here the moment another in the area sinks; this is the earliest that can be.
 					lines.add(new Line("Next wreck here", (view.nextWreck.certain ? "in ≤ " : "likely in ≤ ")

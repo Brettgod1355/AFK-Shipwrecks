@@ -210,6 +210,26 @@ public class WreckTrackerTest
 	}
 
 	@Test
+	public void aWreckThatOutlivesItsClockIsOverdueThenWrittenOff()
+	{
+		WreckTracker tracker = new WreckTracker();
+		long lifetime = ShipwreckType.MERCHANT.getLifetimeSeconds() * 1000L;
+		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, 0);
+		tracker.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, 0);
+		tracker.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 10_000);
+		long due = 10_000 + lifetime;
+		WreckTracker.NextRise next = tracker.nextRise(HOOKS, RANGE, LEVEL, true, due - 1);
+		assertFalse(next.overdue);
+		// Past the clock: no "0:00", just "any moment".
+		next = tracker.nextRise(HOOKS, RANGE, LEVEL, true, due + 5_000);
+		assertTrue(next.overdue);
+		assertEquals(0, next.withinMillis);
+		// A minute past it the clock was simply wrong; nothing to go by until the wreck is worked again.
+		tracker.forgetStaleClocks(true, due + WreckTracker.CLOCK_GRACE_MILLIS + 1);
+		assertNull(tracker.nextRise(HOOKS, RANGE, LEVEL, true, due + WreckTracker.CLOCK_GRACE_MILLIS + 1));
+	}
+
+	@Test
 	public void clearForgetsEverything()
 	{
 		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);

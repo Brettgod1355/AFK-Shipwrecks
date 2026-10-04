@@ -746,6 +746,7 @@ public final class AfkSession
 		est.onlyHigherWrecksInReach = higherWrecksUp > 0 && !wreckInReach;
 		est.hazardous = hazardous;
 		est.stalled = rate.isStalled() && expected > 0;
+		wrecks.forgetStaleClocks(settings.salvagingWorld, now);
 		est.wreckWindowMillis = wrecks.allSunkWithin(points, range, level, now);
 		est.availability = wrecks.availability(settings.salvagingWorld ? AVAILABILITY_PRIOR_SALVAGING_WORLD
 			: AVAILABILITY_PRIOR_OTHER_WORLD, AVAILABILITY_PRIOR_WEIGHT_MILLIS, now);

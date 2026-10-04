@@ -105,11 +105,11 @@ public final class WreckTracker
 		}
 
 		/**
-		 * The latest this wreck can sink, as a time, taking its clock from our own salvaging when we
-		 * have worked it, else from its rise when the world is one where every wreck is worked at
-		 * once, else -1: nothing is known.
+		 * The latest this wreck should sink, as a time, taking its clock from our own salvaging when
+		 * we have worked it, else from its rise when the world is one where every wreck is worked at
+		 * once, else -1: nothing is known. May lie in the past when the wreck has outlived its clock.
 		 */
-		long sinksBy(boolean workedFromRise, long now)
+		long sinksBy(boolean workedFromRise)
 		{
 			if (!active)
 			{
@@ -118,26 +118,51 @@ public final class WreckTracker
 			long lifetime = type.getLifetimeSeconds() * 1000L;
 			if (worked)
 			{
-				return Math.max(now, workedSince + lifetime);
+				return workedSince + lifetime;
 			}
 			if (workedFromRise && roseAt > 0)
 			{
-				return Math.max(now, roseAt + lifetime);
+				return roseAt + lifetime;
 			}
 			return -1;
 		}
 	}
+
+	/** How long a wreck may outlive its clock before the clock is written off as wrong. */
+	public static final long CLOCK_GRACE_MILLIS = 60_000;
 
 	/** When a wreck should next rise in reach, at most, and whether it is bound to be one of ours. */
 	public static final class NextRise
 	{
 		public final long withinMillis;
 		public final boolean certain;
+		/** The other wreck has outlived its clock: the rise is due any moment, not at a time we can name. */
+		public final boolean overdue;
 
-		NextRise(long withinMillis, boolean certain)
+		NextRise(long withinMillis, boolean certain, boolean overdue)
 		{
 			this.withinMillis = withinMillis;
 			this.certain = certain;
+			this.overdue = overdue;
+		}
+	}
+
+	/**
+	 * Writes off the clock of any wreck that has outlived it by {@link #CLOCK_GRACE_MILLIS}: the
+	 * lifetimes are the wiki's averages and "worked from its rise" is an assumption, so a wreck
+	 * can last longer than either says. Such a wreck gives no bound until it is worked again.
+	 */
+	public void forgetStaleClocks(boolean salvagingWorld, long now)
+	{
+		for (Site site : sites.values())
+		{
+			long by = site.sinksBy(salvagingWorld);
+			if (by >= 0 && now - by > CLOCK_GRACE_MILLIS)
+			{
+				site.worked = false;
+				site.workedSince = 0;
+				site.roseAt = 0;
+			}
 		}
 	}
 
@@ -392,13 +417,19 @@ public final class WreckTracker
 				certain = false;
 				continue;
 			}
-			long by = site.sinksBy(salvagingWorld, now);
+			long by = site.sinksBy(salvagingWorld);
 			if (by >= 0 && (earliest < 0 || by < earliest))
 			{
 				earliest = by;
 			}
 		}
-		return earliest < 0 ? null : new NextRise(earliest - now, certain);
+		if (earliest < 0)
+		{
+			return null;
+		}
+		// Past its clock the bound is spent: the rise is due any moment rather than at a time (the
+		// overlay showed "≤ 0:00" before this, owner 2026-10-03).
+		return new NextRise(Math.max(0, earliest - now), certain, earliest <= now);
 	}
 
 	/** The most recent time a wreck in view sank, or 0. */
