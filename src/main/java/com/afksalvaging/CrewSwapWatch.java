@@ -79,6 +79,17 @@ public final class CrewSwapWatch
 		return current != null && current.key().equals(toldKey) ? current : null;
 	}
 
+	/**
+	 * Forgets the swap in the making but remembers the one already pointed out: after a world hop
+	 * the crew are the same, so the same advice would only repeat itself (review, 2026-10-04).
+	 */
+	public void forgetPending()
+	{
+		current = null;
+		candidateKey = null;
+		since = -1;
+	}
+
 	public void reset()
 	{
 		current = null;

@@ -41,6 +41,12 @@ public class SalvagingWorldOverlay extends Overlay
 		setPriority(PRIORITY_HIGH);
 	}
 
+	/** Starts the wait afresh, as when the plugin is switched back on (review, 2026-10-04). */
+	void reset()
+	{
+		bareSince = -1;
+	}
+
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{

@@ -12,6 +12,21 @@ import static org.junit.Assert.assertTrue;
 
 public class SmoothedCountdownTest
 {
+	@Test
+	public void aHeldFigureDoesNotLoseTheHoldWhenItRunsAgain()
+	{
+		SmoothedCountdown countdown = new SmoothedCountdown();
+		countdown.update(12 * 60_000L, true, 0);
+		// Held for two and a half minutes, as during a stall.
+		for (long t = 600; t <= 150_000; t += 600)
+		{
+			assertEquals(12 * 60_000L, countdown.hold(t));
+		}
+		// Running again with the same estimate: one tick off, not the whole stall.
+		long shown = countdown.update(12 * 60_000L, true, 150_600);
+		assertEquals(12 * 60_000L - 600 + 150, shown, 200);
+	}
+
 	private final SmoothedCountdown countdown = new SmoothedCountdown();
 
 	@Test

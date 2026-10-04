@@ -112,6 +112,8 @@ import org.slf4j.LoggerFactory;
  */
 @PluginDescriptor(
 	name = "AFK Shipwrecks",
+	// 1.0 was CargoFullPlugin: keep its on/off switch, so a player who turned it off stays off (review, 2026-10-04).
+	configName = "CargoFullPlugin",
 	description = "Countdown to a full cargo hold while your crew salvage, with alerts for a full hold, an empty hook and stopped crew",
 	tags = {
 		"sailing", "sail", "sailor", "boat", "ship", "raft", "skiff", "sloop", "sea", "ocean", "voyage",
@@ -371,6 +373,7 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.remove(boxOverlay);
 		overlayManager.remove(holdOverlay);
 		overlayManager.remove(worldOverlay);
+		worldOverlay.reset();
 		overlayManager.remove(holdSalvageOverlay);
 		overlayManager.remove(swapOverlay);
 		overlayManager.remove(wreckOutlineOverlay);
@@ -398,6 +401,14 @@ public class AfkSalvagingPlugin extends Plugin
 
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
+	{
+		// RuneLite posts this on whichever thread saved the setting, the Swing thread for the config
+		// panel; the sort lists and caches it rebuilds are read on the client thread, so it runs there
+		// (review, 2026-10-04).
+		clientThread.invokeLater(() -> configChanged(event));
+	}
+
+	private void configChanged(ConfigChanged event)
 	{
 		if ("runelite".equals(event.getGroup()) && "infoBoxSize".equals(event.getKey()))
 		{
@@ -632,11 +643,12 @@ public class AfkSalvagingPlugin extends Plugin
 		String option = event.getMenuOption() == null ? "" : Text.removeTags(event.getMenuOption()).toLowerCase();
 		String target = event.getMenuTarget() == null ? "" : Text.removeTags(event.getMenuTarget()).toLowerCase();
 		MenuAction action = event.getMenuAction();
+		// Any click at all, Examine and Cancel included, shows the player is here (review, 2026-10-04).
+		session.playerClicked();
 		if (action == MenuAction.CANCEL || option.startsWith("examine"))
 		{
 			return;
 		}
-		session.playerClicked();
 		if (option.equals("drop") && event.getItemId() > 0 && sortRule(event.getItemId()) == SortRule.DROP)
 		{
 			session.stats().dropped++;
@@ -833,6 +845,7 @@ public class AfkSalvagingPlugin extends Plugin
 				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=" + tipColour() + ">" + updateMessage + "</col>", null);
 			}
 			updateMessage = null;
+			noteVersionSeen();
 		}
 		if (in.ownBoat && !lastOwnBoat && !lastSailing && ticksSinceLogin > BOARDING_SETTLE_TICKS)
 		{
@@ -1050,10 +1063,17 @@ public class AfkSalvagingPlugin extends Plugin
 			}
 		}
 		updateMessage = WhatsNew.message(last, WhatsNew.usedBefore(rememberedCounts));
-		if (!WhatsNew.VERSION.equals(last))
+		if (updateMessage == null && !WhatsNew.VERSION.equals(last))
 		{
-			configManager.setConfiguration(AfkSalvagingConfig.GROUP, "lastVersion", WhatsNew.VERSION);
+			// Nothing to say. With a line to say, the version is noted once it has been said, so closing
+			// the client before the first game tick does not lose it (review, 2026-10-04).
+			noteVersionSeen();
 		}
+	}
+
+	private void noteVersionSeen()
+	{
+		configManager.setConfiguration(AfkSalvagingConfig.GROUP, "lastVersion", WhatsNew.VERSION);
 	}
 
 	// ---- Inventory sorting: boxes round items, marks, the sidebar lists ----

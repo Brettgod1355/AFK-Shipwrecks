@@ -48,6 +48,13 @@ public final class WreckTracker
 		private long lastSeenAt;
 		/** When another player's boat was first seen beside this wreck while it was up, or 0. */
 		private long othersSince;
+		/**
+		 * Clocks this wreck outlived and that were written off. A written-off clock is not started
+		 * again for the same wreck, by the boat that never left or by our hook still rolling on it,
+		 * which would show a fresh lifetime with no new start behind it (review, 2026-10-04).
+		 */
+		private boolean workedWrittenOff;
+		private boolean othersWrittenOff;
 
 		Site(WorldPoint point, ShipwreckType type)
 		{
@@ -147,19 +154,29 @@ public final class WreckTracker
 	/**
 	 * Writes off the clock of any wreck that has outlived it by {@link #CLOCK_GRACE_MILLIS}: the
 	 * lifetimes are the wiki's averages and a boat beside a wreck may not have started on it at
-	 * once, so a wreck can last longer than the clock says. Such a wreck gives no bound until it
-	 * is seen worked again.
+	 * once, so a wreck can last longer than the clock says. Each clock is judged on its own, so a
+	 * spent clock from a boat seen early does not take a later, still-good one from our own hook
+	 * with it. A written-off clock stays off until the wreck sinks or a new one rises.
 	 */
 	public void forgetStaleClocks(long now)
 	{
 		for (Site site : sites.values())
 		{
-			long by = site.sinksBy();
-			if (by >= 0 && now - by > CLOCK_GRACE_MILLIS)
+			if (!site.active)
+			{
+				continue;
+			}
+			long lifetime = site.type.getLifetimeSeconds() * 1000L;
+			if (site.othersSince > 0 && now - (site.othersSince + lifetime) > CLOCK_GRACE_MILLIS)
+			{
+				site.othersSince = 0;
+				site.othersWrittenOff = true;
+			}
+			if (site.worked && now - (site.workedSince + lifetime) > CLOCK_GRACE_MILLIS)
 			{
 				site.worked = false;
 				site.workedSince = 0;
-				site.othersSince = 0;
+				site.workedWrittenOff = true;
 			}
 		}
 	}
@@ -178,7 +195,7 @@ public final class WreckTracker
 		}
 		for (Site site : sites.values())
 		{
-			if (!site.active || !site.present || site.othersSince > 0)
+			if (!site.active || !site.present || site.othersSince > 0 || site.othersWrittenOff)
 			{
 				continue;
 			}
@@ -226,12 +243,16 @@ public final class WreckTracker
 			site.workedSince = 0;
 			site.sunkAt = 0;
 			site.othersSince = 0;
+			site.workedWrittenOff = false;
+			site.othersWrittenOff = false;
 		}
 		else if (!activeNow && site.active)
 		{
 			site.sunkAt = now;
 			site.worked = false;
 			site.workedSince = 0;
+			site.workedWrittenOff = false;
+			site.othersWrittenOff = false;
 			lastSinkAt = now;
 		}
 		site.active = activeNow;
@@ -363,7 +384,7 @@ public final class WreckTracker
 	{
 		for (Site site : eligibleActive(references, range, sailingLevel))
 		{
-			if (!site.worked)
+			if (!site.worked && !site.workedWrittenOff)
 			{
 				site.worked = true;
 				site.workedSince = now;

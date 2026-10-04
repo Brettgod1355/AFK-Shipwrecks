@@ -182,7 +182,8 @@ public enum Mooring
 	/** The nearest dock the player can disembark at, or null when none is. */
 	public static Mooring nearestUsable(WorldPoint from, int realSailingLevel, Function<Quest, QuestState> questState)
 	{
-		return nearestUsable(from == null ? null : mooring -> mooring.tilesFrom(from), realSailingLevel, questState);
+		return nearestUsable(from == null ? null : mooring -> mooring.isDock() ? mooring.tilesFrom(from) : Integer.MAX_VALUE,
+			realSailingLevel, questState);
 	}
 
 	/**
@@ -244,7 +245,7 @@ public enum Mooring
 	/** The dock nearest a point, or null when there is no point. */
 	public static Mooring nearest(WorldPoint from)
 	{
-		return nearest(from == null ? null : mooring -> mooring.tilesFrom(from));
+		return nearest(from == null ? null : mooring -> mooring.isDock() ? mooring.tilesFrom(from) : Integer.MAX_VALUE);
 	}
 
 	/** The nearest dock by the caller's measure, docks at {@link Integer#MAX_VALUE} never chosen; null when there is none. */

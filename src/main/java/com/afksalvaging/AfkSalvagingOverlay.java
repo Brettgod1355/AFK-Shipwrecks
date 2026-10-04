@@ -74,6 +74,16 @@ public class AfkSalvagingOverlay extends OverlayPanel
 		panelComponent.setPreferredSize(new Dimension(BASE_WIDTH, 0));
 	}
 
+	/**
+	 * The name RuneLite saves a dragged position under. 1.0 called this panel CargoFullOverlay; keeping
+	 * that name keeps a 1.0 player's position after the update (review, 2026-10-04).
+	 */
+	@Override
+	public String getName()
+	{
+		return "CargoFullOverlay";
+	}
+
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
@@ -374,7 +384,12 @@ public class AfkSalvagingOverlay extends OverlayPanel
 		StringBuilder text = new StringBuilder();
 		// The count and the clock only: the wreck's kind is plain from where the boat is (owner, 2026-10-04).
 		text.append(view.wrecksUp).append(" up");
-		if (view.wreckWindowAnchored && view.wreckWindowMillis >= 0)
+		if (view.wreckWindowOverdue)
+		{
+			// Past the clock the bound is spent: say so rather than "≤ 0:00" (review, 2026-10-04).
+			text.append(" - ").append(view.wrecksUp == 1 ? "outliving its clock" : "outliving their clocks");
+		}
+		else if (view.wreckWindowAnchored && view.wreckWindowMillis >= 0)
 		{
 			text.append(" - ").append(view.wrecksUp == 1 ? "sinks in ≤ " : "last sinks in ≤ ")
 				.append(Durations.countdown(view.wreckWindowMillis));

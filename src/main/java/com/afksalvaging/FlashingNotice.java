@@ -37,7 +37,8 @@ final class FlashingNotice
 		Font bold = FontManager.getRunescapeBoldFont();
 		Font titleFont = bold.deriveFont(bold.getSize2D() * scale);
 		Font plain = FontManager.getRunescapeFont();
-		Font detailFont = plain.deriveFont(plain.getSize2D() * Math.max(1f, scale * 0.75f));
+		// Three quarters of the title, never below the font's own size to stay readable, and never above the title (review, 2026-10-04).
+		Font detailFont = plain.deriveFont(Math.min(titleFont.getSize2D(), plain.getSize2D() * Math.max(1f, scale * 0.75f)));
 		FontMetrics titleMetrics = graphics.getFontMetrics(titleFont);
 		FontMetrics detailMetrics = graphics.getFontMetrics(detailFont);
 

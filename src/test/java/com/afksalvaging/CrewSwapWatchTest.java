@@ -58,6 +58,18 @@ public class CrewSwapWatchTest
 	}
 
 	@Test
+	public void aWorldHopDoesNotRepeatWhatWasSaid()
+	{
+		CrewSwapWatch watch = new CrewSwapWatch();
+		watch.update(0, JENKINS_FOR_ADA);
+		assertNotNull(watch.update(CrewSwapWatch.GRACE_MILLIS, JENKINS_FOR_ADA));
+		watch.forgetPending();
+		assertNull(watch.update(CrewSwapWatch.GRACE_MILLIS + 1_000, JENKINS_FOR_ADA));
+		assertNull("same crew after the hop: not said again", watch.update(3 * CrewSwapWatch.GRACE_MILLIS, JENKINS_FOR_ADA));
+		assertNotNull("but it still stands", watch.standing());
+	}
+
+	@Test
 	public void aResetForgetsWhatWasSaid()
 	{
 		CrewSwapWatch watch = new CrewSwapWatch();

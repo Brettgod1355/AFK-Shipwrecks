@@ -188,6 +188,8 @@ public final class AfkSession
 		public int higherWrecksUp;
 		public long wreckWindowMillis;
 		public boolean wreckWindowAnchored;
+		/** Every usable wreck in reach has outlived its clock and is still up: it sinks any moment, at no time we can name. */
+		public boolean wreckWindowOverdue;
 		public ShipwreckType wreckType;
 		public int levelNeeded;
 		public long waitingMillis = -1;
@@ -213,7 +215,8 @@ public final class AfkSession
 	private ShipwreckType rateWreck;
 
 	private final Settings settings = new Settings();
-	private final View view = new View();
+	/** Replaced, not cleared, on a reset, so nothing of the last session shows before the first tick (review, 2026-10-04). */
+	private View view = new View();
 	private final Stats stats = new Stats();
 	private boolean wasConfirmedFull;
 	private long lastTickNow = -1;
@@ -246,6 +249,8 @@ public final class AfkSession
 	/** When the game last said there was no more salvage to sort, or -1. */
 	private long sortingDoneAt = -1;
 	private boolean boostDropNotified;
+	/** Whether the crew had a wreck they could work in reach on the last tick. */
+	private boolean usableWreckLastTick;
 	private boolean idleWarned;
 	private long lastAvailabilityAt = Long.MIN_VALUE;
 
@@ -519,12 +524,13 @@ public final class AfkSession
 	{
 		wrecks.clear();
 		hookWatch.reset();
-		crewSwap.reset();
+		crewSwap.forgetPending();
 		activity.reset();
 		waitingSince = -1;
 		worldTipGiven = false;
 		waitingNotified = false;
 		sortingDoneAt = -1;
+		usableWreckLastTick = false;
 		hazardous = false;
 		countdown.reset();
 	}
@@ -533,6 +539,7 @@ public final class AfkSession
 	public void reset()
 	{
 		flushMemory();
+		view = new View();
 		monitor.reset();
 		roster.clear();
 		boat.clear();
@@ -567,6 +574,7 @@ public final class AfkSession
 		waitingNotified = false;
 		sortingDoneAt = -1;
 		boostDropNotified = false;
+		usableWreckLastTick = false;
 		idleWarned = false;
 		lastAvailabilityAt = Long.MIN_VALUE;
 		wasConfirmedFull = false;
@@ -799,7 +807,7 @@ public final class AfkSession
 		if (estimate.getState() == AfkEstimate.State.STALLED)
 		{
 			// Hold the last figure rather than blanking it for what is probably a short gap.
-			shown = countdown.remainingAt(now, false);
+			shown = countdown.hold(now);
 		}
 		else
 		{
@@ -869,13 +877,20 @@ public final class AfkSession
 			if (!boostDropNotified)
 			{
 				boostDropNotified = true;
-				notices.add(Notice.BOOST_DROPPED);
+				// Only when the crew were salvaging a wreck they could work a tick ago: arriving at a
+				// wreck above your level stops nobody, and the overlay already names the level needed
+				// (review, 2026-10-04).
+				if (usableWreckLastTick)
+				{
+					notices.add(Notice.BOOST_DROPPED);
+				}
 			}
 		}
 		else if (wreckInReach)
 		{
 			boostDropNotified = false;
 		}
+		usableWreckLastTick = wreckInReach && crewOnHooks;
 
 		// The idle logout: one warning per idle stretch, only aboard the player's own boat, where
 		// being logged out is what the whole plugin exists to prevent going unnoticed.
@@ -948,6 +963,7 @@ public final class AfkSession
 		view.higherWrecksUp = higherWrecksUp;
 		view.wreckWindowMillis = est.wreckWindowMillis;
 		view.wreckWindowAnchored = wrecks.allAnchored(points, range, level);
+		view.wreckWindowOverdue = view.wreckWindowAnchored && view.wreckWindowMillis == 0 && !eligible.isEmpty();
 		view.nextWreck = aboard ? wrecks.nextRise(points, range, level, now) : null;
 		view.wreckType = type;
 		view.levelNeeded = levelNeeded;

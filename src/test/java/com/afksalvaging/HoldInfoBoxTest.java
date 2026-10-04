@@ -16,44 +16,81 @@ import static org.junit.Assert.assertTrue;
 public class HoldInfoBoxTest
 {
 	@Test
-	public void theLabelSitsInTheTopHalfAndLeavesTheBottomToTheTime()
+	public void theLabelNeverTouchesTheTimeAtAnySizeItIsDrawnAt()
 	{
-		for (int size : new int[] {35, 32, 28, 50})
+		// RuneLite writes the time in its small font with the baseline 3 px above the bottom; its tallest glyph reaches about 13 px up.
+		for (int size = HoldInfoBox.SMALLEST_LABELLED; size <= 64; size++)
 		{
 			BufferedImage picture = HoldInfoBox.label(size);
 			assertEquals(size, picture.getWidth());
 			assertEquals(size, picture.getHeight());
-			boolean inkAbove = false;
-			boolean inkBelow = false;
-			boolean inkOnEdge = false;
-			for (int y = 0; y < picture.getHeight(); y++)
+			int timeTop = size - 13;
+			boolean ink = false;
+			for (int y = 0; y < size; y++)
 			{
-				for (int x = 0; x < picture.getWidth(); x++)
+				for (int x = 0; x < size; x++)
 				{
 					if ((picture.getRGB(x, y) >>> 24) != 0)
 					{
-						if (y < picture.getHeight() / 2)
-						{
-							inkAbove = true;
-						}
-						else
-						{
-							inkBelow = true;
-						}
-						if (x == 0 || x == picture.getWidth() - 1 || y == 0)
-						{
-							inkOnEdge = true;
-						}
+						ink = true;
+						assertTrue("clear of the time at size " + size + ", row " + y, y < timeTop);
+						assertTrue("clear of the edge at size " + size, x > 0 && x < size - 1 && y > 0);
 					}
 				}
 			}
-			assertTrue("AFK is drawn at " + size, inkAbove);
-			assertFalse("the time's half is clear at " + size, inkBelow);
-			assertFalse("nothing touches the edge at " + size, inkOnEdge);
+			assertTrue("AFK is drawn at " + size, ink);
 		}
-		BufferedImage tiny = HoldInfoBox.label(12);
-		assertEquals(12, tiny.getWidth());
-		assertEquals("too small for the word: blank", 0, tiny.getRGB(6, 3) >>> 24);
+		for (int size : new int[] {12, HoldInfoBox.SMALLEST_LABELLED - 1})
+		{
+			BufferedImage blank = HoldInfoBox.label(size);
+			assertEquals(size, blank.getWidth());
+			for (int y = 0; y < size; y++)
+			{
+				for (int x = 0; x < size; x++)
+				{
+					assertEquals("too small for the word: blank at " + size, 0, blank.getRGB(x, y) >>> 24);
+				}
+			}
+		}
+	}
+
+	@Test
+	public void everyStateHasItsOwnWordAndANumberIsAlwaysATime()
+	{
+		AfkSession.View view = new AfkSession.View();
+		view.countdownMillis = 3 * 60_000L + 40_000L;
+		view.estimate = AfkEstimate.of(AfkEstimate.State.INVENTORY_FILLS_FIRST);
+		assertEquals("3:40", HoldInfoBox.text(view, CargoHoldMonitor.Level.OK));
+		String tip = HoldInfoBox.tooltip(view, CargoHoldMonitor.Level.OK);
+		assertTrue(tip, tip.contains("inventory is full in"));
+		assertFalse("not the hold", tip.contains("hold full in"));
+		view.estimate = AfkEstimate.of(AfkEstimate.State.WRECK_SINKS_FIRST);
+		tip = HoldInfoBox.tooltip(view, CargoHoldMonitor.Level.OK);
+		assertTrue(tip, tip.contains("wreck sinks"));
+		assertFalse(tip.contains("hold full in"));
+		String[][] words = {
+			{"PLAYER_HOOK_IDLE", "Hook", "click it"},
+			{"NOBODY_SALVAGING", "Idle", "no one is on a hook"},
+			{"INVENTORY_FULL", "Inv", "deposit"},
+			{"LEVEL_TOO_LOW", "Lvl", "level is too low"},
+			{"HAZARDOUS", "Stop", "not safe"},
+			{"HOLD_DRIFTED", "?", "resync"},
+			{"HOLD_UNKNOWN", "?", "open the cargo hold"},
+		};
+		for (String[] w : words)
+		{
+			view.estimate = AfkEstimate.of(AfkEstimate.State.valueOf(w[0]));
+			assertEquals(w[0], w[1], HoldInfoBox.text(view, CargoHoldMonitor.Level.OK));
+			tip = HoldInfoBox.tooltip(view, CargoHoldMonitor.Level.OK);
+			assertTrue(w[0] + ": " + tip, tip.contains(w[2]));
+		}
+		// No state's tooltip is an internal name.
+		for (AfkEstimate.State state : AfkEstimate.State.values())
+		{
+			view.estimate = AfkEstimate.of(state);
+			String t = HoldInfoBox.tooltip(view, CargoHoldMonitor.Level.OK);
+			assertFalse(state + ": " + t, t.contains(state.name().toLowerCase().replace('_', ' ')) && state.name().contains("_"));
+		}
 	}
 
 	@Test

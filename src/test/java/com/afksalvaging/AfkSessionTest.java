@@ -595,6 +595,42 @@ public class AfkSessionTest
 	}
 
 	@Test
+	public void loggingOutLeavesNothingOfTheSessionOnScreen()
+	{
+		twoCrewOnHooks();
+		AfkSession.View view = ticks(6);
+		assertEquals(State.COUNTING_DOWN, view.estimate.getState());
+		session.reset();
+		// Before the first tick after logging back in, the overlay and infobox see a blank view.
+		assertEquals(State.NOT_SAILING, session.view().estimate.getState());
+		assertEquals(-1, session.view().countdownMillis);
+		assertEquals(0, session.view().hookCount);
+	}
+
+	@Test
+	public void arrivingAtAWreckAboveYourLevelStopsNobodyAndSaysNothing()
+	{
+		// The fixture's wreck is a merchant (87). Sail up to it at 80: the overlay names the level, no notification.
+		session.wrecks().clear();
+		level = 80;
+		twoCrewOnHooks();
+		ticks(6);
+		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK, now);
+		AfkSession.View view = ticks(4);
+		assertEquals(State.LEVEL_TOO_LOW, view.estimate.getState());
+		assertEquals(87, view.levelNeeded);
+		assertEquals(0, count(Notice.BOOST_DROPPED));
+		ticks(30);
+		assertEquals(0, count(Notice.BOOST_DROPPED));
+		// A boost lets the crew start, then it wears off: that is a stop, and it is said.
+		level = 88;
+		ticks(2);
+		level = 80;
+		ticks(2);
+		assertEquals(1, count(Notice.BOOST_DROPPED));
+	}
+
+	@Test
 	public void theGhostsSilenceNearCapacityMeansTheHoldIsFull()
 	{
 		session.roster().setCrewmate(0, JENKINS);

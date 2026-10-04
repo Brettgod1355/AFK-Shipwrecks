@@ -15,6 +15,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -52,6 +53,10 @@ public class MooringTest
 		// Out at the Unkah Barracuda spot, the ruins are the nearest dock.
 		assertEquals(Mooring.RUINS_OF_UNKAH, Mooring.nearest(SalvagingSpot.BARRACUDA_UNKAH.getPoint()));
 		assertNull(Mooring.nearest((WorldPoint) null));
+		// Alongside the bank boat it is still never the nearest dock: there is nowhere to step off.
+		WorldPoint besideBankBoat = new WorldPoint(2250, 2537, 0);
+		assertNotEquals(Mooring.BANK_BOAT, Mooring.nearest(besideBankBoat));
+		assertNotEquals(Mooring.BANK_BOAT, Mooring.nearestUsable(besideBankBoat, 99, quest -> QuestState.FINISHED));
 	}
 
 	@Test

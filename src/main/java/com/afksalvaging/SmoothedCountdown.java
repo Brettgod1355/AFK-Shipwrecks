@@ -53,6 +53,22 @@ public final class SmoothedCountdown
 		return remaining;
 	}
 
+	/**
+	 * Holds the figure still: time passes without running it down, so when updates resume the time
+	 * spent holding is not taken off at once (review, 2026-10-04: a stall made the timer dive, then
+	 * recover).
+	 *
+	 * @return the held figure, or -1
+	 */
+	public long hold(long now)
+	{
+		if (remaining >= 0)
+		{
+			updatedAt = now;
+		}
+		return remaining;
+	}
+
 	/** The remaining time as of the last update, or -1. */
 	public long remaining()
 	{
