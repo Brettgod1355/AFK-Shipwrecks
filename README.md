@@ -10,12 +10,10 @@ stopped, and the fact that your own hook does not restart itself.
 
 ## Screenshots
 
-<p>
-<img src="docs/images/overlay.png" width="440" alt="The overlay: hold full in about 41 minutes at 11:45 AM, the idle logout in 30:00, the cargo hold at 29 of 210, Jenkins and Jolly Jim on the hooks, two wrecks up and the last sinking within 3:31">
-<img src="docs/images/infobox.png" width="65" alt="The countdown infobox: AFK above 41m">
-</p>
+<img src="docs/images/overlays.webp" width="720" alt="A 16 second clip, parked in a double spot as the hold fills: the overlay counts down, the Cargo hold nearly full banner appears at 208 of 210, then Cargo hold full at 210 with the screen flashing and the infobox reading Full; the hold is opened and emptied, and the timer starts again">
 
-The overlay while the crew salvage, and the optional countdown infobox.
+Parked in a double spot as the hold fills: the overlay counting down, the nearly-full and full
+banners, the countdown infobox in the corner, then emptying the hold and the timer starting over.
 
 <p>
 <img src="docs/images/sidebar-spots.png" width="300" alt="The sidebar's Spots tab: the Discord and GitHub buttons, Test alert and Forget rates, the filter and sort, the Auto route note, the nearest dock you can use and the nearest where your crew bank the hold, the session line and a favourite spot with Map, Route, star and Auto">
