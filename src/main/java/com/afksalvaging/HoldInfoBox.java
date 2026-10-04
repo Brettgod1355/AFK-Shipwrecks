@@ -6,27 +6,65 @@
 package com.afksalvaging;
 
 import java.awt.Color;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.function.Supplier;
 import net.runelite.client.plugins.Plugin;
+import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.infobox.InfoBox;
 
 /**
  * The time to a full hold as one of RuneLite's infoboxes, so it stays in view with the overlay
- * hidden. Shown only aboard the player's own boat with something to say. The box is just its text:
- * the picture every infobox carries is left blank (owner, 2026-10-03).
+ * hidden. Shown only aboard the player's own boat with something to say. In place of a picture the
+ * box carries the word AFK across its top, above the time RuneLite writes along the bottom (owner,
+ * 2026-10-04: "think we can fit AFK above the time").
  */
 public class HoldInfoBox extends InfoBox
 {
+	/** The picture's side, RuneLite's size for an infobox picture before any scaling. */
+	static final int PICTURE_SIZE = 32;
+	/** The word drawn across the top of the picture. */
+	static final String LABEL = "AFK";
+	/** Pixels left clear above the word. */
+	private static final int LABEL_MARGIN = 1;
+
 	private final Supplier<AfkSession.View> view;
 	private final Supplier<CargoHoldMonitor.Level> holdLevel;
 
 	public HoldInfoBox(Plugin plugin, Supplier<AfkSession.View> view, Supplier<CargoHoldMonitor.Level> holdLevel)
 	{
-		super(new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB), plugin);
+		super(label(), plugin);
 		this.view = view;
 		this.holdLevel = holdLevel;
 		setTooltip("AFK Salvaging");
+	}
+
+	/**
+	 * The box's picture: AFK in the game's small font along the top, with the shadow the game gives
+	 * its text, and nothing below, so the time RuneLite writes along the bottom has the lower half
+	 * to itself.
+	 */
+	static BufferedImage label()
+	{
+		BufferedImage picture = new BufferedImage(PICTURE_SIZE, PICTURE_SIZE, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = picture.createGraphics();
+		try
+		{
+			g.setFont(FontManager.getRunescapeSmallFont());
+			FontMetrics metrics = g.getFontMetrics();
+			int x = (PICTURE_SIZE - metrics.stringWidth(LABEL)) / 2;
+			int baseline = LABEL_MARGIN + metrics.getAscent();
+			g.setColor(Color.BLACK);
+			g.drawString(LABEL, x + 1, baseline + 1);
+			g.setColor(Palette.TEXT);
+			g.drawString(LABEL, x, baseline);
+		}
+		finally
+		{
+			g.dispose();
+		}
+		return picture;
 	}
 
 	@Override

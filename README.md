@@ -53,7 +53,8 @@ stopped, and the fact that your own hook does not restart itself.
   sends a notification while you are on your own boat, once per idle stretch. It cannot press a
   key for you.
 - **A countdown infobox.** Optionally, the time to a full hold as one of RuneLite's small
-  infoboxes, with the detail on hover, so it stays in view with the overlay hidden.
+  infoboxes, AFK written above the time and the detail on hover, so it stays in view with the
+  overlay hidden.
 - **A sidebar with three tabs.** Spots (Test alert and Forget rates at the top, the nearest dock and the list), Sorting
   (each inventory sorting list with what you added and what it does by default) and Tips.
 - **Knows where the wrecks are.** The Spots tab lists all 29 salvaging hotspots, filtered by
@@ -162,7 +163,7 @@ wrecks, or always aboard), the cargo counter and what it shows (used of total, s
 percent full), the hooks line, the wrecks line, text size, and the countdown infobox (off by
 default). Whatever the settings, the overlay and the flashing notices step aside while a game
 interface fills the middle of the screen (the cargo hold, a skill guide, the quest journal, a
-diary) and come back when it closes.
+diary, the collection log, the settings, the world map) and come back when it closes.
 
 **Colours**: only the ones you notice are settings: the banners, the boxes on the water and the
 four sorting boxes, each in its own section. The overlay text, the counter's shading, the sidebar

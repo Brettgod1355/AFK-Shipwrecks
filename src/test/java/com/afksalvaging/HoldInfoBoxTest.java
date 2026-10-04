@@ -5,14 +5,45 @@
  */
 package com.afksalvaging;
 
+import java.awt.image.BufferedImage;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class HoldInfoBoxTest
 {
+	@Test
+	public void theLabelSitsInTheTopHalfAndLeavesTheBottomToTheTime()
+	{
+		BufferedImage picture = HoldInfoBox.label();
+		assertEquals(HoldInfoBox.PICTURE_SIZE, picture.getWidth());
+		assertEquals(HoldInfoBox.PICTURE_SIZE, picture.getHeight());
+		boolean inkAbove = false;
+		boolean inkBelow = false;
+		for (int y = 0; y < picture.getHeight(); y++)
+		{
+			for (int x = 0; x < picture.getWidth(); x++)
+			{
+				if ((picture.getRGB(x, y) >>> 24) != 0)
+				{
+					if (y < picture.getHeight() / 2)
+					{
+						inkAbove = true;
+					}
+					else
+					{
+						inkBelow = true;
+					}
+				}
+			}
+		}
+		assertTrue("AFK is drawn", inkAbove);
+		assertFalse("the time's half is clear", inkBelow);
+	}
+
 	@Test
 	public void nothingIsDrawnOffTheBoatOrWithoutAHook()
 	{

@@ -71,7 +71,7 @@ public final class SalvagingTips
 			+ "box so they are easy to find and click (a setting, on by default).",
 		"The overlay only appears while a wreck site is in view. \"Show overlay\" in the Overlay settings can make it "
 			+ "show whenever you are aboard. It steps aside while any game interface fills the middle of the screen, the "
-			+ "cargo hold included, and comes back when that closes."
+			+ "cargo hold and the world map included, and comes back when that closes."
 	));
 
 	private SalvagingTips()

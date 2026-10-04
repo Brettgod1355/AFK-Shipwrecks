@@ -43,6 +43,7 @@ import net.runelite.api.QuestState;
 import net.runelite.api.Scene;
 import net.runelite.api.Skill;
 import net.runelite.api.Tile;
+import net.runelite.api.WidgetNode;
 import net.runelite.api.WorldEntity;
 import net.runelite.api.WorldView;
 import net.runelite.api.coords.LocalPoint;
@@ -69,6 +70,8 @@ import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetModalMode;
+import net.runelite.api.widgets.WidgetUtil;
 import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
@@ -219,9 +222,9 @@ public class AfkSalvagingPlugin extends Plugin
 	private static final int SORT_CACHE_TICKS = 500;
 	/** The one entry the marking choices sit under in an item's right-click menu. */
 	private static final String SORT_MENU = "AFK Salvaging";
-	/** Where each screen layout (fixed, resizable classic, resizable modern) puts an open main interface. */
-	private static final int[] MAIN_INTERFACE_CONTAINERS = {
-		InterfaceID.Toplevel.MAINMODAL, InterfaceID.ToplevelOsrsStretch.MAINMODAL, InterfaceID.ToplevelPreEoc.MAINMODAL
+	/** The interface that frames the screen in each layout: fixed, resizable classic, resizable modern. */
+	static final int[] TOPLEVEL_GROUPS = {
+		InterfaceID.TOPLEVEL, InterfaceID.TOPLEVEL_OSRS_STRETCH, InterfaceID.TOPLEVEL_PRE_EOC
 	};
 	/** Whether the inventory boxes are drawn, decided once per tick rather than per item per frame. */
 	private boolean sortActive;
@@ -2254,23 +2257,38 @@ public class AfkSalvagingPlugin extends Plugin
 
 	/**
 	 * Whether a game interface fills the middle of the screen: the cargo hold, a skill guide, the
-	 * quest journal, a diary, the collection log and the like. The overlays step aside while one is
-	 * open and come back when it closes (owner, 2026-10-03, no setting). The three layouts each
-	 * have their own container for such interfaces; one of them holds a nested interface when
-	 * something is open.
+	 * quest journal, a diary, the collection log, the settings, the world map and the like. The
+	 * overlays step aside while one is open and come back when it closes (owner, 2026-10-03, no
+	 * setting). The game opens every such interface as a modal into some component of the frame
+	 * around the viewport, whichever container that is in the current layout, so the open
+	 * interfaces are checked for a modal hung on the frame rather than one container being watched.
+	 * Side panels, the HUD pieces and the chatbox are opened non-modal, and dialogues open inside
+	 * the chatbox, so none of them count. Client thread only.
 	 */
 	public boolean mainInterfaceOpen()
 	{
-		for (int container : MAIN_INTERFACE_CONTAINERS)
+		for (WidgetNode open : client.getComponentTable())
 		{
-			Widget modal = client.getWidget(container);
-			Widget[] nested = modal == null || modal.isHidden() ? null : modal.getNestedChildren();
-			if (nested != null && nested.length > 0)
+			if (open.getModalMode() != WidgetModalMode.NON_MODAL && isToplevelComponent((int) open.getHash()))
 			{
 				return true;
 			}
 		}
 		return isCargoInterfaceOpen();
+	}
+
+	/** Whether a component belongs to the interface framing the screen in any layout. */
+	static boolean isToplevelComponent(int componentId)
+	{
+		int group = WidgetUtil.componentToInterface(componentId);
+		for (int toplevel : TOPLEVEL_GROUPS)
+		{
+			if (group == toplevel)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void saveUsed()
