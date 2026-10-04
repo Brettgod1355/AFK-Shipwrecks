@@ -8,7 +8,7 @@ alert, the banner, the early warning and the cargo counter. What is new is the t
 things an AFK salvager actually needs to hear about: a hook standing empty, the crew having
 stopped, and the fact that your own hook does not restart itself.
 
-## Screenshots
+## See it in action
 
 <img src="docs/images/overlays.webp" width="720" alt="A 16 second clip, parked in a double spot as the hold fills: the overlay counts down, the Cargo hold nearly full banner appears at 208 of 210, then Cargo hold full at 210 with the screen flashing and the infobox reading Full; the hold is opened and emptied, and the timer starts again">
 
