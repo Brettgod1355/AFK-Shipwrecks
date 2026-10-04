@@ -23,7 +23,13 @@ stopped, and the fact that your own hook does not restart itself.
   your crew can sit idle for a long time. The plugin measures how much of the time a wreck has
   been up and folds that into the estimate. If you have been waiting a while on an ordinary
   world it mentions the salvaging worlds once in chat, and a flashing notice sits in the middle of
-  the screen until a wreck is up or you hop (a setting, on by default).
+  the screen until a wreck is up or you hop (a setting, on by default). While you wait it also
+  says when the next wreck can rise at your spot: the wrecks of an area share one pool and one
+  rises the moment another sinks, so on a salvaging world, where every wreck is worked from the
+  moment it appears, the earliest sink among the others is the latest you will wait. "Next wreck
+  here in ≤ 3:20" means exactly that; "likely" is added when another empty site in the area could
+  take the rise instead. Off the salvaging worlds only wrecks you have worked yourself have a
+  clock, so the line is rare there.
 - **Counts you too.** Salvage you hook yourself goes to your inventory first; the plugin counts
   it as bound for the hold and knows you stop when your inventory is full or the wreck sinks.
   Salvage you withdraw to sort is never counted, and sorting shows its own little countdown.

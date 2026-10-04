@@ -166,6 +166,8 @@ public final class AfkSession
 		public CrewSwapWatch.Suggestion betterCrew;
 		/** How long the boat has stood on one tile, 0 while it moves or when not sailing. */
 		public long boatStillMillis;
+		/** When a wreck should next rise in reach while we wait, or null when nothing says. */
+		public WreckTracker.NextRise nextWreck;
 		/** Usable wrecks up in reach. */
 		public int wrecksUp;
 		/** Wrecks up in reach that the player's level is too low for. */
@@ -876,6 +878,7 @@ public final class AfkSession
 		view.higherWrecksUp = higherWrecksUp;
 		view.wreckWindowMillis = est.wreckWindowMillis;
 		view.wreckWindowAnchored = wrecks.allAnchored(points, range, level);
+		view.nextWreck = aboard ? wrecks.nextRise(points, range, level, settings.salvagingWorld, now) : null;
 		view.wreckType = type;
 		view.levelNeeded = levelNeeded;
 		view.waitingMillis = waitingSince < 0 ? -1 : now - waitingSince;

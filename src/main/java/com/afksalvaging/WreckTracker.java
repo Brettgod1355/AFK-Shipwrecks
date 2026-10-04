@@ -46,6 +46,8 @@ public final class WreckTracker
 		private long workedSince;
 		private long sunkAt;
 		private long lastSeenAt;
+		/** When we saw this wreck rise, or 0 when it was already up when first seen. */
+		private long roseAt;
 
 		Site(WorldPoint point, ShipwreckType type)
 		{
@@ -101,6 +103,42 @@ public final class WreckTracker
 		{
 			return sunkAt;
 		}
+
+		/**
+		 * The latest this wreck can sink, as a time, taking its clock from our own salvaging when we
+		 * have worked it, else from its rise when the world is one where every wreck is worked at
+		 * once, else -1: nothing is known.
+		 */
+		long sinksBy(boolean workedFromRise, long now)
+		{
+			if (!active)
+			{
+				return -1;
+			}
+			long lifetime = type.getLifetimeSeconds() * 1000L;
+			if (worked)
+			{
+				return Math.max(now, workedSince + lifetime);
+			}
+			if (workedFromRise && roseAt > 0)
+			{
+				return Math.max(now, roseAt + lifetime);
+			}
+			return -1;
+		}
+	}
+
+	/** When a wreck should next rise in reach, at most, and whether it is bound to be one of ours. */
+	public static final class NextRise
+	{
+		public final long withinMillis;
+		public final boolean certain;
+
+		NextRise(long withinMillis, boolean certain)
+		{
+			this.withinMillis = withinMillis;
+			this.certain = certain;
+		}
 	}
 
 	private final Map<WorldPoint, Site> sites = new HashMap<>();
@@ -135,6 +173,7 @@ public final class WreckTracker
 			site.worked = false;
 			site.workedSince = 0;
 			site.sunkAt = 0;
+			site.roseAt = now;
 		}
 		else if (!activeNow && site.active)
 		{
@@ -310,6 +349,56 @@ public final class WreckTracker
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * When a wreck should next rise at the sites in reach, while none is up there. The wrecks of an
+	 * area share one pool and one rises the moment another sinks (wiki, Shipwreck salvaging), so
+	 * the answer is the earliest sink among the other wrecks in view. A wreck's clock runs from
+	 * when we worked it; on a salvaging world, where every wreck is worked from the moment it
+	 * rises, from its rise. Certain when every sunk site in view is in reach, so the next rise can
+	 * land nowhere else; otherwise only likely.
+	 *
+	 * @return null when a wreck is up in reach, no sunk site is in reach, or no other wreck has a
+	 * clock to go by
+	 */
+	public NextRise nextRise(List<WorldPoint> references, int range, int sailingLevel, boolean salvagingWorld, long now)
+	{
+		List<Site> inReach = nearby(references, range);
+		boolean sunkInReach = false;
+		for (Site site : inReach)
+		{
+			if (site.active && site.type.getSailingLevel() <= sailingLevel)
+			{
+				return null;
+			}
+			sunkInReach |= !site.active;
+		}
+		if (!sunkInReach)
+		{
+			return null;
+		}
+		long earliest = -1;
+		boolean certain = true;
+		for (Site site : presentSites())
+		{
+			if (inReach.contains(site))
+			{
+				continue;
+			}
+			if (!site.active)
+			{
+				// Another empty site in the area: the next wreck may rise there instead.
+				certain = false;
+				continue;
+			}
+			long by = site.sinksBy(salvagingWorld, now);
+			if (by >= 0 && (earliest < 0 || by < earliest))
+			{
+				earliest = by;
+			}
+		}
+		return earliest < 0 ? null : new NextRise(earliest - now, certain);
 	}
 
 	/** The most recent time a wreck in view sank, or 0. */

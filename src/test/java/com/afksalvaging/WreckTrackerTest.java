@@ -14,6 +14,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -175,6 +176,37 @@ public class WreckTrackerTest
 		assertEquals(later, tracker.availability(0.7, prior, 1_800_000), 1e-9);
 		WreckTracker fresh = new WreckTracker();
 		assertEquals(1.0, fresh.availability(1.0, 0, 0), 1e-9);
+	}
+
+	@Test
+	public void theNextWreckHereIsTheEarliestOtherSinkOnASalvagingWorld()
+	{
+		WreckTracker tracker = new WreckTracker();
+		long lifetime = ShipwreckType.MERCHANT.getLifetimeSeconds() * 1000L;
+		// Ours has sunk; the far one rose at 10 s and, on a salvaging world, was worked from then.
+		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, 0);
+		tracker.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, 0);
+		tracker.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 10_000);
+		WreckTracker.NextRise next = tracker.nextRise(HOOKS, RANGE, LEVEL, true, 20_000);
+		assertNotNull(next);
+		assertEquals(10_000 + lifetime - 20_000, next.withinMillis);
+		assertTrue("ours is the only empty site in view", next.certain);
+		// Off a salvaging world nobody may be working the far wreck: nothing to go by.
+		assertNull(tracker.nextRise(HOOKS, RANGE, LEVEL, false, 20_000));
+		// Another empty site out of reach: the next wreck may rise there instead.
+		WorldPoint other = new WorldPoint(1760, 4000, 0);
+		tracker.observe(other, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, 20_000);
+		next = tracker.nextRise(HOOKS, RANGE, LEVEL, true, 20_000);
+		assertNotNull(next);
+		assertFalse(next.certain);
+		// A wreck up in reach: we are not waiting.
+		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 30_000);
+		assertNull(tracker.nextRise(HOOKS, RANGE, LEVEL, true, 30_000));
+		// A far wreck first seen already up has no clock until we work it.
+		WreckTracker fresh = new WreckTracker();
+		fresh.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, 0);
+		fresh.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);
+		assertNull(fresh.nextRise(HOOKS, RANGE, LEVEL, true, 5_000));
 	}
 
 	@Test

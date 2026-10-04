@@ -24,6 +24,9 @@ public final class SalvagingTips
 		"Reach is taken as " + AfkSession.HOOK_RANGE + " tiles, from other plugins' observations rather than the "
 			+ "game's code, so a box edge may be a tile off. If a hook sits in a box and only one wreck is worked, "
 			+ "report it and the number gets fixed.",
+		"While you wait for a wreck, \"Next wreck here in ≤\" is the earliest another wreck in the area can sink, "
+			+ "since one rises here the moment another sinks. It needs the other wrecks to have a clock: on a salvaging "
+			+ "world every wreck is worked from the moment it rises, so they all do; elsewhere only ones you worked.",
 		"A double spot is a place, not a moment: the green box shows even while one or both of its wrecks are down, "
 			+ "because the next wreck rises on the same tile, so you can park and wait. Sunk wrecks' yellow boxes are "
 			+ "dimmer.",
