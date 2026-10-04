@@ -71,13 +71,14 @@ stopped, and the fact that your own hook does not restart itself.
 - **Boxes on the water that say where to park.** A yellow box around each wreck for where a hook
   can reach it, and a green box where a hook reaches two wrecks at once. Park so every hook on your
   boat sits in the green box and it changes colour and says "Parked". Each has its own switch and
-  colour, and the parked colour is its own setting too.
+  colour, and the parked colour is its own setting too. The green boxes go 20 seconds after the boat stops, at
+  login too, and come back the moment it moves (a setting; 0 keeps them).
   Read the section below before trusting them to the tile.
 
 - **Sorts your inventory for you to act on.** On your boat at a salvaging spot, inventory items
   get a coloured box: yellow keep (an outline only, so what stays is not tinted), cyan deposit
   (into the cargo hold), green alch, red drop. With
-  nothing marked, only two kinds get a box: ship cannonballs are Deposit (never noted ones, which
+  nothing marked, only two kinds get a box: the plain steel to dragon cannonballs are Deposit (never noted ones, which
   the hold refuses; each is listed in the Sorting tab with an × that takes it out of the defaults,
   and marking it Deposit again brings it back), and items whose alch value is at or above a
   threshold you set (1,000 by default) are Alch. Everything else gets no box, and nothing is ever Drop until you mark it.
@@ -160,7 +161,8 @@ inside the open hold so it is easy to find and click (on by default); and the fo
 
 **Salvage spots**: show the sidebar; wreck reach boxes (hidden while you are parked, on by default) and their
 colour (yellow); double spot boxes (on or off), their colour (green) and the colour they change to once
-you are parked (white); whether to label the double spot boxes; show the nearest port and mooring; and auto
+you are parked (white); whether to label the double spot boxes; how long after the boat stops they go (20 s; 0 never); show the
+nearest port and mooring; and auto
 route when boarding (the spot itself is marked in the sidebar). Favourites, the dropdown choices
 and the Auto spot are kept per character, filed against the id Jagex gives the account rather than
 its name, so a name change keeps them and two characters on one RuneLite account do not share an

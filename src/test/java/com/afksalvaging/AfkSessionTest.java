@@ -402,6 +402,19 @@ public class AfkSessionTest
 	}
 
 	@Test
+	public void theBoatsStillTimeGrowsWhileItStandsAndResetsWhenItMoves()
+	{
+		AfkSession.View view = ticks(10);
+		assertTrue("stood " + view.boatStillMillis, view.boatStillMillis >= 5_000);
+		boatPoint = new WorldPoint(BOAT.getX() + 3, BOAT.getY(), 0);
+		view = tick();
+		assertEquals(0, view.boatStillMillis);
+		view = ticks(4);
+		assertEquals(4 * 600L, view.boatStillMillis);
+		boatPoint = BOAT;
+	}
+
+	@Test
 	public void theWreckSinksAndTheTimerWaits()
 	{
 		twoCrewOnHooks();

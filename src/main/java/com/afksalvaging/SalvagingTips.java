@@ -18,7 +18,9 @@ public final class SalvagingTips
 			+ "reaches two wrecks at once.",
 		"Park so every hook on your boat is inside a green box: both on a sloop, the one on a raft or skiff. "
 			+ "The box changes to the parked colour and says \"Parked\" when they all are; with only some in, the "
-			+ "label counts them. Once parked, the yellow boxes go, to clear the view (a setting, on by default).",
+			+ "label counts them. Once parked, the yellow boxes go, to clear the view (a setting, on by default), and "
+			+ "the green ones go 20 seconds after the boat stops, at login too, coming back the moment it moves (a "
+			+ "setting; 0 keeps them).",
 		"Reach is taken as " + AfkSession.HOOK_RANGE + " tiles, from other plugins' observations rather than the "
 			+ "game's code, so a box edge may be a tile off. If a hook sits in a box and only one wreck is worked, "
 			+ "report it and the number gets fixed.",
@@ -56,7 +58,8 @@ public final class SalvagingTips
 			+ "infoboxes, with the detail on hover, for when the overlay is hidden.",
 		"Inventory sorting boxes each item on your boat at a salvaging spot (with the hold open, only the deposits, "
 			+ "in the panel beside it): yellow keep, cyan deposit (ship "
-			+ "cannonballs by default, each listed in the Sorting tab with an × that takes it out), green alch (at or "
+			+ "steel to dragon cannonballs by default, each listed in the Sorting tab with an × that takes it out), green "
+			+ "alch (at or "
 			+ "above the \"Alch from\" value), red drop (only what you mark). "
 			+ "Anything else gets no box until you mark it. Shift-right-click an item to mark it, or type its name in the "
 			+ "Sorting tab. Nothing is dropped or alched for you. Inside the open hold, the salvage stacks get an amber "

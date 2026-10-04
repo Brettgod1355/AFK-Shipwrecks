@@ -680,6 +680,21 @@ public interface AfkSalvagingConfig extends Config
 		return true;
 	}
 
+	@Range(min = 0, max = 600)
+	@Units(Units.SECONDS)
+	@ConfigItem(
+		keyName = "doubleSpotHideSeconds",
+		name = "Hide double spot boxes after",
+		description = "How long after the boat stops the double spot boxes disappear, at login too; they come back the "
+			+ "moment the boat moves. 0 keeps them on screen.",
+		section = SPOTS,
+		position = 9
+	)
+	default int doubleSpotHideSeconds()
+	{
+		return 20;
+	}
+
 	@ConfigItem(
 		keyName = "nearestDock",
 		name = "Show nearest port and mooring",
@@ -687,7 +702,7 @@ public interface AfkSalvagingConfig extends Config
 			+ "any kind at the top of the sidebar, each with buttons to show it on the world map and to route there "
 			+ "with the Shortest Path plugin.",
 		section = SPOTS,
-		position = 9
+		position = 10
 	)
 	default boolean nearestDock()
 	{
@@ -700,7 +715,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Name the nearest port and mooring whose Sailing level (unboosted) and quest you meet, and say what "
 			+ "a nearer one needs when there is one. Off names the nearest whatever they need.",
 		section = SPOTS,
-		position = 11
+		position = 12
 	)
 	default boolean dockRequirements()
 	{
@@ -714,7 +729,7 @@ public interface AfkSalvagingConfig extends Config
 			+ "Path plugin so the route is drawn without pressing anything. Only one spot can be marked. The route is "
 			+ "cleared when you reach the spot or leave your boat.",
 		section = SPOTS,
-		position = 10
+		position = 11
 	)
 	default boolean autoRouteOnBoarding()
 	{
@@ -734,7 +749,7 @@ public interface AfkSalvagingConfig extends Config
 		keyName = "inventorySort",
 		name = "Box inventory items",
 		description = "Draw a coloured box round each item in your inventory: keep (yellow), deposit (cyan), alch (green) "
-			+ "or drop (red). Unmarked items are sorted by what they are: ship cannonballs (never noted) to deposit, "
+			+ "or drop (red). Unmarked items are sorted by what they are: plain steel to dragon cannonballs (never noted) to deposit, "
 			+ "items that alch for at least the threshold to alch, and everything else gets no box. Drop is only "
 			+ "what you mark. Shift-right-click an item to mark it.",
 		section = SORTING,

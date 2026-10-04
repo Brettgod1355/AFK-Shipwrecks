@@ -94,10 +94,20 @@ public final class HoldWhitelist
 		ItemID.DRAGON_INCENDIARY_CANNONBALL
 	)));
 
-	/** Whether this unnoted item is a ship cannonball. */
-	public static boolean isCannonball(int itemId)
+	/**
+	 * The cannonballs salvage actually turns up (owner, 2026-10-03: "we only get normal
+	 * steel-dragon from salvage, not any incendiary or chainshot"): the plain ones from steel (the
+	 * multicannon's MCANNONBALL) to dragon. These are Deposit by default; the hold takes the rest
+	 * of {@link #CANNONBALLS} too, but they get no box unless marked.
+	 */
+	static final Set<Integer> DEFAULT_DEPOSITS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+		ItemID.MCANNONBALL, ItemID.MITHRIL_CANNONBALL, ItemID.ADAMANT_CANNONBALL, ItemID.RUNE_CANNONBALL, ItemID.DRAGON_CANNONBALL
+	)));
+
+	/** Whether this unnoted item is a Deposit by default: a plain steel to dragon cannonball. */
+	public static boolean isDefaultDeposit(int itemId)
 	{
-		return CANNONBALLS.contains(itemId);
+		return DEFAULT_DEPOSITS.contains(itemId);
 	}
 
 	private final Set<Integer> accepted = new LinkedHashSet<>();

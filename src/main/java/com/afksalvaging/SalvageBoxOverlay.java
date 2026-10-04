@@ -106,7 +106,11 @@ public class SalvageBoxOverlay extends Overlay
 			}
 		}
 
-		if (doubleSpots)
+		// Once the boat has stood still a while the green boxes have done their job (owner, 2026-10-03):
+		// they go after the set time, at login too, and come back the moment the boat moves.
+		int hideAfter = config.doubleSpotHideSeconds();
+		boolean restingLongEnough = hideAfter > 0 && plugin.getSession().view().boatStillMillis >= hideAfter * 1000L;
+		if (doubleSpots && !restingLongEnough)
 		{
 			Color colour = config.doubleSpotColor();
 			for (int i = 0; i < doubles.size(); i++)

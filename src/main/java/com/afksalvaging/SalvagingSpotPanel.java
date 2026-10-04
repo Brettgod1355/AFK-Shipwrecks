@@ -376,7 +376,8 @@ public class SalvagingSpotPanel extends PluginPanel
 						+ defaults.geOverAlchPercent + "% or more."
 					: "By default: nothing; only what you mark.";
 			case HOLD:
-				return "By default: the ship cannonballs listed above, never noted; × takes one off, and marking it "
+				return "By default: the plain cannonballs, steel to dragon, listed above, never noted; × takes one off, and "
+					+ "marking it "
 					+ "Deposit again brings it back. Other things the hold takes, such as repair kits or fish, get no "
 					+ "box unless you mark them here.";
 			case ALCH:

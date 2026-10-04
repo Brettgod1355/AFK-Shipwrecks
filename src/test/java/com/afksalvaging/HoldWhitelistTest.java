@@ -55,11 +55,19 @@ public class HoldWhitelistTest
 		for (int id : cannonballs)
 		{
 			assertTrue("cannonball " + id, hold.takes(id));
-			assertTrue("cannonball " + id, HoldWhitelist.isCannonball(id));
 		}
 		assertEquals(cannonballs.length, HoldWhitelist.CANNONBALLS.size());
 		assertTrue("every cannonball is also in the seed", HoldWhitelist.SEED.containsAll(HoldWhitelist.CANNONBALLS));
-		assertFalse("a repair kit is taken but is no cannonball", HoldWhitelist.isCannonball(KIT));
+		// Only the plain steel to dragon ones are Deposit by default (owner, 2026-10-03).
+		assertEquals(5, HoldWhitelist.DEFAULT_DEPOSITS.size());
+		for (int id : new int[]{ItemID.MCANNONBALL, ItemID.MITHRIL_CANNONBALL, ItemID.ADAMANT_CANNONBALL, ItemID.RUNE_CANNONBALL, ItemID.DRAGON_CANNONBALL})
+		{
+			assertTrue("default deposit " + id, HoldWhitelist.isDefaultDeposit(id));
+		}
+		assertFalse("bronze is not salvaged", HoldWhitelist.isDefaultDeposit(ItemID.BRONZE_CANNONBALL));
+		assertFalse("chainshot is not salvaged", HoldWhitelist.isDefaultDeposit(ItemID.DRAGON_CHAINSHOT_CANNONBALL));
+		assertFalse("a repair kit is taken but is no default deposit", HoldWhitelist.isDefaultDeposit(KIT));
+		assertTrue("every default deposit is a cannonball the hold takes", HoldWhitelist.CANNONBALLS.containsAll(HoldWhitelist.DEFAULT_DEPOSITS));
 	}
 
 	@Test

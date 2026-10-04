@@ -164,6 +164,8 @@ public final class AfkSession
 		public HookWatch.Reason reminder;
 		/** A swap already suggested and still worth making, or null. */
 		public CrewSwapWatch.Suggestion betterCrew;
+		/** How long the boat has stood on one tile, 0 while it moves or when not sailing. */
+		public long boatStillMillis;
 		/** Usable wrecks up in reach. */
 		public int wrecksUp;
 		/** Wrecks up in reach that the player's level is too low for. */
@@ -869,6 +871,7 @@ public final class AfkSession
 		view.spareCrewCannotUseHook = spare == 0 && !roster.idle(tick).isEmpty();
 		view.reminder = hookWatch.getReason();
 		view.betterCrew = crewSwap.standing();
+		view.boatStillMillis = stillTicks * 600L;
 		view.wrecksUp = eligible.size();
 		view.higherWrecksUp = higherWrecksUp;
 		view.wreckWindowMillis = est.wreckWindowMillis;

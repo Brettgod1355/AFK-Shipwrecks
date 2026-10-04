@@ -1047,7 +1047,7 @@ public class AfkSalvagingPlugin extends Plugin
 		ItemComposition realItem = real == itemId ? item : itemManager.getItemComposition(real);
 		boolean noted = item.getNote() != -1;
 		return new SalvageSorter.ItemFacts(itemId, noted, realItem.isTradeable(), holdWhitelist.takes(real),
-			HoldWhitelist.isCannonball(real), realItem.getHaPrice(), itemManager.getItemPrice(real));
+			HoldWhitelist.isDefaultDeposit(real), realItem.getHaPrice(), itemManager.getItemPrice(real));
 	}
 
 	/**
@@ -1207,7 +1207,7 @@ public class AfkSalvagingPlugin extends Plugin
 				{
 					// The default deposits, listed with an × like marks (owner, 2026-10-03); a third element says so.
 					List<String[]> defaults = new ArrayList<>();
-					for (int id : HoldWhitelist.CANNONBALLS)
+					for (int id : HoldWhitelist.DEFAULT_DEPOSITS)
 					{
 						if (sortLists.markOf(id) == null && !sortLists.isExcluded(id))
 						{

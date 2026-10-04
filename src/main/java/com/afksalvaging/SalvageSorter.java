@@ -32,19 +32,19 @@ public final class SalvageSorter
 		public final boolean tradeable;
 		/** Whether the cargo hold accepts the unnoted item ({@link HoldWhitelist}). */
 		public final boolean holdTakes;
-		/** Whether the unnoted item is a ship cannonball, the only default deposit. */
-		public final boolean cannonball;
+		/** Whether the unnoted item is a Deposit by default: a plain steel to dragon cannonball. */
+		public final boolean defaultDeposit;
 		public final int alchValue;
 		public final long gePrice;
 
-		public ItemFacts(int id, boolean noted, boolean tradeable, boolean holdTakes, boolean cannonball,
+		public ItemFacts(int id, boolean noted, boolean tradeable, boolean holdTakes, boolean defaultDeposit,
 			int alchValue, long gePrice)
 		{
 			this.id = id;
 			this.noted = noted;
 			this.tradeable = tradeable;
 			this.holdTakes = holdTakes;
-			this.cannonball = cannonball;
+			this.defaultDeposit = defaultDeposit;
 			this.alchValue = alchValue;
 			this.gePrice = gePrice;
 		}
@@ -227,9 +227,9 @@ public final class SalvageSorter
 			// Untradeables are left alone unless the player marks them (owner, 2026-10-02).
 			return null;
 		}
-		if (facts.cannonball && !facts.noted)
+		if (facts.defaultDeposit && !facts.noted)
 		{
-			// Only cannonballs are a deposit by default (owner, 2026-10-02).
+			// Only the plain steel to dragon cannonballs are a deposit by default (owner, 2026-10-02, trimmed 2026-10-03).
 			return SortRule.HOLD;
 		}
 		if (facts.holdTakes)
