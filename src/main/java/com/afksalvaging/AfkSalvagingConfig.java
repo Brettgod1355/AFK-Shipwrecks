@@ -279,8 +279,8 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "sortingDoneNotification",
 		name = "Done sorting at the station",
-		description = "Notify five seconds after the game says you have no more salvage to sort, unless you have started "
-			+ "sorting again by then. Off unless you want it.",
+		description = "Notify five seconds after the game says you have no more salvage to sort, unless you have clicked "
+			+ "anything or started sorting again by then: it is for when you have wandered off. Off unless you want it.",
 		section = REMINDERS,
 		position = 6
 	)

@@ -22,19 +22,23 @@ import net.runelite.client.ui.overlay.infobox.InfoBox;
  */
 public class HoldInfoBox extends InfoBox
 {
-	/** The picture's side, RuneLite's size for an infobox picture before any scaling. */
-	static final int PICTURE_SIZE = 32;
 	/** The word drawn across the top of the picture. */
 	static final String LABEL = "AFK";
 	/** Pixels left clear above the word. */
 	private static final int LABEL_MARGIN = 1;
+	/** The smallest picture worth drawing the word on; below it the box is text only. */
+	static final int SMALLEST_LABELLED = 20;
 
 	private final Supplier<AfkSession.View> view;
 	private final Supplier<CargoHoldMonitor.Level> holdLevel;
 
-	public HoldInfoBox(Plugin plugin, Supplier<AfkSession.View> view, Supplier<CargoHoldMonitor.Level> holdLevel)
+	/**
+	 * @param boxSize RuneLite's infobox size setting; the picture is drawn at this size so RuneLite
+	 *                never scales it, which would thin or drop the word's strokes
+	 */
+	public HoldInfoBox(Plugin plugin, int boxSize, Supplier<AfkSession.View> view, Supplier<CargoHoldMonitor.Level> holdLevel)
 	{
-		super(label(), plugin);
+		super(label(boxSize), plugin);
 		this.view = view;
 		this.holdLevel = holdLevel;
 		setTooltip("AFK Shipwrecks");
@@ -43,17 +47,22 @@ public class HoldInfoBox extends InfoBox
 	/**
 	 * The box's picture: AFK in the game's small font along the top, with the shadow the game gives
 	 * its text, and nothing below, so the time RuneLite writes along the bottom has the lower half
-	 * to itself.
+	 * to itself. Square, of the given side; a very small box gets a blank picture.
 	 */
-	static BufferedImage label()
+	static BufferedImage label(int size)
 	{
-		BufferedImage picture = new BufferedImage(PICTURE_SIZE, PICTURE_SIZE, BufferedImage.TYPE_INT_ARGB);
+		size = Math.max(2, size);
+		BufferedImage picture = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+		if (size < SMALLEST_LABELLED)
+		{
+			return picture;
+		}
 		Graphics2D g = picture.createGraphics();
 		try
 		{
 			g.setFont(FontManager.getRunescapeSmallFont());
 			FontMetrics metrics = g.getFontMetrics();
-			int x = (PICTURE_SIZE - metrics.stringWidth(LABEL)) / 2;
+			int x = (size - metrics.stringWidth(LABEL)) / 2;
 			int baseline = LABEL_MARGIN + metrics.getAscent();
 			g.setColor(Color.BLACK);
 			g.drawString(LABEL, x + 1, baseline + 1);

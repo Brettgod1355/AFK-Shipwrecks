@@ -465,6 +465,15 @@ public final class AfkSession
 		sortingDoneAt = now;
 	}
 
+	/**
+	 * The player clicked something in the game. A pending done-sorting notice is dropped: the notice
+	 * is for a player who wandered off, not one dropping the loot (owner, 2026-10-04).
+	 */
+	public void playerClicked()
+	{
+		sortingDoneAt = -1;
+	}
+
 	/** The player clicked something else before reaching the hold, so the deposit or withdrawal is off. */
 	public void holdActionCancelled()
 	{

@@ -503,6 +503,19 @@ public class AfkSessionTest
 	}
 
 	@Test
+	public void doneSortingIsDroppedWhenThePlayerClicksWithinTheGrace()
+	{
+		// Dropping the loot is clicking: the player is here, so there is nobody to call back.
+		twoCrewOnHooks();
+		ticks(2);
+		session.sortingDoneLine(now);
+		ticks(3);
+		session.playerClicked();
+		ticks(20);
+		assertEquals(0, count(Notice.SORTING_DONE));
+	}
+
+	@Test
 	public void doneSortingIsDroppedWhenSortingStartsAgainWithinTheGrace()
 	{
 		twoCrewOnHooks();

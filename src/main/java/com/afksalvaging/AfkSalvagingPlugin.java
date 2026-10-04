@@ -398,6 +398,13 @@ public class AfkSalvagingPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
+		if ("runelite".equals(event.getGroup()) && "infoBoxSize".equals(event.getKey()))
+		{
+			// The label is drawn at the box's size: redraw it at the new one.
+			removeInfoBox();
+			applyInfoBox();
+			return;
+		}
 		if (!AfkSalvagingConfig.GROUP.equals(event.getGroup()))
 		{
 			return;
@@ -628,6 +635,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			return;
 		}
+		session.playerClicked();
 		if (option.equals("drop") && event.getItemId() > 0 && sortRule(event.getItemId()) == SortRule.DROP)
 		{
 			session.stats().dropped++;
@@ -1328,7 +1336,9 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			if (infoBox == null)
 			{
-				infoBox = new HoldInfoBox(this, session::view, () -> session.monitor().level(config.warnSlotsRemaining()));
+				// Drawn at RuneLite's infobox size, so the AFK label is never scaled and never loses a column.
+				infoBox = new HoldInfoBox(this, runeLiteConfig.infoBoxSize(), session::view,
+					() -> session.monitor().level(config.warnSlotsRemaining()));
 				infoBoxManager.addInfoBox(infoBox);
 			}
 		}

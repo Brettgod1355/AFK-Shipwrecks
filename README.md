@@ -151,7 +151,7 @@ wreck off those worlds, on by default).
 free; your hook is idle; a better crewmate is free; crew stopped because your level is too low;
 idle logout coming; and two that are off unless you want them: waiting for a wreck, once every
 wreck in reach has been down ten seconds, and done sorting at the station, five seconds after the
-game says so), whether the swap also flashes mid-screen (on by default), the
+game says so and only if you have not clicked anything since), whether the swap also flashes mid-screen (on by default), the
 grace period before the first reminder (10 s by default; using the hold buys a little more,
 settling in to sort shortens it), how often to repeat, and how long before the idle logout to
 warn (60 s; 0 never).

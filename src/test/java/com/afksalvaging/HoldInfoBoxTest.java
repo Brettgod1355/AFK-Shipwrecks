@@ -18,30 +18,42 @@ public class HoldInfoBoxTest
 	@Test
 	public void theLabelSitsInTheTopHalfAndLeavesTheBottomToTheTime()
 	{
-		BufferedImage picture = HoldInfoBox.label();
-		assertEquals(HoldInfoBox.PICTURE_SIZE, picture.getWidth());
-		assertEquals(HoldInfoBox.PICTURE_SIZE, picture.getHeight());
-		boolean inkAbove = false;
-		boolean inkBelow = false;
-		for (int y = 0; y < picture.getHeight(); y++)
+		for (int size : new int[] {35, 32, 28, 50})
 		{
-			for (int x = 0; x < picture.getWidth(); x++)
+			BufferedImage picture = HoldInfoBox.label(size);
+			assertEquals(size, picture.getWidth());
+			assertEquals(size, picture.getHeight());
+			boolean inkAbove = false;
+			boolean inkBelow = false;
+			boolean inkOnEdge = false;
+			for (int y = 0; y < picture.getHeight(); y++)
 			{
-				if ((picture.getRGB(x, y) >>> 24) != 0)
+				for (int x = 0; x < picture.getWidth(); x++)
 				{
-					if (y < picture.getHeight() / 2)
+					if ((picture.getRGB(x, y) >>> 24) != 0)
 					{
-						inkAbove = true;
-					}
-					else
-					{
-						inkBelow = true;
+						if (y < picture.getHeight() / 2)
+						{
+							inkAbove = true;
+						}
+						else
+						{
+							inkBelow = true;
+						}
+						if (x == 0 || x == picture.getWidth() - 1 || y == 0)
+						{
+							inkOnEdge = true;
+						}
 					}
 				}
 			}
+			assertTrue("AFK is drawn at " + size, inkAbove);
+			assertFalse("the time's half is clear at " + size, inkBelow);
+			assertFalse("nothing touches the edge at " + size, inkOnEdge);
 		}
-		assertTrue("AFK is drawn", inkAbove);
-		assertFalse("the time's half is clear", inkBelow);
+		BufferedImage tiny = HoldInfoBox.label(12);
+		assertEquals(12, tiny.getWidth());
+		assertEquals("too small for the word: blank", 0, tiny.getRGB(6, 3) >>> 24);
 	}
 
 	@Test
