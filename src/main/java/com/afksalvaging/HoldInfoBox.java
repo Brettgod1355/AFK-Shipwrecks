@@ -117,7 +117,8 @@ public class HoldInfoBox extends InfoBox
 			case STALLED:
 				return Durations.tiny(v.countdownMillis);
 			case WAITING_FOR_WRECK:
-				return "Wait";
+				// Only at a spot; on the way there the box has nothing to say (owner, 2026-10-04).
+				return v.atSpot ? "Wait" : null;
 			case NOT_SAILING:
 			case NO_HOOK:
 				return null;

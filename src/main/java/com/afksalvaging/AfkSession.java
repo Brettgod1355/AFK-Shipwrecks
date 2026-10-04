@@ -800,7 +800,9 @@ public final class AfkSession
 			shown = countdown.update(estimate.hasEta() ? estimate.getEtaMillis() : -1, running, now);
 		}
 
-		if (estimate.getState() == AfkEstimate.State.WAITING_FOR_WRECK)
+		// Waiting is only waiting at a spot: the voyage there, with the crew on hooks and nothing in
+		// reach, is the same estimate state but not time waited (owner, 2026-10-04).
+		if (estimate.getState() == AfkEstimate.State.WAITING_FOR_WRECK && atSpot)
 		{
 			if (waitingSince < 0)
 			{
@@ -901,8 +903,7 @@ public final class AfkSession
 		{
 			waitingNotified = false;
 		}
-		else if (!waitingNotified && atSpot && estimate.getState() == AfkEstimate.State.WAITING_FOR_WRECK
-			&& now - waitingSince >= WAITING_ALERT_AFTER_MILLIS)
+		else if (!waitingNotified && now - waitingSince >= WAITING_ALERT_AFTER_MILLIS)
 		{
 			// Once per stretch of waiting, after a pause in case the next wreck rises at once.
 			waitingNotified = true;
@@ -910,8 +911,7 @@ public final class AfkSession
 		}
 
 		boolean showTip = false;
-		if (estimate.getState() == AfkEstimate.State.WAITING_FOR_WRECK && !settings.salvagingWorld && atSpot
-			&& waitingSince >= 0 && now - waitingSince >= WORLD_TIP_AFTER_MILLIS)
+		if (!settings.salvagingWorld && waitingSince >= 0 && now - waitingSince >= WORLD_TIP_AFTER_MILLIS)
 		{
 			showTip = true;
 			if (!worldTipGiven)

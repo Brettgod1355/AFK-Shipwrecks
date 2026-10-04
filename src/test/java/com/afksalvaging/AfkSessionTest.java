@@ -445,17 +445,26 @@ public class AfkSessionTest
 	@Test
 	public void waitingIsNotSaidAtADockBesideTheSpots()
 	{
-		// Crew on the hooks, a sunk wreck in view but out of reach: not at a spot, so no waiting notice and no world tip.
+		// Crew on the hooks, a sunk wreck in view but out of reach: not at a spot, so the estimate says
+		// waiting but the clock does not run, and there is no waiting notice and no world tip.
+		session.wrecks().clear();
 		twoCrewOnHooks();
 		session.settings().salvagingWorld = false;
 		session.wreckSeen(FAR_WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, now);
 		AfkSession.View view = ticks(120);
+		assertEquals(State.WAITING_FOR_WRECK, view.estimate.getState());
+		assertFalse(view.atSpot);
+		assertEquals(-1, view.waitingMillis);
 		assertEquals(0, count(Notice.WAITING_FOR_WRECK));
 		assertEquals(0, count(Notice.WORLD_TIP));
 		assertFalse(view.showWorldTip);
-		// Pull up to the spot: the sunk wreck is in reach, and the wait is a wait.
+		// Pull up to the spot: the sunk wreck is in reach, the clock starts there, and the wait is a wait.
 		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, now);
-		ticks(20);
+		view = ticks(10);
+		assertTrue(view.atSpot);
+		assertEquals(10 * TICK, view.waitingMillis, TICK);
+		assertEquals("six seconds at the spot: not yet", 0, count(Notice.WAITING_FOR_WRECK));
+		ticks(10);
 		assertEquals(1, count(Notice.WAITING_FOR_WRECK));
 	}
 

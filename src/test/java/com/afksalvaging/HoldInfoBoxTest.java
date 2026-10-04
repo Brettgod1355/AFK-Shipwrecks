@@ -64,6 +64,8 @@ public class HoldInfoBoxTest
 		assertTrue(HoldInfoBox.tooltip(view, CargoHoldMonitor.Level.OK).contains("52 min"));
 		assertEquals("Full", HoldInfoBox.text(view, CargoHoldMonitor.Level.FULL));
 		view.estimate = AfkEstimate.of(AfkEstimate.State.WAITING_FOR_WRECK);
+		assertNull("on the way to a spot the box says nothing", HoldInfoBox.text(view, CargoHoldMonitor.Level.OK));
+		view.atSpot = true;
 		assertEquals("Wait", HoldInfoBox.text(view, CargoHoldMonitor.Level.OK));
 		view.estimate = AfkEstimate.of(AfkEstimate.State.HOLD_UNKNOWN);
 		assertEquals("?", HoldInfoBox.text(view, CargoHoldMonitor.Level.OK));

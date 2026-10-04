@@ -76,7 +76,7 @@ stopped, and the fact that your own hook does not restart itself.
   a first visit to Kourend or Varlamore, the items worn for Entrana, or the raft needed for
   Wyrmscraig Cavern, are shown rather than checked.
 - **A session line and two tools.** How much has been salvaged, the Sailing XP, holds filled and
-  time spent waiting for wrecks since the client started; a Test alert button that fires the
+  time spent waiting for wrecks at a spot since the client started; a Test alert button that fires the
   full-hold notification and banner so you can check your set-up; and Forget rates, which
   throws away what the timer has learned about your crew's speed. The Tips tab explains the boxes,
   the buttons and the rest of this README in short.
@@ -129,7 +129,8 @@ while waiting for a wreck, carries a "~". Other lines you may see:
 
 - `open the cargo hold once to start`: it needs one real count to work from.
 - `Waiting for a wreck · 1:20 so far` and `Left to salvage · 34 min`: nobody can salvage until a
-  wreck rises; the second line is what remains once one does.
+  wreck rises; the second line is what remains once one does. The clock counts time at the spot,
+  not the voyage there; on the way, with nothing in reach, the line reads `no wreck site in reach`.
 - `Hooks  Jenkins · 1 empty (no crewmate can use it)`: a hook is standing empty.
 - `Crew stopped  Sailing level too low (needs 87)`.
 - `Hold  full by the tally; open it to check`: the running tally says full, but nothing has

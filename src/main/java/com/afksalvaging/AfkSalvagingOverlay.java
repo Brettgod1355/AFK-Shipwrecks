@@ -239,6 +239,12 @@ public class AfkSalvagingOverlay extends OverlayPanel
 					"Sailing level too low" + (view.levelNeeded > 0 ? " (needs " + view.levelNeeded + ")" : ""), bad));
 				break;
 			case WAITING_FOR_WRECK:
+				if (!view.atSpot)
+				{
+					// Crew on the hooks but no wreck site within reach: on the way, not waiting.
+					lines.add(new Line("Timer", "no wreck site in reach", dim));
+					break;
+				}
 				lines.add(new Line("Waiting for a wreck", view.waitingMillis >= 0 ? Durations.countdown(view.waitingMillis) + " so far" : "", amber));
 				if (view.nextWreck != null && view.nextWreck.overdue)
 				{
