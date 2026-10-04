@@ -8,6 +8,28 @@ alert, the banner, the early warning and the cargo counter. What is new is the t
 things an AFK salvager actually needs to hear about: a hook standing empty, the crew having
 stopped, and the fact that your own hook does not restart itself.
 
+## Screenshots
+
+<p>
+<img src="docs/images/overlay.png" width="440" alt="The overlay: hold full in about 41 minutes at 11:45 AM, the idle logout in 30:00, the cargo hold at 29 of 210, Jenkins and Jolly Jim on the hooks, two wrecks up and the last sinking within 3:31">
+<img src="docs/images/infobox.png" width="65" alt="The countdown infobox: AFK above 41m">
+</p>
+
+The overlay while the crew salvage, and the optional countdown infobox.
+
+<p>
+<img src="docs/images/sidebar-spots.png" width="300" alt="The sidebar's Spots tab: the Discord and GitHub buttons, Test alert and Forget rates, the filter and sort, the Auto route note, the nearest dock you can use and the nearest where your crew bank the hold, the session line and a favourite spot with Map, Route, star and Auto">
+<img src="docs/images/spot-filter.png" width="300" alt="The spot filter: all wrecks, spots I can salvage, favourites, or one kind of salvage with its level">
+</p>
+
+The sidebar: every salvaging spot with its distance by sea, the nearest docks, and routes through
+the Shortest Path plugin.
+
+<img src="docs/images/sorting.webp" width="640" alt="Inventory sorting: the inventory with its items boxed by what to do with them, beside the Sorting tab listing the Keep, Deposit, Alch and Drop marks">
+
+Inventory sorting: every item gets a box for keep, deposit, alch or drop, and the Sorting tab
+lists what you have marked.
+
 ## What it does
 
 - **Countdown to a full hold.** "Hold full in about 52 min", with the clock time if you like. It is
