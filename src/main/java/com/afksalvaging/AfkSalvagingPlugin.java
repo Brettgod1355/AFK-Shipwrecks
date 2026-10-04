@@ -59,6 +59,7 @@ import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.OverheadTextChanged;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.events.WidgetClosed;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.events.WorldEntityDespawned;
 import net.runelite.api.events.WorldEntitySpawned;
@@ -225,6 +226,14 @@ public class AfkSalvagingPlugin extends Plugin
 	/** The interface that frames the screen in each layout: fixed, resizable classic, resizable modern. */
 	static final int[] TOPLEVEL_GROUPS = {
 		InterfaceID.TOPLEVEL, InterfaceID.TOPLEVEL_OSRS_STRETCH, InterfaceID.TOPLEVEL_PRE_EOC
+	};
+	/** The frame's containers for interfaces drawn over the viewport, in each layout: modals, adverts, floating windows. */
+	static final int[] MAIN_VIEWPORT_CONTAINERS = {
+		InterfaceID.Toplevel.MAINMODAL, InterfaceID.Toplevel.MAINCRM, InterfaceID.Toplevel.FLOATER,
+		InterfaceID.ToplevelOsrsStretch.MAINMODAL, InterfaceID.ToplevelOsrsStretch.MAINMODAL_BACKGROUNDS,
+		InterfaceID.ToplevelOsrsStretch.MAINCRM, InterfaceID.ToplevelOsrsStretch.FLOATER,
+		InterfaceID.ToplevelPreEoc.MAINMODAL, InterfaceID.ToplevelPreEoc.MAINMODAL_BACKGROUNDS,
+		InterfaceID.ToplevelPreEoc.MAINCRM, InterfaceID.ToplevelPreEoc.FLOATER
 	};
 	/** Whether the inventory boxes are drawn, decided once per tick rather than per item per frame. */
 	private boolean sortActive;
@@ -665,6 +674,13 @@ public class AfkSalvagingPlugin extends Plugin
 			// The map takes a position only once its own script has laid it out, a tick or two later.
 			mapFocusTicks = 2;
 		}
+		logOpenInterfaces("loading " + event.getGroupId());
+	}
+
+	@Subscribe
+	public void onWidgetClosed(WidgetClosed event)
+	{
+		logOpenInterfaces("closing " + event.getGroupId());
 	}
 
 	@Subscribe
@@ -2259,22 +2275,56 @@ public class AfkSalvagingPlugin extends Plugin
 	 * Whether a game interface fills the middle of the screen: the cargo hold, a skill guide, the
 	 * quest journal, a diary, the collection log, the settings, the world map and the like. The
 	 * overlays step aside while one is open and come back when it closes (owner, 2026-10-03, no
-	 * setting). The game opens every such interface as a modal into some component of the frame
-	 * around the viewport, whichever container that is in the current layout, so the open
-	 * interfaces are checked for a modal hung on the frame rather than one container being watched.
-	 * Side panels, the HUD pieces and the chatbox are opened non-modal, and dialogues open inside
-	 * the chatbox, so none of them count. Client thread only.
+	 * setting). The open interfaces are read off the client's component table: anything opened as a
+	 * modal counts, except inside the chatbox, where dialogues live; so does anything, modal or
+	 * not, opened into one of the frame's containers for interfaces over the viewport (modals,
+	 * adverts, floating windows) in any layout. Side panels and the HUD pieces are opened non-modal
+	 * into other containers, so they do not count. Client thread only.
 	 */
 	public boolean mainInterfaceOpen()
 	{
 		for (WidgetNode open : client.getComponentTable())
 		{
-			if (open.getModalMode() != WidgetModalMode.NON_MODAL && isToplevelComponent((int) open.getHash()))
+			int component = (int) open.getHash();
+			boolean modalOutsideChat = open.getModalMode() != WidgetModalMode.NON_MODAL
+				&& WidgetUtil.componentToInterface(component) != InterfaceID.CHATBOX;
+			if (modalOutsideChat || isMainViewportContainer(component))
 			{
 				return true;
 			}
 		}
 		return isCargoInterfaceOpen();
+	}
+
+	/** Whether a component is one of the frame's containers for interfaces over the viewport, in any layout. */
+	static boolean isMainViewportContainer(int componentId)
+	{
+		for (int container : MAIN_VIEWPORT_CONTAINERS)
+		{
+			if (componentId == container)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Temporary (2026-10-04): what is open, where and how, to learn where the mid-screen interfaces hang. */
+	private void logOpenInterfaces(String why)
+	{
+		if (!log.isDebugEnabled())
+		{
+			return;
+		}
+		StringBuilder open = new StringBuilder();
+		for (WidgetNode node : client.getComponentTable())
+		{
+			int component = (int) node.getHash();
+			open.append(' ').append(WidgetUtil.componentToInterface(component)).append(':')
+				.append(WidgetUtil.componentToId(component)).append("->").append(node.getId())
+				.append('/').append(node.getModalMode());
+		}
+		log.debug("Interfaces open after {}:{} (main interface open: {})", why, open, mainInterfaceOpen());
 	}
 
 	/** Whether a component belongs to the interface framing the screen in any layout. */

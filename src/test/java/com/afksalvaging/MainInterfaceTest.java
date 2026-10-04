@@ -29,4 +29,14 @@ public class MainInterfaceTest
 		assertFalse(AfkSalvagingPlugin.isToplevelComponent(InterfaceID.SailingBoatCargohold.UNIVERSE));
 		assertFalse(AfkSalvagingPlugin.isToplevelComponent(InterfaceID.SkillGuide.WINDOW));
 	}
+
+	@Test
+	public void theViewportContainersAreKnownInEveryLayout()
+	{
+		assertTrue(AfkSalvagingPlugin.isMainViewportContainer(InterfaceID.Toplevel.MAINMODAL));
+		assertTrue(AfkSalvagingPlugin.isMainViewportContainer(InterfaceID.ToplevelOsrsStretch.FLOATER));
+		assertTrue(AfkSalvagingPlugin.isMainViewportContainer(InterfaceID.ToplevelPreEoc.MAINMODAL_BACKGROUNDS));
+		assertFalse("side panels", AfkSalvagingPlugin.isMainViewportContainer(InterfaceID.ToplevelOsrsStretch.SIDE3));
+		assertFalse("the chatbox", AfkSalvagingPlugin.isMainViewportContainer(InterfaceID.Toplevel.CHAT_CONTAINER));
+	}
 }
