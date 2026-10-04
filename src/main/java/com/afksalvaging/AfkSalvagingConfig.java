@@ -725,13 +725,27 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "parkedTextAfterHide",
+		name = "Say \"Parked\" after hiding",
+		description = "Once the double spot boxes have hidden, keep the words \"Parked in double spot\" where the box "
+			+ "was while every hook is in it. Only the text, no box.",
+		section = SPOTS,
+		position = 11
+	)
+	default boolean parkedTextAfterHide()
+	{
+		// On by default (owner, 2026-10-04).
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "nearestDock",
 		name = "Show nearest docks",
 		description = "Name the nearest dock you can use and the nearest dock where your crew bank the hold as you step off "
 			+ "(a dock with a bank deposit box, or the bank boat) at the top of the sidebar, each with buttons to show "
 			+ "it on the world map and to route there with the Shortest Path plugin.",
 		section = SPOTS,
-		position = 11
+		position = 12
 	)
 	default boolean nearestDock()
 	{
@@ -744,7 +758,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Name only docks whose Sailing level (unboosted) and quest you meet, and say what a nearer one "
 			+ "needs when there is one. Off names the nearest whatever they need.",
 		section = SPOTS,
-		position = 13
+		position = 14
 	)
 	default boolean dockRequirements()
 	{
@@ -758,7 +772,7 @@ public interface AfkSalvagingConfig extends Config
 			+ "Path plugin so the route is drawn without pressing anything. Only one spot can be marked. The route is "
 			+ "cleared when you reach the spot or leave your boat.",
 		section = SPOTS,
-		position = 12
+		position = 13
 	)
 	default boolean autoRouteOnBoarding()
 	{

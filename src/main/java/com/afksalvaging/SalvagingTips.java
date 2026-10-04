@@ -21,7 +21,8 @@ public final class SalvagingTips
 			+ "The box changes to the parked colour and says \"Parked\" when they all are; with only some in, the "
 			+ "label counts them. Once parked, the yellow boxes go, to clear the view (a setting, on by default), and "
 			+ "the green ones go 20 seconds after the boat stops, at login too, coming back the moment it moves (a "
-			+ "setting; 0 keeps them).",
+			+ "setting; 0 keeps them). While you stay parked, \"Parked in double spot\" stays where the box was (a "
+			+ "setting, on by default).",
 		"Reach is taken as " + AfkSession.HOOK_RANGE + " tiles, from other plugins' observations rather than the "
 			+ "game's code, so a box edge may be a tile off. If a hook sits in a box and only one wreck is worked, "
 			+ "report it and the number gets fixed.",

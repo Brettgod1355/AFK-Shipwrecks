@@ -84,7 +84,8 @@ stopped, and the fact that your own hook does not restart itself.
   can reach it, and a green box where a hook reaches two wrecks at once. Park so every hook on your
   boat sits in the green box and it changes colour and says "Parked". Each has its own switch and
   colour, and the parked colour is its own setting too. The green boxes go 20 seconds after the boat stops, at
-  login too, and come back the moment it moves (a setting; 0 keeps them). Wrecks that are up and within
+  login too, and come back the moment it moves (a setting; 0 keeps them). While you stay parked,
+  the words "Parked in double spot" stay where the box was (a setting, on by default). Wrecks that are up and within
   your level get a soft cyan outline round the hull, like the game's own hover outline, so the one to
   work stands out without another box (a setting, on by default).
   Read the section below before trusting them to the tile.
@@ -186,7 +187,8 @@ inside the open hold so it is easy to find and click (on by default); and the fo
 **Salvage spots**: show the sidebar; wreck reach boxes (hidden while you are parked, on by default) and their
 colour (yellow); outline wrecks that are up (on by default); double spot boxes (on or off), their
 colour (green) and the colour they change to once you are parked (a faint cyan); whether to label the
-double spot boxes; how long after the boat stops they go (20 s; 0 never); show the nearest docks (the
+double spot boxes; how long after the boat stops they go (20 s; 0 never); whether "Parked in double
+spot" stays once they have gone (on by default); show the nearest docks (the
 one you can use and the one where your crew bank the hold); and auto route when boarding (the spot itself is marked in the sidebar). Favourites, the dropdown choices
 and the Auto spot are kept per character, filed against the id Jagex gives the account rather than
 its name, so a name change keeps them and two characters on one RuneLite account do not share an

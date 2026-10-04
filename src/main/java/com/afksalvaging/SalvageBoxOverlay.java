@@ -36,6 +36,8 @@ import net.runelite.client.ui.overlay.OverlayUtil;
  */
 public class SalvageBoxOverlay extends Overlay
 {
+	/** What the parked double spot says once its box has hidden. */
+	static final String PARKED_TEXT = "Parked in double spot";
 	private static final Stroke OUTLINE = new BasicStroke(2);
 	private static final Stroke PARKED_OUTLINE = new BasicStroke(3);
 	/** How much dimmer a box is when its wreck, or one of its pair, has sunk. */
@@ -140,7 +142,42 @@ public class SalvageBoxOverlay extends Overlay
 				drawBox(graphics, top, box, drawn, parked ? PARKED_OUTLINE : OUTLINE, label);
 			}
 		}
+		else if (doubleSpots && config.parkedTextAfterHide() && !hooks.isEmpty())
+		{
+			// The boxes have hidden, but the boat is still parked in one: say so where its label was,
+			// with no box (owner, 2026-10-04). Full strength, as a faint parked colour is a box fill.
+			Color parkedColour = config.doubleSpotParkedColor();
+			Color text = new Color(parkedColour.getRed(), parkedColour.getGreen(), parkedColour.getBlue());
+			for (int i = 0; i < doubles.size(); i++)
+			{
+				if (hooksInside[i] == hooks.size())
+				{
+					drawLabel(graphics, top, doubles.get(i).getBox(), PARKED_TEXT, text);
+				}
+			}
+		}
 		return null;
+	}
+
+	/** Words where a double spot box's label goes, at its middle, with no box. */
+	private void drawLabel(Graphics2D graphics, WorldView top, DoubleSpot.Box box, String text, Color colour)
+	{
+		if (box == null)
+		{
+			return;
+		}
+		LocalPoint low = LocalPoint.fromWorld(top, box.getMinX(), box.getMinY());
+		LocalPoint high = LocalPoint.fromWorld(top, box.getMaxX(), box.getMaxY());
+		if (low == null || high == null)
+		{
+			return;
+		}
+		LocalPoint centre = new LocalPoint((low.getX() + high.getX()) / 2, (low.getY() + high.getY()) / 2, top);
+		Point at = Perspective.getCanvasTextLocation(client, graphics, centre, text, 0);
+		if (at != null)
+		{
+			OverlayUtil.renderTextLocation(graphics, at, text, colour);
+		}
 	}
 
 	private void drawBox(Graphics2D graphics, WorldView top, DoubleSpot.Box box, Color colour, Stroke stroke, String label)
