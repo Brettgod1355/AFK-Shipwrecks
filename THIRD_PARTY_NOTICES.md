@@ -1,6 +1,6 @@
 # Third-party notices
 
-AFK Salvaging (formerly Cargo Hold Alert) is an independent project. It is not an official
+AFK Shipwrecks (formerly Cargo Hold Alert) is an independent project. It is not an official
 RuneLite product and is not affiliated with Jagex.
 
 ## RuneLite

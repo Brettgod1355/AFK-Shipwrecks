@@ -37,7 +37,7 @@ public class HoldInfoBox extends InfoBox
 		super(label(), plugin);
 		this.view = view;
 		this.holdLevel = holdLevel;
-		setTooltip("AFK Salvaging");
+		setTooltip("AFK Shipwrecks");
 	}
 
 	/**
@@ -131,25 +131,25 @@ public class HoldInfoBox extends InfoBox
 	{
 		if (level == CargoHoldMonitor.Level.FULL || v.estimate.getState() == AfkEstimate.State.HOLD_FULL)
 		{
-			return "AFK Salvaging: the cargo hold is full";
+			return "AFK Shipwrecks: the cargo hold is full";
 		}
 		switch (v.estimate.getState())
 		{
 			case HOLD_FULL_UNCONFIRMED:
-				return "AFK Salvaging: hold full by the tally; open it to check";
+				return "AFK Shipwrecks: hold full by the tally; open it to check";
 			case COUNTING_DOWN:
 			case INVENTORY_FILLS_FIRST:
 			case WRECK_SINKS_FIRST:
 			case STALLED:
-				return "AFK Salvaging: hold full in " + (v.estimate.isApproximate() ? "~" : "")
+				return "AFK Shipwrecks: hold full in " + (v.estimate.isApproximate() ? "~" : "")
 					+ Durations.coarse(v.countdownMillis)
 					+ (v.idleWarning ? "; idle logout in " + Durations.countdown(v.idleLogoutMillis) : "");
 			case WAITING_FOR_WRECK:
-				return "AFK Salvaging: waiting for a wreck";
+				return "AFK Shipwrecks: waiting for a wreck";
 			case HOLD_UNKNOWN:
-				return "AFK Salvaging: open the cargo hold once to start the timer";
+				return "AFK Shipwrecks: open the cargo hold once to start the timer";
 			default:
-				return "AFK Salvaging: " + v.estimate.getState().name().toLowerCase().replace('_', ' ');
+				return "AFK Shipwrecks: " + v.estimate.getState().name().toLowerCase().replace('_', ' ');
 		}
 	}
 }

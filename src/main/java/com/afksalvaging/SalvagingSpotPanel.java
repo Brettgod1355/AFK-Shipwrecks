@@ -151,7 +151,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
 		top.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-		JLabel title = new JLabel("AFK Salvaging");
+		JLabel title = new JLabel("AFK Shipwrecks");
 		title.setFont(FontManager.getRunescapeBoldFont());
 		title.setForeground(Color.WHITE);
 		title.setAlignmentX(LEFT_ALIGNMENT);

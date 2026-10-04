@@ -46,9 +46,9 @@ public final class WhatsNew
 		if (lastVersion == null || lastVersion.isEmpty())
 		{
 			return installedBefore
-				? "Cargo Hold Alert is now AFK Salvaging " + VERSION + ": " + NOTE + "."
+				? "Cargo Hold Alert is now AFK Shipwrecks " + VERSION + ": " + NOTE + "."
 				: null;
 		}
-		return "AFK Salvaging updated to " + VERSION + ": " + NOTE + ".";
+		return "AFK Shipwrecks updated to " + VERSION + ": " + NOTE + ".";
 	}
 }

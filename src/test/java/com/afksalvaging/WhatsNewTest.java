@@ -40,7 +40,7 @@ public class WhatsNewTest
 	public void anUpdateSaysOneLineWithTheVersionAndTheNote()
 	{
 		String line = WhatsNew.message("1.9", true);
-		assertTrue(line, line.startsWith("AFK Salvaging updated to " + WhatsNew.VERSION + ": "));
+		assertTrue(line, line.startsWith("AFK Shipwrecks updated to " + WhatsNew.VERSION + ": "));
 		assertTrue(line, line.endsWith(WhatsNew.NOTE + "."));
 		assertFalse("no links in chat", line.contains("http"));
 	}
@@ -49,7 +49,7 @@ public class WhatsNewTest
 	public void comingFromTheVersionThatKeptNoVersionIsTheRename()
 	{
 		String line = WhatsNew.message(null, true);
-		assertTrue(line, line.startsWith("Cargo Hold Alert is now AFK Salvaging " + WhatsNew.VERSION + ": "));
+		assertTrue(line, line.startsWith("Cargo Hold Alert is now AFK Shipwrecks " + WhatsNew.VERSION + ": "));
 	}
 
 	@Test

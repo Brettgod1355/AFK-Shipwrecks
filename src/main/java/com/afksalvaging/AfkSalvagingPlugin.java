@@ -110,7 +110,7 @@ import org.slf4j.LoggerFactory;
  * deposits and withdrawals; the capacity from the cargo hold object built on the boat.
  */
 @PluginDescriptor(
-	name = "AFK Salvaging",
+	name = "AFK Shipwrecks",
 	description = "Countdown to a full cargo hold while your crew salvage, with alerts for a full hold, an empty hook and stopped crew",
 	tags = {
 		"sailing", "sail", "sailor", "boat", "ship", "raft", "skiff", "sloop", "sea", "ocean", "voyage",
@@ -221,7 +221,7 @@ public class AfkSalvagingPlugin extends Plugin
 	/** Ticks between clearing the sort cache so Grand Exchange price changes show up. */
 	private static final int SORT_CACHE_TICKS = 500;
 	/** The one entry the marking choices sit under in an item's right-click menu. */
-	private static final String SORT_MENU = "AFK Salvaging";
+	private static final String SORT_MENU = "AFK Shipwrecks";
 	/** The frame's containers for interfaces drawn over the viewport, in each layout: modals, adverts, floating windows. */
 	static final int[] MAIN_VIEWPORT_CONTAINERS = {
 		InterfaceID.Toplevel.MAINMODAL, InterfaceID.Toplevel.MAINCRM, InterfaceID.Toplevel.FLOATER,
@@ -1098,7 +1098,7 @@ public class AfkSalvagingPlugin extends Plugin
 	}
 
 	/**
-	 * Shift-right-click on an inventory item offers one "AFK Salvaging" entry that opens to Keep /
+	 * Shift-right-click on an inventory item offers one "AFK Shipwrecks" entry that opens to Keep /
 	 * Deposit / Alch / Drop and Unmark, so the item's own menu grows by one line rather than four.
 	 * These are RuneLite-side entries: clicking one changes a setting and sends nothing to the game.
 	 */
@@ -1500,7 +1500,7 @@ public class AfkSalvagingPlugin extends Plugin
 		String problem = ShortestPathPresence.check(pluginManager).problem();
 		spotsPanel.setStatus(problem, problem != null);
 		spotsButton = NavigationButton.builder()
-			.tooltip("AFK Salvaging")
+			.tooltip("AFK Shipwrecks")
 			.icon(ImageUtil.loadImageResource(getClass(), "spots_icon.png"))
 			.priority(7)
 			.panel(spotsPanel)
