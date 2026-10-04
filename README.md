@@ -27,8 +27,9 @@ the Shortest Path plugin.
 
 <img src="docs/images/sorting.webp" width="640" alt="Inventory sorting: the inventory with its items boxed by what to do with them, beside the Sorting tab listing the Keep, Deposit, Alch and Drop marks">
 
-Inventory sorting: every item gets a box for keep, deposit, alch or drop, and the Sorting tab
-lists what you have marked.
+Inventory sorting: items get a box for deposit, alch or drop, and the Sorting tab lists what you
+have marked. Keep has a box too, off by default; switch on "Box kept items" in the Inventory sorting
+settings to see it.
 
 ## What it does
 
