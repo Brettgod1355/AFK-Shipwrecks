@@ -32,7 +32,7 @@ public final class SalvageSorter
 		public final boolean tradeable;
 		/** Whether the cargo hold accepts the unnoted item ({@link HoldWhitelist}). */
 		public final boolean holdTakes;
-		/** Whether the unnoted item is a Deposit by default: a plain steel to dragon cannonball. */
+		/** Whether the unnoted item is a Deposit by default: a plain bronze to dragon cannonball. */
 		public final boolean defaultDeposit;
 		public final int alchValue;
 		public final long gePrice;
@@ -229,7 +229,7 @@ public final class SalvageSorter
 		}
 		if (facts.defaultDeposit && !facts.noted)
 		{
-			// Only the plain steel to dragon cannonballs are a deposit by default (owner, 2026-10-02, trimmed 2026-10-03).
+			// Only the plain bronze to dragon cannonballs are a deposit by default (owner, 2026-10-02, trimmed 2026-10-03, bronze and iron 2026-10-04).
 			return SortRule.HOLD;
 		}
 		if (facts.holdTakes)
