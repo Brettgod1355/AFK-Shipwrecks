@@ -65,7 +65,8 @@ public final class SalvagingTips
 			+ "in the panel beside it): sage keep, cyan deposit (ship "
 			+ "bronze to dragon cannonballs by default, each listed in the Sorting tab with an × that takes it out), green "
 			+ "alch (at or "
-			+ "above the \"Alch from\" value), red drop (only what you mark). "
+			+ "above the \"Alch from\" value), red drop (only what you mark; \"Add suggested drops\" in the Sorting "
+			+ "tab marks 52 common ones for you, after asking). "
 			+ "Anything else gets no box until you mark it. Shift-right-click an item to mark it, or type its name in the "
 			+ "Sorting tab. Nothing is dropped or alched for you. Inside the open hold, the salvage stacks get an amber "
 			+ "box so they are easy to find and click (a setting, on by default).",

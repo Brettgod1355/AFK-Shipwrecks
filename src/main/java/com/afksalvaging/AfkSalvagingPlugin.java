@@ -1202,6 +1202,31 @@ public class AfkSalvagingPlugin extends Plugin
 	}
 
 	/**
+	 * Adds the suggested drops the player agreed to as their own Drop marks, skipping anything
+	 * already in a list of theirs. Client thread.
+	 */
+	private void addSuggestedDropMarks()
+	{
+		int added = markStore.markAllUnmarked(SuggestedDrops.ITEMS, SortRule.DROP);
+		if (added < 0)
+		{
+			setSpotStatus("Log in first: marks are kept per character.", true);
+			return;
+		}
+		reloadSortLists();
+		int skipped = SuggestedDrops.ITEMS.size() - added;
+		if (added == 0)
+		{
+			setSpotStatus("Every suggested drop is already in one of your lists.", false);
+		}
+		else
+		{
+			setSpotStatus("Added " + added + " suggested drops to Drop"
+				+ (skipped > 0 ? "; " + skipped + " already in your lists were left as they were." : "."), false);
+		}
+	}
+
+	/**
 	 * Takes a default deposit (a ship cannonball) out of the defaults for the character logged in,
 	 * so it gets no box until marked again. Client thread.
 	 */
@@ -1497,6 +1522,12 @@ public class AfkSalvagingPlugin extends Plugin
 			public void sortItemAdd(String name, SortRule rule)
 			{
 				addSortItemByName(name, rule);
+			}
+
+			@Override
+			public void addSuggestedDrops()
+			{
+				clientThread.invokeLater(() -> addSuggestedDropMarks());
 			}
 
 			@Override

@@ -187,6 +187,39 @@ final class MarkStore
 	}
 
 	/**
+	 * Marks every item in one go for the character logged in, leaving alone any item already in a
+	 * list of anyone's: a suggestion never overrides a choice the player made. One save, so the
+	 * lists reload once rather than once per item.
+	 *
+	 * @return how many items were added, or -1 when nobody is logged in
+	 */
+	int markAllUnmarked(Iterable<Integer> itemIds, SortRule rule)
+	{
+		String own = settings.ownProfile();
+		if (own == null)
+		{
+			return -1;
+		}
+		SalvageSorter.Lists everyone = load();
+		String key = keyFor(rule);
+		List<Integer> ids = new ArrayList<>(SalvageSorter.Lists.parse(settings.get(own, key)));
+		int added = 0;
+		for (int id : itemIds)
+		{
+			if (everyone.markOf(id) == null && !ids.contains(id))
+			{
+				ids.add(id);
+				added++;
+			}
+		}
+		if (added > 0)
+		{
+			save(own, key, ids);
+		}
+		return added;
+	}
+
+	/**
 	 * Takes an item out of the defaults for the character logged in: no box until it is marked
 	 * again. Same rules as {@link #mark}.
 	 */

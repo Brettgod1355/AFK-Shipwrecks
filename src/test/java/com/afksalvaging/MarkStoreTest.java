@@ -48,7 +48,7 @@ public class MarkStoreTest
 	private static final int BALL = 31906;
 
 	/** RuneLite's settings, in memory: two characters, one logged in. */
-	private static final class FakeSettings implements MarkStore.Settings
+	static final class FakeSettings implements MarkStore.Settings
 	{
 		final Map<String, String> plugin = new HashMap<>();
 		final Map<String, String> perCharacter = new HashMap<>();

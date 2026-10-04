@@ -24,6 +24,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
@@ -78,6 +79,9 @@ public class SalvagingSpotPanel extends PluginPanel
 
 		/** The × on a row: a mark comes off; a default entry is taken out of the defaults until marked again. */
 		void sortItemRemove(int itemId, boolean fromDefaults);
+
+		/** The player agreed to add the suggested drops to their Drop list. */
+		void addSuggestedDrops();
 	}
 
 	/** The sidebar's fixed colours; the sorting list headings follow the settings, see {@link #setSortColours}. */
@@ -334,6 +338,12 @@ public class SalvagingSpotPanel extends PluginPanel
 		addRow.setAlignmentX(LEFT_ALIGNMENT);
 		addRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
 		block.add(addRow);
+		block.add(Box.createVerticalStrut(4));
+		JButton suggested = button("Add suggested drops", "Add " + SuggestedDrops.ITEMS.size() + " items most players drop "
+			+ "to your Drop list. Asks first; items you have already put in a list are left alone.");
+		suggested.addActionListener(e -> confirmSuggestedDrops(suggested));
+		suggested.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
+		block.add(suggested);
 		block.add(Box.createVerticalStrut(8));
 
 		sortLists.setLayout(new BoxLayout(sortLists, BoxLayout.Y_AXIS));
@@ -842,6 +852,26 @@ public class SalvagingSpotPanel extends PluginPanel
 		row.add(text, BorderLayout.CENTER);
 		row.add(buttons, BorderLayout.SOUTH);
 		return row;
+	}
+
+	/**
+	 * Asks before adding the suggested drops: dropping cannot be undone, so nothing is marked Drop
+	 * without the player saying so (owner, 2026-10-04: "some people might not want everything to be
+	 * on by default that i think is junk"). Swing thread.
+	 */
+	private void confirmSuggestedDrops(JButton from)
+	{
+		int answer = JOptionPane.showConfirmDialog(SwingUtilities.getWindowAncestor(from),
+			"Add " + SuggestedDrops.ITEMS.size() + " items most players drop to your Drop list?\n\n"
+				+ "Logs, planks, nails, bars, ore, air and water runes, raw fish, fishing gear, seaweed, rings, "
+				+ "caskets and the like.\n"
+				+ "Anything you have already put in a list stays as it is, and each new one gets an × "
+				+ "to take it off again.",
+			"Add suggested drops", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+		if (answer == JOptionPane.OK_OPTION)
+		{
+			actions.addSuggestedDrops();
+		}
 	}
 
 	private static JPanel buttons(JButton left, JButton right)

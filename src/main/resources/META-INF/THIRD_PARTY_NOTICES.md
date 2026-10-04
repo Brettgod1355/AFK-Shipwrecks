@@ -77,8 +77,10 @@ development tooling is not included in the plugin JAR.
   the official salvaging worlds ([World](https://oldschool.runescape.wiki/w/World)), and the Sailing
   level and quest each dock needs ([Mooring point](https://oldschool.runescape.wiki/w/Mooring_point)
   and [Last Light](https://oldschool.runescape.wiki/w/Last_Light), read 2026-10-02). The same
-  salvaging page's update history is where "double salvage spots" is named as a game feature. Only
-  the figures are used; no wiki text or images are included.
+  salvaging page's update history is where "double salvage spots" is named as a game feature. The
+  suggested drops (`SuggestedDrops`) are items the owner picked from the shipwreck salvage tables of
+  the wiki's shipwreck pages (read 2026-10-04), matched to item ids by name in the game cache. Only
+  the figures and item names are used; no wiki text or images are included.
 - The [Sailing](https://github.com/LlemonDuck/sailing) plugin by LlemonDuck (BSD 2-Clause) was
   consulted to confirm which game objects represent a boat's cargo hold and salvaging hooks, which
   crewmate line reports a full hold, which varbits hold the crew slots and their assignments, and
