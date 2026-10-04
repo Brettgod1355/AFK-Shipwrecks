@@ -24,8 +24,8 @@ public final class WhatsNew
 	 * One line on what this version brings, no links; a full stop is added when it is said. Leave
 	 * it empty for a release not worth a line (a fix, a wording change) and nothing is said.
 	 */
-	public static final String NOTE = "a countdown to a full hold, hook and crew reminders, and a sidebar of salvaging spots "
-		+ "with the world map, Shortest Path routes, favourites, auto route and the boxes that show where to park";
+	public static final String NOTE = "hook and crew reminders, wreck timers, loot sorting, and a sidebar of salvaging spots "
+		+ "with routes and docks";
 
 	private WhatsNew()
 	{
