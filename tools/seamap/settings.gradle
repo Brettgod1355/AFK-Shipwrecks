@@ -1,0 +1,2 @@
+// A standalone build on purpose: this tool is not part of the plugin and never ships with it.
+rootProject.name = 'seamap'

@@ -11,8 +11,8 @@ repositories {
 }
 
 def runeLiteVersion = providers.gradleProperty('runeLiteVersion').getOrElse('latest.release')
-group = 'com.cargofull'
-version = '1.0'
+group = 'com.afksalvaging'
+version = '2.0'
 
 dependencies {
     compileOnly "net.runelite:client:${runeLiteVersion}"
@@ -33,7 +33,7 @@ test {
 
 tasks.register('run', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'com.cargofull.CargoFullPluginTest'
+    mainClass = 'com.afksalvaging.AfkSalvagingPluginTest'
     jvmArgs '-ea'
     args '--developer-mode', '--debug'
 }

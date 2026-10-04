@@ -1,0 +1,288 @@
+/*
+ * SPDX-License-Identifier: BSD-2-Clause
+ * Copyright (c) 2026, Brettgod1355 <github.com/Brettgod1355>
+ * See LICENSE for redistribution conditions and disclaimer.
+ */
+package com.afksalvaging;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.gameval.ObjectID;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+public class WreckTrackerTest
+{
+	private static final WorldPoint HOOK = new WorldPoint(1800, 4000, 0);
+	private static final List<WorldPoint> HOOKS = Collections.singletonList(HOOK);
+	private static final WorldPoint NEAR = new WorldPoint(1806, 4004, 0);
+	private static final WorldPoint FAR = new WorldPoint(1840, 4000, 0);
+	private static final WorldPoint UPSTAIRS = new WorldPoint(1806, 4004, 1);
+	private static final int RANGE = 8;
+	private static final int LEVEL = 99;
+
+	private final WreckTracker tracker = new WreckTracker();
+
+	@Test
+	public void findsWrecksInRangeOfAnyHookOnTheSamePlane()
+	{
+		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);
+		tracker.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);
+		tracker.observe(UPSTAIRS, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);
+		assertFalse(tracker.observe(NEAR, ObjectID.SAILING_BOAT_HULL_KANDARIN_3X8_WOOD, 0));
+
+		List<WreckTracker.Site> nearby = tracker.nearby(HOOKS, RANGE);
+		assertEquals(1, nearby.size());
+		assertEquals(NEAR, nearby.get(0).getPoint());
+		assertEquals(ShipwreckType.MERCHANT, nearby.get(0).getType());
+		assertTrue(tracker.anyActive(HOOKS, RANGE));
+		assertEquals(1, tracker.eligibleActive(HOOKS, RANGE, LEVEL).size());
+		assertEquals(0, tracker.eligibleActive(HOOKS, RANGE, 86).size());
+		assertEquals(ShipwreckType.MERCHANT, tracker.typeInReach(HOOKS, RANGE, LEVEL));
+		assertNull(tracker.typeInReach(HOOKS, RANGE, 86));
+		assertTrue(tracker.nearby((WorldPoint) null, RANGE).isEmpty());
+		assertTrue(tracker.nearby(Collections.emptyList(), RANGE).isEmpty());
+
+		// A second hook further along the boat brings the far wreck into reach.
+		WorldPoint secondHook = new WorldPoint(1834, 4000, 0);
+		assertEquals(2, tracker.nearby(Arrays.asList(HOOK, secondHook), RANGE).size());
+	}
+
+	@Test
+	public void stumpsAreNotActive()
+	{
+		tracker.observe(NEAR, ObjectID.SAILING_LARGE_SHIPWRECK_STUMP, 0);
+		assertEquals(1, tracker.nearby(HOOKS, RANGE).size());
+		assertFalse(tracker.anyActive(HOOKS, RANGE));
+		assertEquals(0, tracker.allSunkWithin(HOOKS, RANGE, LEVEL, 0));
+		assertFalse(tracker.allAnchored(HOOKS, RANGE, LEVEL));
+	}
+
+	@Test
+	public void aWreckIsOnlyAnchoredOnceWeWorkIt()
+	{
+		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 10_000);
+		// Until then all we know is that it lasts at most one lifetime.
+		assertEquals(240_000, tracker.allSunkWithin(HOOKS, RANGE, LEVEL, 20_000));
+		assertEquals(240_000, tracker.allSunkWithin(HOOKS, RANGE, LEVEL, 500_000));
+		assertFalse(tracker.allAnchored(HOOKS, RANGE, LEVEL));
+
+		tracker.noteRolling(HOOKS, RANGE, LEVEL, 30_000);
+		assertTrue(tracker.allAnchored(HOOKS, RANGE, LEVEL));
+		assertEquals(240_000, tracker.allSunkWithin(HOOKS, RANGE, LEVEL, 30_000));
+		assertEquals(180_000, tracker.allSunkWithin(HOOKS, RANGE, LEVEL, 90_000));
+		assertEquals(0, tracker.allSunkWithin(HOOKS, RANGE, LEVEL, 500_000));
+		// Rolling on does not move the anchor.
+		tracker.noteRolling(HOOKS, RANGE, LEVEL, 100_000);
+		assertEquals(170_000, tracker.allSunkWithin(HOOKS, RANGE, LEVEL, 100_000));
+	}
+
+	@Test
+	public void seeingAWreckRiseDoesNotAnchorItByItself()
+	{
+		tracker.observe(NEAR, ObjectID.SAILING_SMALL_SHIPWRECK_STUMP, 0);
+		tracker.observe(NEAR, ObjectID.SAILING_SMALL_SHIPWRECK, 50_000);
+		assertFalse(tracker.allAnchored(HOOKS, RANGE, LEVEL));
+		assertEquals(60_000, tracker.allSunkWithin(HOOKS, RANGE, LEVEL, 80_000));
+
+		tracker.observe(NEAR, ObjectID.SAILING_SMALL_SHIPWRECK_STUMP, 110_000);
+		assertEquals(110_000, tracker.getLastSinkAt());
+		assertEquals(110_000, tracker.nearby(HOOKS, RANGE).get(0).getSunkAt());
+		assertFalse(tracker.anyActive(HOOKS, RANGE));
+
+		// The new wreck on the site starts with nothing known.
+		tracker.noteRolling(HOOKS, RANGE, LEVEL, 100_000);
+		tracker.observe(NEAR, ObjectID.SAILING_SMALL_SHIPWRECK, 200_000);
+		assertFalse(tracker.allAnchored(HOOKS, RANGE, LEVEL));
+		assertEquals(60_000, tracker.allSunkWithin(HOOKS, RANGE, LEVEL, 200_000));
+	}
+
+	@Test
+	public void theLongestLivedWreckDecidesWhenAllAreGone()
+	{
+		WorldPoint other = new WorldPoint(1795, 3996, 0);
+		tracker.observe(NEAR, ObjectID.SAILING_PIRATE_SHIPWRECK, 10_000);
+		tracker.noteRolling(HOOKS, RANGE, LEVEL, 10_000);
+		tracker.observe(other, ObjectID.SAILING_PIRATE_SHIPWRECK, 70_000);
+		tracker.noteRolling(HOOKS, RANGE, LEVEL, 70_000);
+		assertEquals(180_000, tracker.allSunkWithin(HOOKS, RANGE, LEVEL, 70_000));
+		assertEquals(150_000, tracker.allSunkWithin(HOOKS, RANGE, LEVEL, 100_000));
+		assertTrue(tracker.allAnchored(HOOKS, RANGE, LEVEL));
+
+		// A third, unanchored wreck loosens the bound to a whole lifetime.
+		WorldPoint third = new WorldPoint(1808, 3998, 0);
+		tracker.observe(third, ObjectID.SAILING_PIRATE_SHIPWRECK, 100_000);
+		assertEquals(180_000, tracker.allSunkWithin(HOOKS, RANGE, LEVEL, 100_000));
+		assertFalse(tracker.allAnchored(HOOKS, RANGE, LEVEL));
+	}
+
+	@Test
+	public void aSceneReloadDoesNotResetAnything()
+	{
+		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);
+		tracker.noteRolling(HOOKS, RANGE, LEVEL, 0);
+		tracker.markAllAbsent(50_000);
+		assertTrue(tracker.nearby(HOOKS, RANGE).isEmpty());
+		// The replayed spawn is the same wreck with the same clock.
+		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 51_000);
+		assertTrue(tracker.allAnchored(HOOKS, RANGE, LEVEL));
+		assertEquals(189_000, tracker.allSunkWithin(HOOKS, RANGE, LEVEL, 51_000));
+	}
+
+	@Test
+	public void sitesThatLeaveTheSceneAreRememberedThenForgotten()
+	{
+		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);
+		tracker.despawn(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 1_000);
+		assertTrue(tracker.nearby(HOOKS, RANGE).isEmpty());
+		assertEquals(1, tracker.siteCount());
+		tracker.prune(1_000 + WreckTracker.FORGET_AFTER_MILLIS);
+		assertEquals(1, tracker.siteCount());
+		tracker.prune(1_001 + WreckTracker.FORGET_AFTER_MILLIS);
+		assertEquals(0, tracker.siteCount());
+
+		// Despawn of a different object at the site is ignored.
+		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 2_000);
+		tracker.despawn(NEAR, ObjectID.SAILING_BOAT_HULL_KANDARIN_3X8_WOOD, 3_000);
+		assertEquals(1, tracker.nearby(HOOKS, RANGE).size());
+	}
+
+	@Test
+	public void availabilityStartsAtThePriorAndMovesWithEvidence()
+	{
+		long prior = 600_000;
+		assertEquals(0.7, tracker.availability(0.7, prior, 0), 1e-9);
+		for (long now = 600; now <= 600_000; now += 600)
+		{
+			tracker.recordAvailability(true, 600, now);
+		}
+		double after = tracker.availability(0.7, prior, 600_000);
+		assertTrue(after > 0.8 && after < 0.9);
+		for (long now = 600_600; now <= 1_800_000; now += 600)
+		{
+			tracker.recordAvailability(false, 600, now);
+		}
+		double later = tracker.availability(0.7, prior, 1_800_000);
+		assertTrue(later < after);
+		assertTrue(later > 0.2);
+		tracker.recordAvailability(true, 0, 1_800_000);
+		assertEquals(later, tracker.availability(0.7, prior, 1_800_000), 1e-9);
+		WreckTracker fresh = new WreckTracker();
+		assertEquals(1.0, fresh.availability(1.0, 0, 0), 1e-9);
+	}
+
+	@Test
+	public void theNextWreckHereIsTheEarliestSinkAmongWrecksSeenWorked()
+	{
+		WreckTracker tracker = new WreckTracker();
+		long lifetime = ShipwreckType.MERCHANT.getLifetimeSeconds() * 1000L;
+		// Ours has sunk; the far one is up, and nobody has been seen on it: nothing to go by.
+		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, 0);
+		tracker.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);
+		assertNull(tracker.nextRise(HOOKS, RANGE, LEVEL, 5_000));
+		// Another boat pulls up beside it at 10 s: its clock starts then.
+		List<WorldPoint> beside = Collections.singletonList(new WorldPoint(FAR.getX() + 6, FAR.getY(), 0));
+		tracker.noteBoatsNear(beside, AfkSession.OTHER_BOAT_REACH, 10_000);
+		tracker.noteBoatsNear(beside, AfkSession.OTHER_BOAT_REACH, 15_000);
+		WreckTracker.NextRise next = tracker.nextRise(HOOKS, RANGE, LEVEL, 20_000);
+		assertNotNull(next);
+		assertEquals(10_000 + lifetime - 20_000, next.withinMillis);
+		assertTrue("ours is the only empty site in view", next.certain);
+		// A boat far from any wreck starts nothing.
+		WreckTracker quiet = new WreckTracker();
+		quiet.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, 0);
+		quiet.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);
+		quiet.noteBoatsNear(Collections.singletonList(new WorldPoint(1900, 4100, 0)), AfkSession.OTHER_BOAT_REACH, 10_000);
+		assertNull(quiet.nextRise(HOOKS, RANGE, LEVEL, 20_000));
+		// Another empty site out of reach: the next wreck may rise there instead.
+		WorldPoint other = new WorldPoint(1760, 4000, 0);
+		tracker.observe(other, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, 20_000);
+		next = tracker.nextRise(HOOKS, RANGE, LEVEL, 20_000);
+		assertNotNull(next);
+		assertFalse(next.certain);
+		// A wreck up in reach: we are not waiting.
+		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 30_000);
+		assertNull(tracker.nextRise(HOOKS, RANGE, LEVEL, 30_000));
+	}
+
+	@Test
+	public void aWreckThatOutlivesItsClockIsOverdueThenWrittenOff()
+	{
+		WreckTracker tracker = new WreckTracker();
+		long lifetime = ShipwreckType.MERCHANT.getLifetimeSeconds() * 1000L;
+		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, 0);
+		tracker.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);
+		tracker.noteBoatsNear(Collections.singletonList(new WorldPoint(FAR.getX() + 6, FAR.getY(), 0)), AfkSession.OTHER_BOAT_REACH, 10_000);
+		long due = 10_000 + lifetime;
+		WreckTracker.NextRise next = tracker.nextRise(HOOKS, RANGE, LEVEL, due - 1);
+		assertFalse(next.overdue);
+		// Past the clock: no "0:00", just "any moment".
+		next = tracker.nextRise(HOOKS, RANGE, LEVEL, due + 5_000);
+		assertTrue(next.overdue);
+		assertEquals(0, next.withinMillis);
+		// A minute past it the clock was simply wrong; nothing to go by.
+		tracker.forgetStaleClocks(due + WreckTracker.CLOCK_GRACE_MILLIS + 1);
+		assertNull(tracker.nextRise(HOOKS, RANGE, LEVEL, due + WreckTracker.CLOCK_GRACE_MILLIS + 1));
+		// The boat that never left does not start a fresh lifetime for the same wreck.
+		tracker.noteBoatsNear(Collections.singletonList(new WorldPoint(FAR.getX() + 6, FAR.getY(), 0)), AfkSession.OTHER_BOAT_REACH, due + 70_000);
+		assertNull(tracker.nextRise(HOOKS, RANGE, LEVEL, due + 70_000));
+		// Once that wreck sinks and a new one rises there, a boat beside it starts a clock again.
+		tracker.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, due + 80_000);
+		tracker.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, due + 90_000);
+		tracker.noteBoatsNear(Collections.singletonList(new WorldPoint(FAR.getX() + 6, FAR.getY(), 0)), AfkSession.OTHER_BOAT_REACH, due + 95_000);
+		assertNotNull(tracker.nextRise(HOOKS, RANGE, LEVEL, due + 95_000));
+	}
+
+	@Test
+	public void ourOwnHookDoesNotRestartAClockItOutlived()
+	{
+		WreckTracker tracker = new WreckTracker();
+		long lifetime = ShipwreckType.MERCHANT.getLifetimeSeconds() * 1000L;
+		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);
+		tracker.noteRolling(HOOKS, RANGE, LEVEL, 1_000);
+		assertTrue(tracker.allAnchored(HOOKS, RANGE, LEVEL));
+		// Past the clock and still up: zero left, still anchored, which the overlay shows as "outliving its clock".
+		assertEquals(0, tracker.allSunkWithin(HOOKS, RANGE, LEVEL, 1_000 + lifetime + 5_000));
+		long writeOff = 1_000 + lifetime + WreckTracker.CLOCK_GRACE_MILLIS + 1;
+		tracker.forgetStaleClocks(writeOff);
+		assertFalse(tracker.allAnchored(HOOKS, RANGE, LEVEL));
+		// Our crew are still rolling on it, but that is no new start: no fresh lifetime.
+		tracker.noteRolling(HOOKS, RANGE, LEVEL, writeOff + 600);
+		assertFalse(tracker.allAnchored(HOOKS, RANGE, LEVEL));
+	}
+
+	@Test
+	public void aSpentBoatClockDoesNotTakeOurLaterHookClockWithIt()
+	{
+		WreckTracker tracker = new WreckTracker();
+		long lifetime = ShipwreckType.MERCHANT.getLifetimeSeconds() * 1000L;
+		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);
+		// Another boat was beside it first; our hook started much later.
+		tracker.noteBoatsNear(Collections.singletonList(new WorldPoint(NEAR.getX() + 3, NEAR.getY(), 0)), AfkSession.OTHER_BOAT_REACH, 1_000);
+		tracker.noteRolling(HOOKS, RANGE, LEVEL, 200_000);
+		long boatClockSpent = 1_000 + lifetime + WreckTracker.CLOCK_GRACE_MILLIS + 1;
+		tracker.forgetStaleClocks(boatClockSpent);
+		// The boat's clock goes; ours, still within its lifetime, stays.
+		assertTrue(tracker.allAnchored(HOOKS, RANGE, LEVEL));
+		assertEquals(200_000 + lifetime - boatClockSpent, tracker.allSunkWithin(HOOKS, RANGE, LEVEL, boatClockSpent));
+	}
+
+	@Test
+	public void clearForgetsEverything()
+	{
+		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);
+		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, 5);
+		tracker.recordAvailability(true, 1000, 1000);
+		tracker.clear();
+		assertEquals(0, tracker.siteCount());
+		assertEquals(0, tracker.getLastSinkAt());
+		assertEquals(0.5, tracker.availability(0.5, 1000, 2000), 1e-9);
+	}
+}
