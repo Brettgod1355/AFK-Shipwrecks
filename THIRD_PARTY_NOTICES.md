@@ -15,7 +15,7 @@ are referenced from the RuneLite API's `net.runelite.api.gameval` classes at com
 
 `src/main/resources/com/afksalvaging/seamap.bin` records which four-tile cells of the game's
 surface are open water a boat can reach, and is what the sidebar's sailing distances are measured
-over. It is generated, not drawn: `tools/seamap/SeaMapDumper.java` reads the Old School RuneScape
+over. It is generated, not drawn: `tools/seamap/src/main/java/SeaMapDumper.java` reads the Old School RuneScape
 game cache (the same files the client downloads) with RuneLite's `cache` library
 ([runelite/runelite](https://github.com/runelite/runelite), module `cache`, version 1.13.1,
 BSD 2-Clause) and the per-region XTEA keys published by the

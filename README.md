@@ -57,7 +57,7 @@ stopped, and the fact that your own hook does not restart itself.
   infoboxes, AFK written above the time and the detail on hover, so it stays in view with the
   overlay hidden.
 - **A sidebar with three tabs.** Spots (Test alert and Forget rates at the top, the nearest dock and the list), Sorting
-  (each inventory sorting list with what you added and what it does by default) and Tips.
+  (each inventory sorting list with what you added, and the default cannonballs under Deposit) and Tips.
 - **Knows where the wrecks are.** The Spots tab lists all 29 salvaging hotspots, filtered by
   wreck, down to the ones your level allows, or to your favourites, sorted by wreck or nearest to
   you first, with the Sailing level each needs, where it sits from the nearest port and how far it
@@ -92,7 +92,7 @@ stopped, and the fact that your own hook does not restart itself.
 - **Sorts your inventory for you to act on.** On your boat at a salvaging spot, inventory items
   get a coloured box: sage keep (an outline only, so what stays is not tinted), cyan deposit
   (into the cargo hold), green alch, red drop. With
-  nothing marked, only two kinds get a box: the plain steel to dragon cannonballs are Deposit (never noted ones, which
+  nothing marked, only two kinds get a box: the plain bronze to dragon cannonballs are Deposit (never noted ones, which
   the hold refuses; each is listed in the Sorting tab with an × that takes it out of the defaults,
   and marking it Deposit again brings it back), and items whose alch value is at or above a
   threshold you set (1,000 by default) are Alch. Everything else gets no box, and nothing is ever Drop until you mark it.
@@ -108,7 +108,8 @@ stopped, and the fact that your own hook does not restart itself.
 
 Everything comes from game state your client already has. No web requests other than RuneLite's
 own world list, no accounts, nothing sent anywhere, and it never clicks anything for you. It does
-not need any other plugin; Shortest Path is optional and only used if you press Route.
+not need any other plugin; Shortest Path is optional and only used when you press Route or have
+marked a spot Auto.
 
 ## The overlay
 
@@ -178,16 +179,19 @@ highlighting the cargo hold itself in the Deposit colour (off by default); boxin
 inside the open hold so it is easy to find and click (on by default); and the four colours. Under Salvage spots, "Only docks I can use" turns the dock requirements check off.
 
 **Salvage spots**: show the sidebar; wreck reach boxes (hidden while you are parked, on by default) and their
-colour (yellow); double spot boxes (on or off), their colour (green) and the colour they change to once
-you are parked (a faint cyan); whether to label the double spot boxes; how long after the boat stops they go (20 s; 0 never); show the
-nearest port and mooring; and auto
-route when boarding (the spot itself is marked in the sidebar). Favourites, the dropdown choices
+colour (yellow); outline wrecks that are up (on by default); double spot boxes (on or off), their
+colour (green) and the colour they change to once you are parked (a faint cyan); whether to label the
+double spot boxes; how long after the boat stops they go (20 s; 0 never); show the nearest docks (the
+one you can use and the one where your crew bank the hold); and auto route when boarding (the spot itself is marked in the sidebar). Favourites, the dropdown choices
 and the Auto spot are kept per character, filed against the id Jagex gives the account rather than
 its name, so a name change keeps them and two characters on one RuneLite account do not share an
 Auto spot. Which items you mark Keep, Deposit, Alch or Drop is shared across your characters:
 each character's marks are kept under their own id and the lists you see are all of them
 together, so two clients open at once never overwrite each other's marks (RuneLite only
 downloads settings when a client starts, so the other client shows a new mark after a restart).
+One catch with two clients open: if you unmark an item on one, then mark something into the same
+list on the other before restarting it, the other client still has the old list and the item
+comes back. Restart the other client after unmarking to avoid it.
 
 ## Salvage spots and double spots
 
@@ -220,7 +224,7 @@ step off your boat, so the line does not hang about after it has done its job.
 The boxes are worked out, not looked up. A hook works any wreck within its reach, and reach is
 measured as a square around the wreck: that square is the yellow box. Where two yellow boxes
 overlap, a hook parked in the overlap works both wrecks: that overlap is the green box, labelled
-with the two wrecks. The game measures reach from the hook rather than the boat (a game update
+"Double spot" (with how many of your hooks are in it, or "Parked"). The game measures reach from the hook rather than the boat (a game update
 changed it to that), so the boxes are about where a hook has to sit, not the whole boat. Your own
 hooks are known, so when every hook on the boat is inside a green box, both on a sloop, the box
 changes to the parked colour and says "Parked"; with only one of two in, the label says so and the

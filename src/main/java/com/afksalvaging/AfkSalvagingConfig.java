@@ -776,7 +776,7 @@ public interface AfkSalvagingConfig extends Config
 		keyName = "inventorySort",
 		name = "Box inventory items",
 		description = "Draw a coloured box round each item in your inventory: keep (sage), deposit (cyan), alch (green) "
-			+ "or drop (red). Unmarked items are sorted by what they are: plain steel to dragon cannonballs (never noted) to deposit, "
+			+ "or drop (red). Unmarked items are sorted by what they are: plain bronze to dragon cannonballs (never noted) to deposit, "
 			+ "items that alch for at least the threshold to alch, and everything else gets no box. Drop is only "
 			+ "what you mark. Shift-right-click an item to mark it.",
 		section = SORTING,

@@ -976,7 +976,6 @@ public final class AfkSession
 		return notices;
 	}
 
-	/** The message for a hold alert, with the count when it is known and not just the game's word. */
 	/** The swap to suggest, in words, or null when none stands. */
 	public String betterCrewMessage()
 	{

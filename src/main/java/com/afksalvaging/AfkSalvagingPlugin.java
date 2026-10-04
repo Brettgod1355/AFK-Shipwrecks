@@ -150,7 +150,7 @@ public class AfkSalvagingPlugin extends Plugin
 	private static final int BOARDING_SETTLE_TICKS = 3;
 	/** How long the banner shows for a test alert when the banner setting keeps it up indefinitely. */
 	private static final int TEST_BANNER_SECONDS = 10;
-	/** Ticks between fallback scans of the boat while no hook has been found. */
+	/** The varbits naming the crewmate in each of the boat's crew slots, slot 1 first. */
 	private static final int[] CREW_SLOT_VARBITS = {
 		VarbitID.SAILING_CREW_SLOT_1, VarbitID.SAILING_CREW_SLOT_2, VarbitID.SAILING_CREW_SLOT_3,
 		VarbitID.SAILING_CREW_SLOT_4, VarbitID.SAILING_CREW_SLOT_5
@@ -1853,7 +1853,7 @@ public class AfkSalvagingPlugin extends Plugin
 	{
 		if (configManager.getRSProfileKey() == null)
 		{
-			setSpotStatus("Favourites are kept per account: log in and press the star again to keep it.", true);
+			setSpotStatus("Favourites are kept per character: log in and press the star again to keep it.", true);
 			return;
 		}
 		Set<SalvagingSpot> favourites = loadFavourites();
@@ -2238,7 +2238,6 @@ public class AfkSalvagingPlugin extends Plugin
 		}
 	}
 
-	/** Whether a hook the boat is known to have lacks the object needed to place it. */
 	/** Prefers the capacity the game showed in the hold interface, then the hold object on the boat. */
 	private void refreshCapacity()
 	{

@@ -76,7 +76,6 @@ public final class CrewSpeech
 		return plain(text).contains(HAZARDOUS);
 	}
 
-	/** Whether the game says the wreck the player was salvaging has sunk. */
 	/**
 	 * Whether this is the ghost crewmate's wordless speech. He cannot say what he did, so a
 	 * Sailing XP drop in the same tick is what tells us he salvaged something.

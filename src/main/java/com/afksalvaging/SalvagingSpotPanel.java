@@ -303,7 +303,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		title.setAlignmentX(LEFT_ALIGNMENT);
 		block.add(title);
 		JLabel note = new JLabel(html("Boxes round inventory items on your boat at a salvaging spot: keep, deposit, alch or "
-			+ "drop. Unmarked items sort themselves by the defaults under each list; mark one by "
+			+ "drop. Unmarked items sort themselves by the rules in Tips; mark one by "
 			+ "shift-right-clicking it, or type its name here.", TOP_TEXT_WIDTH));
 		small(note);
 		block.add(note);
@@ -343,7 +343,6 @@ public class SalvagingSpotPanel extends PluginPanel
 		return block;
 	}
 
-	/** What each list does for items nobody marked, for showing under the marks. */
 	/**
 	 * The sorting lists: the player's marks with item names (each row {id, name}) and the default
 	 * deposits (a third element says so), listed alike (owner, 2026-10-03). Safe to call from any thread.
