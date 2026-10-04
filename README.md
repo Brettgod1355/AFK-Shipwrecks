@@ -15,6 +15,11 @@ stopped, and the fact that your own hook does not restart itself.
 Parked in a double spot as the hold fills: the overlay counting down, the nearly-full and full
 banners, the countdown infobox in the corner, then emptying the hold and the timer starting over.
 
+<img src="docs/images/parking.webp" width="720" alt="A 17 second clip, sailing in to a Fremennik salvaging spot: the overlay says no wreck site in reach, the yellow reach boxes and the green double spot box appear, the label counts 1 of 2 hooks in, then Double spot - Parked, the wrecks are outlined in cyan, and once the boat has stopped the words Parked in double spot sit in the middle of the boat">
+
+Sailing in and parking: the reach boxes and the double spot appear as you arrive, the label counts
+your hooks in, and once both are in it says you are parked.
+
 <p>
 <img src="docs/images/sidebar-spots.png" width="300" alt="The sidebar's Spots tab: the Discord and GitHub buttons, Test alert and Forget rates, the filter and sort, the Auto route note, the nearest dock you can use and the nearest where your crew bank the hold, the session line and a favourite spot with Map, Route, star and Auto">
 <img src="docs/images/spot-filter.png" width="300" alt="The spot filter: all wrecks, spots I can salvage, favourites, or one kind of salvage with its level">
