@@ -180,6 +180,8 @@ public final class AfkSession
 		public long boatStillMillis;
 		/** When a wreck should next rise in reach while we wait, or null when nothing says. */
 		public WreckTracker.NextRise nextWreck;
+		/** Whether a wreck site, up or sunk, is within reach of a hook: the boat is at a spot, not merely beside one. */
+		public boolean atSpot;
 		/** Usable wrecks up in reach. */
 		public int wrecksUp;
 		/** Wrecks up in reach that the player's level is too low for. */
@@ -640,11 +642,15 @@ public final class AfkSession
 		List<WreckTracker.Site> eligible = aboard ? wrecks.eligibleActive(points, range, level) : Collections.emptyList();
 		boolean wreckInReach = !eligible.isEmpty();
 		ShipwreckType type = wreckInReach ? eligible.get(0).getType() : null;
+		// Sites in reach, wrecks up or sunk: being at a spot means one of these, not merely a site in
+		// view, which a dock beside the spots also has (owner, 2026-10-04, Pandemonium).
+		List<WreckTracker.Site> sitesInReach = aboard ? wrecks.nearby(points, range) : Collections.emptyList();
+		boolean atSpot = !sitesInReach.isEmpty();
 		int levelNeeded = 0;
 		int higherWrecksUp = 0;
 		if (aboard)
 		{
-			for (WreckTracker.Site site : wrecks.nearby(points, range))
+			for (WreckTracker.Site site : sitesInReach)
 			{
 				if (site.isActive() && site.getType().getSailingLevel() > level)
 				{
@@ -832,7 +838,7 @@ public final class AfkSession
 		situation.holdFull = confirmedFull;
 		situation.wreckInReach = wreckInReach;
 		situation.parked = aboard && parked;
-		situation.atSpot = !wrecks.presentSites().isEmpty();
+		situation.atSpot = atSpot;
 		HookWatch.Signal signal = hookWatch.update(now, situation, settings.graceMillis, settings.repeatReminderMillis);
 		if (signal != HookWatch.Signal.NONE)
 		{
@@ -895,7 +901,7 @@ public final class AfkSession
 		{
 			waitingNotified = false;
 		}
-		else if (!waitingNotified && estimate.getState() == AfkEstimate.State.WAITING_FOR_WRECK
+		else if (!waitingNotified && atSpot && estimate.getState() == AfkEstimate.State.WAITING_FOR_WRECK
 			&& now - waitingSince >= WAITING_ALERT_AFTER_MILLIS)
 		{
 			// Once per stretch of waiting, after a pause in case the next wreck rises at once.
@@ -904,7 +910,7 @@ public final class AfkSession
 		}
 
 		boolean showTip = false;
-		if (estimate.getState() == AfkEstimate.State.WAITING_FOR_WRECK && !settings.salvagingWorld
+		if (estimate.getState() == AfkEstimate.State.WAITING_FOR_WRECK && !settings.salvagingWorld && atSpot
 			&& waitingSince >= 0 && now - waitingSince >= WORLD_TIP_AFTER_MILLIS)
 		{
 			showTip = true;
@@ -928,6 +934,7 @@ public final class AfkSession
 		view.reminder = hookWatch.getReason();
 		view.betterCrew = crewSwap.standing();
 		view.boatStillMillis = stillTicks * 600L;
+		view.atSpot = atSpot;
 		view.wrecksUp = eligible.size();
 		view.higherWrecksUp = higherWrecksUp;
 		view.wreckWindowMillis = est.wreckWindowMillis;

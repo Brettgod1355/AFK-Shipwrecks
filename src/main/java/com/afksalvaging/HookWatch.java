@@ -52,7 +52,10 @@ public final class HookWatch
 		public boolean wreckInReach;
 		/** Whether the boat is standing still on the player's own boat. */
 		public boolean parked = true;
-		/** Whether a wreck site is in view: only there is an empty hook worth a word (owner, 2026-10-03). */
+		/**
+		 * Whether a wreck site, up or sunk, is within reach of a hook: only there is an empty hook worth a
+		 * word (owner, 2026-10-03; within reach rather than in view, 2026-10-04).
+		 */
 		public boolean atSpot = true;
 	}
 

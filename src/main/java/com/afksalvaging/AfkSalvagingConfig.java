@@ -200,7 +200,8 @@ public interface AfkSalvagingConfig extends Config
 		keyName = "hookEmptyNotification",
 		name = "Hook empty, crewmate free",
 		description = "Notify when a salvaging hook is standing empty and a crewmate aboard could be working it, "
-			+ "for example after you step off your hook to sort. Only at a salvaging spot, with a wreck site in view.",
+			+ "for example after you step off your hook to sort. Only at a salvaging spot, with a wreck site, up or "
+			+ "sunk, within reach of your hooks.",
 		section = REMINDERS,
 		position = 0
 	)

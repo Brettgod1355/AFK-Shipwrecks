@@ -37,6 +37,8 @@ public class AfkSessionTest
 	private static final WorldPoint PLAYER = new WorldPoint(1801, 4001, 0);
 	private static final WorldPoint BOAT = new WorldPoint(1799, 4002, 0);
 	private static final WorldPoint WRECK = new WorldPoint(1806, 4002, 0);
+	/** A wreck site in view but well beyond hook reach, as seen from a dock beside the spots. */
+	private static final WorldPoint FAR_WRECK = new WorldPoint(1830, 4002, 0);
 	private static final int SALVAGING = AnimationID.SAILING_HUMAN_SALVAGE_HOOK_KANDARIN_3X8_DROP01;
 	private static final int SORTING = AnimationID.HUMAN_SAILING_SALVAGE01_LARGE01_INTERACT01;
 	private static final Crewmate JENKINS = new Crewmate(7, "Cabin Boy Jenkins", 4);
@@ -427,10 +429,34 @@ public class AfkSessionTest
 		assertEquals(1, view.emptyHooks);
 		assertEquals(0, count(Notice.HOOK_EMPTY));
 		assertNull(view.reminder);
-		// A wreck site comes into view: now it matters.
+		assertFalse(view.atSpot);
+		// A wreck site in view but out of reach, as from a dock beside the spots: still nobody's business.
+		session.wreckSeen(FAR_WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK, now);
+		view = ticks(40);
+		assertEquals(0, count(Notice.HOOK_EMPTY));
+		assertFalse(view.atSpot);
+		// A wreck site within reach of a hook: now it matters.
 		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK, now);
-		ticks(40);
+		view = ticks(40);
 		assertEquals(1, count(Notice.HOOK_EMPTY));
+		assertTrue(view.atSpot);
+	}
+
+	@Test
+	public void waitingIsNotSaidAtADockBesideTheSpots()
+	{
+		// Crew on the hooks, a sunk wreck in view but out of reach: not at a spot, so no waiting notice and no world tip.
+		twoCrewOnHooks();
+		session.settings().salvagingWorld = false;
+		session.wreckSeen(FAR_WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, now);
+		AfkSession.View view = ticks(120);
+		assertEquals(0, count(Notice.WAITING_FOR_WRECK));
+		assertEquals(0, count(Notice.WORLD_TIP));
+		assertFalse(view.showWorldTip);
+		// Pull up to the spot: the sunk wreck is in reach, and the wait is a wait.
+		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, now);
+		ticks(20);
+		assertEquals(1, count(Notice.WAITING_FOR_WRECK));
 	}
 
 	@Test

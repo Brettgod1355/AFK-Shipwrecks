@@ -44,11 +44,12 @@ public class SalvagingWorldOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		// At a spot means a wreck site is in view; bare means no wreck the player can work is up.
+		// At a spot means a wreck site, up or sunk, is within reach of a hook (a dock beside the spots
+		// has sites in view but none in reach); bare means no wreck the player can work is up.
 		// Nothing else is asked, so it shows with or without crew and before the hold was ever opened.
 		AfkSession.View view = plugin.getSession().view();
 		boolean bare = config.worldAlert() && !plugin.isSalvagingWorld() && plugin.isOwnBoat()
-			&& !plugin.getSession().wrecks().presentSites().isEmpty() && view.wrecksUp == 0;
+			&& view.atSpot && view.wrecksUp == 0;
 		long now = System.currentTimeMillis();
 		if (!bare)
 		{
