@@ -372,11 +372,8 @@ public class AfkSalvagingOverlay extends OverlayPanel
 			return new Line("Wrecks", "none in reach", dim);
 		}
 		StringBuilder text = new StringBuilder();
+		// The count and the clock only: the wreck's kind is plain from where the boat is (owner, 2026-10-04).
 		text.append(view.wrecksUp).append(" up");
-		if (view.wreckType != null)
-		{
-			text.append(" (").append(view.wreckType.getDisplayName()).append(")");
-		}
 		if (view.wreckWindowAnchored && view.wreckWindowMillis >= 0)
 		{
 			text.append(" · ").append(view.wrecksUp == 1 ? "sinks in ≤ " : "last sinks in ≤ ")

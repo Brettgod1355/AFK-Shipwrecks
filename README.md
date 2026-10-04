@@ -120,7 +120,7 @@ Hold full in about   52 min
                   at 2:32 PM
 Cargo hold          188/240
 Hooks    Jenkins, Jolly Jim
-Wrecks   2 up (Merchant) · last sinks in ≤ 1:20
+Wrecks   2 up · last sinks in ≤ 1:20
 ```
 
 The time is always a forecast, hence "about". Early on it rests mostly on the published tables and
