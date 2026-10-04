@@ -75,7 +75,8 @@ stopped, and the fact that your own hook does not restart itself.
   Read the section below before trusting them to the tile.
 
 - **Sorts your inventory for you to act on.** On your boat at a salvaging spot, inventory items
-  get a coloured box: yellow keep, cyan deposit (into the cargo hold), green alch, red drop. With
+  get a coloured box: yellow keep (an outline only, so what stays is not tinted), cyan deposit
+  (into the cargo hold), green alch, red drop. With
   nothing marked, only two kinds get a box: ship cannonballs are Deposit (never noted ones, which
   the hold refuses; each is listed in the Sorting tab with an × that takes it out of the defaults,
   and marking it Deposit again brings it back), and items whose alch value is at or above a
