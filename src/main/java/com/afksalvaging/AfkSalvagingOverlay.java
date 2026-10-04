@@ -344,9 +344,9 @@ public class AfkSalvagingOverlay extends OverlayPanel
 		{
 			if (text.length() > 0)
 			{
-				text.append(" · ");
+				text.append(" - ");
 			}
-			text.append(view.emptyHooks).append(view.emptyHooks == 1 ? " empty" : " empty");
+			text.append(view.emptyHooks).append(" empty");
 			if (view.spareCrewCannotUseHook)
 			{
 				text.append(" (no crewmate can use it)");
@@ -376,7 +376,7 @@ public class AfkSalvagingOverlay extends OverlayPanel
 		text.append(view.wrecksUp).append(" up");
 		if (view.wreckWindowAnchored && view.wreckWindowMillis >= 0)
 		{
-			text.append(" · ").append(view.wrecksUp == 1 ? "sinks in ≤ " : "last sinks in ≤ ")
+			text.append(" - ").append(view.wrecksUp == 1 ? "sinks in ≤ " : "last sinks in ≤ ")
 				.append(Durations.countdown(view.wreckWindowMillis));
 		}
 		return new Line("Wrecks", text.toString(), good);

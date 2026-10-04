@@ -120,7 +120,7 @@ Hold full in about   52 min
                   at 2:32 PM
 Cargo hold          188/240
 Hooks    Jenkins, Jolly Jim
-Wrecks   2 up · last sinks in ≤ 1:20
+Wrecks   2 up - last sinks in ≤ 1:20
 ```
 
 The time is always a forecast, hence "about". Early on it rests mostly on the published tables and
@@ -128,10 +128,10 @@ firms up after about 25 salvages have been seen; until then the "Left to salvage
 while waiting for a wreck, carries a "~". Other lines you may see:
 
 - `open the cargo hold once to start`: it needs one real count to work from.
-- `Waiting for a wreck · 1:20 so far` and `Left to salvage · 34 min`: nobody can salvage until a
+- `Waiting for a wreck  1:20 so far` and `Left to salvage  34 min`: nobody can salvage until a
   wreck rises; the second line is what remains once one does. The clock counts time at the spot,
   not the voyage there; on the way, with nothing in reach, the line reads `no wreck site in reach`.
-- `Hooks  Jenkins · 1 empty (no crewmate can use it)`: a hook is standing empty.
+- `Hooks  Jenkins - 1 empty (no crewmate can use it)`: a hook is standing empty.
 - `Crew stopped  Sailing level too low (needs 87)`.
 - `Hold  full by the tally; open it to check`: the running tally says full, but nothing has
   confirmed it. If the crew keep bringing salvage in, the tally was high: it becomes
