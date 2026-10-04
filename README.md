@@ -96,9 +96,9 @@ stopped, and the fact that your own hook does not restart itself.
   the hold refuses; each is listed in the Sorting tab with an × that takes it out of the defaults,
   and marking it Deposit again brings it back), and items whose alch value is at or above a
   threshold you set (1,000 by default) are Alch. Everything else gets no box, and nothing is ever Drop until you mark it.
-  To start a Drop list quickly, the Sorting tab's "Add suggested drops" button adds 52 items most
-  players drop (logs, planks, nails, bars, low runes, raw fish, fishing gear, seaweed, rings and the
-  like) as your own marks, after asking; anything you already put in a list is left alone, and each
+  To start a Drop list quickly, the Sorting tab's "Add suggested drops" button adds 74 items most
+  players drop (logs, planks, nails, bars, low runes, raw fish, fishing gear, seeds, uncut gems,
+  seaweed, rings and the like; none alchs for 1,000 gp or more) as your own marks, after asking; anything you already put in a list is left alone, and each
   one gets an × like any other mark.
   Repair kits, fish and the other things the hold takes are never called an alch either; the
   plugin knows them from the wiki's list and learns the game's own answer every time you open the

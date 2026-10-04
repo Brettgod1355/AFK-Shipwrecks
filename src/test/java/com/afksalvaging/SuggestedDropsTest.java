@@ -19,7 +19,7 @@ public class SuggestedDropsTest
 	{
 		// The owner's screenshots repeated some items (oak logs, raw lobster, emerald ring...): each goes in once.
 		assertEquals(SuggestedDrops.LISTED.length, SuggestedDrops.ITEMS.size());
-		assertEquals(52, SuggestedDrops.ITEMS.size());
+		assertEquals(74, SuggestedDrops.ITEMS.size());
 	}
 
 	@Test

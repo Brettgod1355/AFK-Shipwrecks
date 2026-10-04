@@ -863,8 +863,8 @@ public class SalvagingSpotPanel extends PluginPanel
 	{
 		int answer = JOptionPane.showConfirmDialog(SwingUtilities.getWindowAncestor(from),
 			"Add " + SuggestedDrops.ITEMS.size() + " items most players drop to your Drop list?\n\n"
-				+ "Logs, planks, nails, bars, ore, air and water runes, raw fish, fishing gear, seaweed, rings, "
-				+ "caskets and the like.\n"
+				+ "Logs, planks, nails, bars, ore, air and water runes, raw fish, fishing gear, seeds, uncut gems, "
+				+ "seaweed, rings, caskets and the like. None alchs for 1,000 gp or more.\n"
 				+ "Anything you have already put in a list stays as it is, and each new one gets an × "
 				+ "to take it off again.",
 			"Add suggested drops", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
