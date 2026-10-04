@@ -246,6 +246,9 @@ public class AfkSalvagingPlugin extends Plugin
 	@Inject
 	private CrewSwapOverlay swapOverlay;
 
+	@Inject
+	private WreckOutlineOverlay wreckOutlineOverlay;
+
 	/** The spot last sent to the map or routed to; the sidebar highlights it. */
 	private SalvagingSpot pickedSpot;
 	/** The route to a salvaging spot that Shortest Path is drawing for us, or null. */
@@ -276,6 +279,8 @@ public class AfkSalvagingPlugin extends Plugin
 	private final Map<Integer, Integer> cargoHoldByWorldView = new HashMap<>();
 	/** The cargo hold object itself, by world view, for the highlight. */
 	private final Map<Integer, GameObject> cargoHoldObjects = new HashMap<>();
+	/** The wreck objects in view by tile, for the hull outline; cleared whenever the scene reloads. */
+	private final Map<WorldPoint, GameObject> wreckObjects = new HashMap<>();
 	/** Capacity read from the cargo hold interface, indexed by boat slot 1 to 5. */
 	private final int[] capacityFromInterface = new int[CargoHoldContainers.BOAT_SLOTS + 1];
 	/** Hook objects on the followed boat, by object hash. */
@@ -332,6 +337,7 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.add(worldOverlay);
 		overlayManager.add(holdSalvageOverlay);
 		overlayManager.add(swapOverlay);
+		overlayManager.add(wreckOutlineOverlay);
 		overlayManager.add(sortOverlay);
 		markStore = new MarkStore(configManager);
 		if (markStore.migrate())
@@ -359,6 +365,7 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.remove(worldOverlay);
 		overlayManager.remove(holdSalvageOverlay);
 		overlayManager.remove(swapOverlay);
+		overlayManager.remove(wreckOutlineOverlay);
 		overlayManager.remove(sortOverlay);
 		removeInfoBox();
 		if (worldRequest != null)
@@ -421,6 +428,8 @@ public class AfkSalvagingPlugin extends Plugin
 				loginPending = true;
 				break;
 			case LOADING:
+				// The scene is being replaced: the wreck objects we hold are about to be stale.
+				wreckObjects.clear();
 				session.sceneReloading(clock());
 				break;
 			case LOGGED_IN:
@@ -488,6 +497,7 @@ public class AfkSalvagingPlugin extends Plugin
 		if (object.getWorldView().isTopLevel())
 		{
 			session.wreckGone(object.getWorldLocation(), object.getId(), clock());
+			wreckObjects.remove(object.getWorldLocation(), object);
 		}
 	}
 
@@ -873,6 +883,12 @@ public class AfkSalvagingPlugin extends Plugin
 	public boolean isSalvagingWorld()
 	{
 		return salvagingWorld;
+	}
+
+	/** The wreck object standing on a tile, or null when none is in view there. */
+	public GameObject wreckObject(WorldPoint point)
+	{
+		return wreckObjects.get(point);
 	}
 
 	/** The cargo hold on the boat the player is aboard, or null ashore or before it has been seen. */
@@ -1829,6 +1845,7 @@ public class AfkSalvagingPlugin extends Plugin
 		session.reset();
 		cargoHoldByWorldView.clear();
 		cargoHoldObjects.clear();
+		wreckObjects.clear();
 		Arrays.fill(capacityFromInterface, CargoHoldCapacity.UNKNOWN);
 		hookObjects.clear();
 		monitoredSlot = 0;
@@ -1989,6 +2006,7 @@ public class AfkSalvagingPlugin extends Plugin
 						if (object != null && ShipwreckType.fromObjectId(object.getId()) != null)
 						{
 							session.wreckSeen(object.getWorldLocation(), object.getId(), now);
+							wreckObjects.put(object.getWorldLocation(), object);
 						}
 					}
 				}
@@ -2005,6 +2023,7 @@ public class AfkSalvagingPlugin extends Plugin
 			if (ShipwreckType.fromObjectId(id) != null)
 			{
 				session.wreckSeen(object.getWorldLocation(), id, clock());
+				wreckObjects.put(object.getWorldLocation(), object);
 			}
 			return;
 		}

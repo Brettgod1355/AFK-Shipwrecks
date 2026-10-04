@@ -23,6 +23,8 @@ final class Palette
 	static final Color BAD = new Color(240, 90, 90);
 	static final Color COUNTER_EMPTY = new Color(70, 200, 70);
 	static final Color COUNTER_FULL = new Color(230, 60, 60);
+	/** The outline round a wreck that is up and salvageable: the game's own hover cyan, a little softer. */
+	static final Color WRECK_OUTLINE = new Color(90, 220, 230);
 
 	// Sidebar.
 	static final Color SIDEBAR_IN_LEVEL = new Color(70, 200, 110);

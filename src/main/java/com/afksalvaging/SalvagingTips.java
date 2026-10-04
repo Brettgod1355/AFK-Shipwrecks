@@ -15,7 +15,8 @@ public final class SalvagingTips
 	private static final List<String> TIPS = Collections.unmodifiableList(Arrays.asList(
 		"The boxes on the water are for your hooks, not the whole boat. The game measures salvage reach from the "
 			+ "hook, so a hook has to sit inside a box. Yellow: a hook there reaches that wreck. Green: a hook there "
-			+ "reaches two wrecks at once.",
+			+ "reaches two wrecks at once. Wrecks that are up and within your level also get a soft cyan outline round "
+			+ "the hull, like the game's own hover outline (a setting).",
 		"Park so every hook on your boat is inside a green box: both on a sloop, the one on a raft or skiff. "
 			+ "The box changes to the parked colour and says \"Parked\" when they all are; with only some in, the "
 			+ "label counts them. Once parked, the yellow boxes go, to clear the view (a setting, on by default), and "

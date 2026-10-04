@@ -79,7 +79,9 @@ stopped, and the fact that your own hook does not restart itself.
   can reach it, and a green box where a hook reaches two wrecks at once. Park so every hook on your
   boat sits in the green box and it changes colour and says "Parked". Each has its own switch and
   colour, and the parked colour is its own setting too. The green boxes go 20 seconds after the boat stops, at
-  login too, and come back the moment it moves (a setting; 0 keeps them).
+  login too, and come back the moment it moves (a setting; 0 keeps them). Wrecks that are up and within
+  your level get a soft cyan outline round the hull, like the game's own hover outline, so the one to
+  work stands out without another box (a setting, on by default).
   Read the section below before trusting them to the tile.
 
 - **Sorts your inventory for you to act on.** On your boat at a salvaging spot, inventory items

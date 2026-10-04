@@ -614,12 +614,25 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "outlineWrecks",
+		name = "Outline wrecks that are up",
+		description = "Outline the hull of every wreck in view that is up and that your Sailing level lets you salvage, "
+			+ "the way the game outlines one under the mouse. Sunk wrecks and wrecks above your level get nothing.",
+		section = SPOTS,
+		position = 5
+	)
+	default boolean outlineWrecks()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "doubleSpotBoxes",
 		name = "Double spot boxes",
 		description = "Box the water where one hook reaches two wreck sites at once, whether or not both wrecks are up "
 			+ "right now. Park so every hook sits in the box and it changes colour and says Parked.",
 		section = SPOTS,
-		position = 5
+		position = 6
 	)
 	default boolean doubleSpotBoxes()
 	{
@@ -633,7 +646,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Outline colour of the double spot boxes while you are not parked in them. The fill is a fainter "
 			+ "version of it.",
 		section = SPOTS,
-		position = 6
+		position = 7
 	)
 	default Color doubleSpotColor()
 	{
@@ -647,7 +660,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "The colour a double spot box changes to once every hook on your boat is inside it: both hooks on a "
 			+ "sloop, the one hook on a raft or skiff.",
 		section = SPOTS,
-		position = 7
+		position = 8
 	)
 	default Color doubleSpotParkedColor()
 	{
@@ -660,7 +673,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Write \"Double spot\" on each box where to park, with how many of your hooks are in it, and "
 			+ "\"Parked\" once they all are.",
 		section = SPOTS,
-		position = 8
+		position = 9
 	)
 	default boolean doubleSpotLabels()
 	{
@@ -675,7 +688,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "How long after the boat stops the double spot boxes disappear, at login too; they come back the "
 			+ "moment the boat moves. 0 keeps them on screen.",
 		section = SPOTS,
-		position = 9
+		position = 10
 	)
 	default int doubleSpotHideSeconds()
 	{
@@ -689,7 +702,7 @@ public interface AfkSalvagingConfig extends Config
 			+ "any kind at the top of the sidebar, each with buttons to show it on the world map and to route there "
 			+ "with the Shortest Path plugin.",
 		section = SPOTS,
-		position = 10
+		position = 11
 	)
 	default boolean nearestDock()
 	{
@@ -702,7 +715,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Name the nearest port and mooring whose Sailing level (unboosted) and quest you meet, and say what "
 			+ "a nearer one needs when there is one. Off names the nearest whatever they need.",
 		section = SPOTS,
-		position = 12
+		position = 13
 	)
 	default boolean dockRequirements()
 	{
@@ -716,7 +729,7 @@ public interface AfkSalvagingConfig extends Config
 			+ "Path plugin so the route is drawn without pressing anything. Only one spot can be marked. The route is "
 			+ "cleared when you reach the spot or leave your boat.",
 		section = SPOTS,
-		position = 11
+		position = 12
 	)
 	default boolean autoRouteOnBoarding()
 	{
