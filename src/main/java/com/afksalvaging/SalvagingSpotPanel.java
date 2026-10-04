@@ -102,8 +102,9 @@ public class SalvagingSpotPanel extends PluginPanel
 	private static final int TOP_TEXT_WIDTH = 190;
 	static final String DISCORD_URL = "https://discord.gg/c85DK83jWx";
 	static final String GITHUB_URL = "https://github.com/Brettgod1355/AFK-Shipwrecks";
-	/** The link icons' size beside the title, in pixels. */
-	private static final int LINK_ICON_SIZE = 16;
+	/** The logos' size beside the title, and the square black buttons they sit in, in pixels. */
+	static final int LINK_ICON_SIZE = 16;
+	private static final int LINK_BUTTON_SIZE = 24;
 	private static final int ROW_TEXT_WIDTH = 172;
 	private static final String[][] FILTERS = {
 		{SpotList.FILTER_ALL, "All wrecks"},
@@ -170,16 +171,16 @@ public class SalvagingSpotPanel extends PluginPanel
 		title.setFont(FontManager.getRunescapeBoldFont());
 		title.setForeground(Color.WHITE);
 		// The community and the code, one click from the title (owner, 2026-10-04).
-		JPanel links = new JPanel(new GridLayout(1, 2, 6, 0));
+		JPanel links = new JPanel(new GridLayout(1, 2, 4, 0));
 		links.setOpaque(false);
-		links.add(link("discord_icon.png", "Join the AFK Shipwrecks Discord", DISCORD_URL));
-		links.add(link("github_icon.png", "AFK Shipwrecks on GitHub: code, bug reports and requests", GITHUB_URL));
+		links.add(link("discord_white.png", "discord_blurple.png", "Join the AFK Shipwrecks Discord", DISCORD_URL));
+		links.add(link("github_white.png", "github_green.png", "AFK Shipwrecks on GitHub: code, bug reports and requests", GITHUB_URL));
 		JPanel titleRow = new JPanel(new BorderLayout());
 		titleRow.setOpaque(false);
 		titleRow.add(title, BorderLayout.WEST);
 		titleRow.add(links, BorderLayout.EAST);
 		titleRow.setAlignmentX(LEFT_ALIGNMENT);
-		titleRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, LINK_ICON_SIZE + 4));
+		titleRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, LINK_BUTTON_SIZE));
 		top.add(titleRow);
 		top.add(Box.createVerticalStrut(6));
 		// The tools sit at the top so they are not buried under the spot list (owner, 2026-10-02).
@@ -896,16 +897,24 @@ public class SalvagingSpotPanel extends PluginPanel
 	}
 
 	/**
-	 * A small icon that opens a web page in the browser, dim until the mouse is over it. The icons
-	 * are RuneLite's own, from its Info panel (BSD 2-Clause, see THIRD_PARTY_NOTICES).
+	 * A square black button that opens a web page in the browser, showing the brand's white logo and,
+	 * while the mouse is over it, the brand's coloured logo on the same black (owner, 2026-10-04).
+	 * Both are the brands' own files, only scaled: neither Discord nor GitHub allows recolouring
+	 * their logos, so the plugin swaps between their versions instead (see THIRD_PARTY_NOTICES).
 	 */
-	private static JLabel link(String iconFile, String tooltip, String url)
+	private static JLabel link(String restingFile, String hoverFile, String tooltip, String url)
 	{
-		BufferedImage image = ImageUtil.resizeImage(ImageUtil.loadImageResource(SalvagingSpotPanel.class, iconFile),
-			LINK_ICON_SIZE, LINK_ICON_SIZE);
-		ImageIcon bright = new ImageIcon(image);
-		ImageIcon dim = new ImageIcon(ImageUtil.alphaOffset(image, 0.6f));
-		JLabel label = new JLabel(dim);
+		BufferedImage restingLogo = logo(restingFile);
+		ImageIcon resting = new ImageIcon(restingLogo);
+		ImageIcon hovered = new ImageIcon(logoLike(hoverFile, restingLogo));
+		JLabel label = new JLabel(resting);
+		label.setOpaque(true);
+		label.setBackground(Color.BLACK);
+		label.setHorizontalAlignment(JLabel.CENTER);
+		Dimension size = new Dimension(LINK_BUTTON_SIZE, LINK_BUTTON_SIZE);
+		label.setPreferredSize(size);
+		label.setMinimumSize(size);
+		label.setMaximumSize(size);
 		label.setToolTipText(tooltip);
 		label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		label.addMouseListener(new MouseAdapter()
@@ -919,16 +928,31 @@ public class SalvagingSpotPanel extends PluginPanel
 			@Override
 			public void mouseEntered(MouseEvent e)
 			{
-				label.setIcon(bright);
+				label.setIcon(hovered);
 			}
 
 			@Override
 			public void mouseExited(MouseEvent e)
 			{
-				label.setIcon(dim);
+				label.setIcon(resting);
 			}
 		});
 		return label;
+	}
+
+	/** The other version of a logo at exactly the size of the first, so hovering never shifts it by a pixel. */
+	static BufferedImage logoLike(String file, BufferedImage like)
+	{
+		return ImageUtil.resizeImage(ImageUtil.loadImageResource(SalvagingSpotPanel.class, file), like.getWidth(), like.getHeight());
+	}
+
+	/** A brand logo scaled to fit {@link #LINK_ICON_SIZE} square, keeping its proportions (the brands forbid distorting them). */
+	static BufferedImage logo(String file)
+	{
+		BufferedImage image = ImageUtil.loadImageResource(SalvagingSpotPanel.class, file);
+		double scale = Math.min((double) LINK_ICON_SIZE / image.getWidth(), (double) LINK_ICON_SIZE / image.getHeight());
+		return ImageUtil.resizeImage(image, Math.max(1, (int) Math.round(image.getWidth() * scale)),
+			Math.max(1, (int) Math.round(image.getHeight() * scale)));
 	}
 
 	private static JPanel buttons(JButton left, JButton right)

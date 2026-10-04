@@ -47,19 +47,24 @@ Both files are licensed under the BSD 2-Clause License, the same text as this pr
 in the copy of this file shipped inside the plugin JAR. The data was transcribed into this
 project's own enum, with the "where" descriptions computed from it; no source code was copied.
 
-## Icons taken from RuneLite's Info panel (BSD 2-Clause)
+## Discord and GitHub logos (trademarks, used as link buttons)
 
-The two link icons beside the sidebar's title, `discord_icon.png` and `github_icon.png` in
-`src/main/resources/com/afksalvaging/`, are copied unchanged from
-[runelite/runelite](https://github.com/runelite/runelite), `runelite-client`, version 1.13.1,
-`net/runelite/client/plugins/info/`, where `InfoPanel.java` uses them:
+The two buttons beside the sidebar's title show the brands' own logos, taken from their official
+brand pages on 2026-10-04 and only scaled down, never recoloured or redrawn:
 
-- `InfoPanel.java`: Copyright (c) 2018 Abex; Copyright (c) 2018, Psikoi <https://github.com/psikoi>.
-  All rights reserved.
+- Discord: `discord_white.png` and `discord_blurple.png` are `Discord-Symbol-White.png` and
+  `Discord-Symbol-Blurple.png` from the white and colour "Symbol" downloads at
+  <https://discord.com/branding>, which lists white and Blurple among the logo's colours.
+- GitHub: `github_white.png` is `GitHub_Invertocat_White.png` from `GitHub_Logos.zip` at
+  <https://brand.github.com/foundations/logo>. The pack has no green file, so `github_green.png` is
+  the green Invertocat cut from the same page's colour illustration
+  (<https://brand.github.com/_next/static/media/logo-04.c5edeefa.png>), with the black around it made
+  transparent and its pixels otherwise unchanged; the page allows the mark "in white, black, or in
+  few cases grey or green", and its use "as a social button to link to your GitHub profile or project".
 
-Licensed under the BSD 2-Clause License, the same text as this project's [LICENSE](LICENSE); the
-copyright notices are reproduced here and in the copy of this file inside the plugin JAR. They only
-link to this plugin's Discord server and GitHub repository.
+Discord and the Discord logo are trademarks of Discord Inc.; GitHub and the Invertocat are
+trademarks of GitHub, Inc. They are used only to link to this plugin's own Discord server and GitHub
+repository, and imply no endorsement by either company.
 
 ## Gradle wrapper
 
