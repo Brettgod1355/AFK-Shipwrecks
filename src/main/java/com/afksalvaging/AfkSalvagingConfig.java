@@ -379,14 +379,16 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "warnSlotsRemaining",
 		name = "Warn with slots left",
-		description = "Alert once this many free slots remain, before the hold is completely full. 0 turns the early warning off.",
+		description = "Alert once this many free slots remain, before the hold is completely full: 5 by default. 0 turns "
+			+ "the early warning off.",
 		section = EARLY_WARNING,
 		position = 0
 	)
 	@Range(min = 0, max = 239)
 	default int warnSlotsRemaining()
 	{
-		return 0;
+		// 5 slots by default (owner, 2026-10-04).
+		return 5;
 	}
 
 	@ConfigItem(

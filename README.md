@@ -74,7 +74,8 @@ marked.
 - **Crew stopped.** Crew salvage on your level, boosted or not. If it drops below what the wreck
   needs they stop; the plugin says so.
 - **Full-hold alert.** Sound, tray popup, screen flash, focus, whatever you set up in RuneLite,
-  plus a big red banner and an optional early warning and repeat. As before.
+  plus a big red banner, an early warning at 5 slots left (your number; 0 turns it off) and a
+  repeat.
 - **Idle logout.** If the hold will take longer to fill than you have left before the game logs
   you out for idling, it shows that too, and a minute before the logout (your choice how long) it
   sends a notification while you are on your own boat, once per idle stretch. It cannot press a
