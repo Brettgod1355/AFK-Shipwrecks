@@ -415,6 +415,25 @@ public class AfkSessionTest
 	}
 
 	@Test
+	public void anEmptyHookAwayFromAnySpotIsNobodysBusiness()
+	{
+		// No wreck site in view: parked at a dock, say. A spare crewmate and an empty hook, but no reminder.
+		session.wrecks().clear();
+		session.roster().setCrewmate(0, JENKINS);
+		session.roster().setPosition(0, CrewAssignment.HOOK_SLOOP_1);
+		session.roster().setCrewmate(1, JOLLY);
+		session.settings().graceMillis = 3_000;
+		AfkSession.View view = ticks(40);
+		assertEquals(1, view.emptyHooks);
+		assertEquals(0, count(Notice.HOOK_EMPTY));
+		assertNull(view.reminder);
+		// A wreck site comes into view: now it matters.
+		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK, now);
+		ticks(40);
+		assertEquals(1, count(Notice.HOOK_EMPTY));
+	}
+
+	@Test
 	public void theWreckSinksAndTheTimerWaits()
 	{
 		twoCrewOnHooks();

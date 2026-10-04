@@ -52,6 +52,8 @@ public final class HookWatch
 		public boolean wreckInReach;
 		/** Whether the boat is standing still on the player's own boat. */
 		public boolean parked = true;
+		/** Whether a wreck site is in view: only there is an empty hook worth a word (owner, 2026-10-03). */
+		public boolean atSpot = true;
 	}
 
 	private long emptySince = -1;
@@ -141,7 +143,7 @@ public final class HookWatch
 	/** What, if anything, is wrong right now. */
 	static Reason reasonFor(Situation s)
 	{
-		if (!s.parked || s.holdFull || s.hookCount <= 0)
+		if (!s.parked || !s.atSpot || s.holdFull || s.hookCount <= 0)
 		{
 			return null;
 		}

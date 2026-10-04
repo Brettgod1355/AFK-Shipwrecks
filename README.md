@@ -36,7 +36,8 @@ stopped, and the fact that your own hook does not restart itself.
   it as bound for the hold and knows you stop when your inventory is full or the wreck sinks.
   Salvage you withdraw to sort is never counted, and sorting shows its own little countdown.
 - **Hook reminders.** Step off your hook to sort and forget to hand it over, and after a short
-  grace period it reminds you: "A salvaging hook is empty. Assign a crewmate to it." If nobody
+  grace period it reminds you: "A salvaging hook is empty. Assign a crewmate to it." (Only at a
+  salvaging spot, with a wreck site in view; an empty hook on the way there is your business.) If nobody
   aboard can take the hook (a crewmate needs enough deckhandiness for it) and a wreck is up, it
   asks you to click the hook instead, because unlike your crew you do not restart by yourself.
   And if a crewmate with more deckhandiness is sitting idle while a weaker one works a hook, it

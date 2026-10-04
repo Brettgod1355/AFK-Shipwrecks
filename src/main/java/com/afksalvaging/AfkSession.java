@@ -811,6 +811,7 @@ public final class AfkSession
 		situation.holdFull = confirmedFull;
 		situation.wreckInReach = wreckInReach;
 		situation.parked = aboard && parked;
+		situation.atSpot = !wrecks.presentSites().isEmpty();
 		HookWatch.Signal signal = hookWatch.update(now, situation, settings.graceMillis, settings.repeatReminderMillis);
 		if (signal != HookWatch.Signal.NONE)
 		{
