@@ -285,10 +285,9 @@ For development: clone the repo and use `./gradlew run` for a development client
 
 ## Found a bug? Want something?
 
-Tell me on Discord: <https://discord.gg/c85DK83jWx>. Questions, suggestions and bug reports are all
-welcome there. If you'd rather, open an issue on GitHub:
-<https://github.com/Brettgod1355/AFK-Shipwrecks/issues>. Both are one click away from the buttons
-beside the sidebar's title.
+Open an issue on GitHub: <https://github.com/Brettgod1355/AFK-Shipwrecks/issues>. If you'd rather,
+ask a question, make a suggestion or report a bug on Discord instead:
+<https://discord.gg/c85DK83jWx>. Both are one click away from the buttons beside the sidebar's title.
 
 ## License
 
