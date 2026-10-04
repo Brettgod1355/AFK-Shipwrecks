@@ -151,10 +151,11 @@ unless its own setting is off or set to custom with the cog. Left plain it is Ru
 notification settings; make it custom once and every category follows. **Cargo full** and **Early
 warning**: as before. **Banner**: as before, plus a colour for the
 reminder banner and a colour for the nearly-full banner. **Overlay**: when to show it (near
-wrecks, or always aboard), hiding it while the cargo hold is open (on by default, so it is not in
-the way when you withdraw), the cargo counter and what it shows (used of total, slots left or
+wrecks, or always aboard), the cargo counter and what it shows (used of total, slots left or
 percent full), the hooks line, the wrecks line, text size, and the countdown infobox (off by
-default).
+default). Whatever the settings, the overlay and the flashing notices step aside while a game
+interface fills the middle of the screen (the cargo hold, a skill guide, the quest journal, a
+diary) and come back when it closes.
 
 **Colours**: only the ones you notice are settings: the banners, the boxes on the water and the
 four sorting boxes, each in its own section. The overlay text, the counter's shading, the sidebar

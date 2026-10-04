@@ -485,19 +485,6 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "hideWhileHoldOpen",
-		name = "Hide while the hold is open",
-		description = "Hide the overlay panel, banners included, while the cargo hold window is open, so it does not "
-			+ "cover the items you are withdrawing. It comes back when you close the hold.",
-		section = OVERLAY,
-		position = -1
-	)
-	default boolean hideWhileHoldOpen()
-	{
-		return true;
-	}
-
-	@ConfigItem(
 		keyName = "showCounter",
 		name = "Show cargo counter",
 		description = "Show used and total cargo slots while you are on your boat.",
@@ -775,7 +762,7 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "alchThreshold",
 		name = "Alch from",
-		description = "An unmarked item that alchs for at least this much gets the alch box; below it, the drop box.",
+		description = "An unmarked item that alchs for at least this much gets the alch box; below it, no box.",
 		section = SORTING,
 		position = 2
 	)

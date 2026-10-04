@@ -33,6 +33,7 @@ public final class SeaMap
 
 	private final int minX, minY, cellSize, cellsX, cellsY;
 	private final BitSet sea;
+	private int[] costs;
 
 	SeaMap(int minX, int minY, int cellSize, int cellsX, int cellsY, BitSet sea)
 	{
@@ -94,7 +95,7 @@ public final class SeaMap
 	 * joins them. A point on land uses the nearest sea cell within {@link #LAND_REACH_TILES}, so a
 	 * dock measures from the water beside it; from further inland every distance is unreachable.
 	 */
-	public int[] distances(WorldPoint from, List<WorldPoint> targets)
+	public synchronized int[] distances(WorldPoint from, List<WorldPoint> targets)
 	{
 		int[] result = new int[targets.size()];
 		Arrays.fill(result, UNREACHABLE);
@@ -114,8 +115,7 @@ public final class SeaMap
 			}
 		}
 		// Dijkstra in tenths of a cell: a straight step is 10, a diagonal 14.
-		int[] cost = new int[cellsX * cellsY];
-		Arrays.fill(cost, Integer.MAX_VALUE);
+		int[] cost = scratch();
 		cost[start] = 0;
 		PriorityQueue<long[]> queue = new PriorityQueue<>((a, b) -> Long.compare(a[0], b[0]));
 		queue.add(new long[]{0, start});
@@ -161,6 +161,17 @@ public final class SeaMap
 			}
 		}
 		return result;
+	}
+
+	/** One cost array for every search (the map is 2.4 MB of ints), reset rather than reallocated; hence {@code synchronized}. */
+	private int[] scratch()
+	{
+		if (costs == null)
+		{
+			costs = new int[cellsX * cellsY];
+		}
+		Arrays.fill(costs, Integer.MAX_VALUE);
+		return costs;
 	}
 
 	/** The sea cell holding the point, else the nearest within {@link #LAND_REACH_TILES}, else -1. */

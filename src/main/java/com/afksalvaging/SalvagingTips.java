@@ -68,7 +68,8 @@ public final class SalvagingTips
 			+ "Sorting tab. Nothing is dropped or alched for you. Inside the open hold, the salvage stacks get an amber "
 			+ "box so they are easy to find and click (a setting, on by default).",
 		"The overlay only appears while a wreck site is in view. \"Show overlay\" in the Overlay settings can make it "
-			+ "show whenever you are aboard."
+			+ "show whenever you are aboard. It steps aside while any game interface fills the middle of the screen, the "
+			+ "cargo hold included, and comes back when that closes."
 	));
 
 	private SalvagingTips()

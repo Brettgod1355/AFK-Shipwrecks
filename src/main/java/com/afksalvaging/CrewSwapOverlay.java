@@ -44,7 +44,8 @@ public class CrewSwapOverlay extends Overlay
 	public Dimension render(Graphics2D graphics)
 	{
 		CrewSwapWatch.Suggestion swap = plugin.getSession().view().betterCrew;
-		if (!config.swapAlert() || swap == null || !plugin.isOwnBoat())
+		if (!config.swapAlert() || swap == null || !plugin.isOwnBoat()
+			|| plugin.mainInterfaceOpen())
 		{
 			return null;
 		}

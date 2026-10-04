@@ -77,7 +77,7 @@ public class AfkSalvagingOverlay extends OverlayPanel
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		if (config.hideWhileHoldOpen() && plugin.isCargoInterfaceOpen())
+		if (plugin.mainInterfaceOpen())
 		{
 			// The panel sits over the hold window and gets in the way of withdrawing.
 			return null;

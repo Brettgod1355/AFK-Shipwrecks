@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Function;
 import java.util.function.ToIntFunction;
 import javax.inject.Inject;
 import net.runelite.api.Actor;
@@ -37,6 +38,8 @@ import net.runelite.api.NPC;
 import net.runelite.api.NPCComposition;
 import net.runelite.api.ObjectComposition;
 import net.runelite.api.Player;
+import net.runelite.api.Quest;
+import net.runelite.api.QuestState;
 import net.runelite.api.Scene;
 import net.runelite.api.Skill;
 import net.runelite.api.Tile;
@@ -87,8 +90,6 @@ import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 import net.runelite.client.util.ImageUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import net.runelite.client.util.Text;
 import net.runelite.http.api.item.ItemPrice;
 import net.runelite.http.api.worlds.World;
@@ -120,7 +121,6 @@ public class AfkSalvagingPlugin extends Plugin
 {
 	private static final Logger log = LoggerFactory.getLogger(AfkSalvagingPlugin.class);
 
-	private static final Logger LOG = LoggerFactory.getLogger(AfkSalvagingPlugin.class);
 
 	/** RuneScape-profile config key prefix for the remembered count of each boat slot. */
 	private static final String USED_KEY_PREFIX = "used.";
@@ -145,7 +145,6 @@ public class AfkSalvagingPlugin extends Plugin
 	/** How long the banner shows for a test alert when the banner setting keeps it up indefinitely. */
 	private static final int TEST_BANNER_SECONDS = 10;
 	/** Ticks between fallback scans of the boat while no hook has been found. */
-	private static final int RESCAN_TICKS = 5;
 	private static final int[] CREW_SLOT_VARBITS = {
 		VarbitID.SAILING_CREW_SLOT_1, VarbitID.SAILING_CREW_SLOT_2, VarbitID.SAILING_CREW_SLOT_3,
 		VarbitID.SAILING_CREW_SLOT_4, VarbitID.SAILING_CREW_SLOT_5
@@ -220,6 +219,10 @@ public class AfkSalvagingPlugin extends Plugin
 	private static final int SORT_CACHE_TICKS = 500;
 	/** The one entry the marking choices sit under in an item's right-click menu. */
 	private static final String SORT_MENU = "AFK Salvaging";
+	/** Where each screen layout (fixed, resizable classic, resizable modern) puts an open main interface. */
+	private static final int[] MAIN_INTERFACE_CONTAINERS = {
+		InterfaceID.Toplevel.MAINMODAL, InterfaceID.ToplevelOsrsStretch.MAINMODAL, InterfaceID.ToplevelPreEoc.MAINMODAL
+	};
 	/** Whether the inventory boxes are drawn, decided once per tick rather than per item per frame. */
 	private boolean sortActive;
 
@@ -256,6 +259,9 @@ public class AfkSalvagingPlugin extends Plugin
 	private Future<?> seaRequest;
 	/** Bumped for every search and on shutdown, so a search that finishes late publishes nothing. */
 	private volatile int seaGeneration;
+	/** At most one sea search this often while the boat is under way. */
+	private static final long SEA_SEARCH_GAP_MS = 5_000;
+	private long seaSearchedAt;
 
 	/** The sidebar entry and its panel, present while the setting is on. */
 	private NavigationButton spotsButton;
@@ -378,12 +384,24 @@ public class AfkSalvagingPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		if (AfkSalvagingConfig.GROUP.equals(event.getGroup()))
+		if (!AfkSalvagingConfig.GROUP.equals(event.getGroup()))
 		{
-			applySpotSettings();
-			applyInfoBox();
-			reloadSortLists();
+			return;
 		}
+		if (MarkStore.allKeys().contains(event.getKey()))
+		{
+			// A character's marks changed, ours or another's: read them all again.
+			reloadSortLists();
+			return;
+		}
+		if (event.getProfile() != null)
+		{
+			// Other per-character data the plugin itself writes (remembered counts, rates, favourites, dropdowns): nothing to apply.
+			return;
+		}
+		applySpotSettings();
+		applyInfoBox();
+		reloadSortLists();
 	}
 
 	@Subscribe
@@ -744,10 +762,6 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			followBoat(player.getWorldView());
 		}
-		else if (sailing && player != null && tick % RESCAN_TICKS == 0 && hooksMissingObjects())
-		{
-			scanBoat(player.getWorldView());
-		}
 
 		if (!sailing)
 		{
@@ -817,8 +831,11 @@ public class AfkSalvagingPlugin extends Plugin
 			if (config.dockRequirements())
 			{
 				int level = client.getRealSkillLevel(Skill.SAILING);
-				mooring = Mooring.nearestUsable(toDock, level, quest -> quest.getState(client));
-				port = Mooring.nearestUsable(toPort, level, quest -> quest.getState(client));
+				// Each quest's state is a clientscript run: ask once per refresh, not once per dock per list.
+				Map<Quest, QuestState> questStates = new EnumMap<>(Quest.class);
+				Function<Quest, QuestState> questState = quest -> questStates.computeIfAbsent(quest, q -> q.getState(client));
+				mooring = Mooring.nearestUsable(toDock, level, questState);
+				port = Mooring.nearestUsable(toPort, level, questState);
 			}
 			spotsPanel.setDocks(port, mooring, nearest);
 			spotsPanel.setStats(statsLine());
@@ -1561,10 +1578,13 @@ public class AfkSalvagingPlugin extends Plugin
 			return;
 		}
 		int cell = from == null ? -1 : seaMap.nearestCell(from);
-		if (cell == seaFromCell || (seaRequest != null && !seaRequest.isDone()))
+		long now = System.currentTimeMillis();
+		if (cell == seaFromCell || (seaRequest != null && !seaRequest.isDone()) || now - seaSearchedAt < SEA_SEARCH_GAP_MS)
 		{
+			// The search walks the whole sea; under way, once every few seconds is plenty.
 			return;
 		}
+		seaSearchedAt = now;
 		seaFromCell = cell;
 		if (cell < 0)
 		{
@@ -2081,7 +2101,7 @@ public class AfkSalvagingPlugin extends Plugin
 		}
 		catch (RuntimeException e)
 		{
-			LOG.debug("Could not read crewmate {} from the crew table", uniqueId, e);
+			log.debug("Could not read crewmate {} from the crew table", uniqueId, e);
 		}
 		return new Crewmate(uniqueId, name, deckhandiness);
 	}
@@ -2141,18 +2161,6 @@ public class AfkSalvagingPlugin extends Plugin
 	}
 
 	/** Whether a hook the boat is known to have lacks the object needed to place it. */
-	private boolean hooksMissingObjects()
-	{
-		for (BoatFacilities.Hook hook : session.boat().hooks())
-		{
-			if (!hookObjects.containsKey(hook.getHash()))
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
 	/** Prefers the capacity the game showed in the hold interface, then the hold object on the boat. */
 	private void refreshCapacity()
 	{
@@ -2181,7 +2189,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			capacityFromInterface[slot] = capacity;
 			session.monitor().setCapacity(capacity);
-			LOG.debug("Cargo hold interface reports capacity {} for boat {}", capacity, slot);
+			log.debug("Cargo hold interface reports capacity {} for boat {}", capacity, slot);
 		}
 		if (used >= 0 && used <= CargoHoldCapacity.MAX_SLOTS)
 		{
@@ -2207,6 +2215,27 @@ public class AfkSalvagingPlugin extends Plugin
 	{
 		Widget root = client.getWidget(InterfaceID.SailingBoatCargohold.UNIVERSE);
 		return root != null && !root.isHidden();
+	}
+
+	/**
+	 * Whether a game interface fills the middle of the screen: the cargo hold, a skill guide, the
+	 * quest journal, a diary, the collection log and the like. The overlays step aside while one is
+	 * open and come back when it closes (owner, 2026-10-03, no setting). The three layouts each
+	 * have their own container for such interfaces; one of them holds a nested interface when
+	 * something is open.
+	 */
+	public boolean mainInterfaceOpen()
+	{
+		for (int container : MAIN_INTERFACE_CONTAINERS)
+		{
+			Widget modal = client.getWidget(container);
+			Widget[] nested = modal == null || modal.isHidden() ? null : modal.getNestedChildren();
+			if (nested != null && nested.length > 0)
+			{
+				return true;
+			}
+		}
+		return isCargoInterfaceOpen();
 	}
 
 	private void saveUsed()
@@ -2248,7 +2277,7 @@ public class AfkSalvagingPlugin extends Plugin
 		}
 		catch (NumberFormatException e)
 		{
-			LOG.debug("Ignoring unreadable remembered cargo count '{}' for boat {}", saved, slot);
+			log.debug("Ignoring unreadable remembered cargo count '{}' for boat {}", saved, slot);
 		}
 	}
 
@@ -2396,7 +2425,7 @@ public class AfkSalvagingPlugin extends Plugin
 			}
 			catch (RuntimeException e)
 			{
-				LOG.debug("World list not available", e);
+				log.debug("World list not available", e);
 			}
 			worldDirty = true;
 		});

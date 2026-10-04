@@ -25,8 +25,6 @@ public final class CrewSpeech
 	private static final String PLAYER_DEPOSIT = "you deposit some cargo into the cargo hold";
 	/** Game message when the boat is somewhere it may not salvage. */
 	private static final String HAZARDOUS = "not safe to salvage while in hazardous waters";
-	/** Game message when the wreck the player was working sinks. */
-	private static final String WRECK_SUNK = "reclaimed by the sea";
 	/** The ghostly cabin boy only ever says variations of "Wooo wooo." */
 	private static final Pattern GHOST_SPEECH = Pattern.compile("(?i)^(?:w+o+[ ,]*)+[.!]*$");
 
@@ -71,11 +69,6 @@ public final class CrewSpeech
 	}
 
 	/** Whether the game says the wreck the player was salvaging has sunk. */
-	public static boolean reportsWreckSunk(String text)
-	{
-		return plain(text).contains(WRECK_SUNK);
-	}
-
 	/**
 	 * Whether this is the ghost crewmate's wordless speech. He cannot say what he did, so a
 	 * Sailing XP drop in the same tick is what tells us he salvaged something.

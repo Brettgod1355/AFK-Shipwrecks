@@ -59,7 +59,7 @@ public class SalvagingWorldOverlay extends Overlay
 		{
 			bareSince = now;
 		}
-		if (now - bareSince < AFTER_MS)
+		if (now - bareSince < AFTER_MS || plugin.mainInterfaceOpen())
 		{
 			return null;
 		}
