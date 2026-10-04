@@ -740,6 +740,10 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			session.hazardLine(playerTopLevelPoint());
 		}
+		else if (CrewSpeech.reportsSortingDone(text))
+		{
+			session.sortingDoneLine(clock());
+		}
 	}
 
 	@Subscribe
@@ -1923,6 +1927,15 @@ public class AfkSalvagingPlugin extends Plugin
 			case IDLE_LOGOUT_SOON:
 				notifier.notify(resolved(config.idleLogoutNotification()), "You will be logged out for idling in about "
 					+ Durations.countdown(session.view().idleLogoutMillis) + ". Move the mouse or press a key.");
+				break;
+			case SORTING_DONE:
+				// Off by default: for players who sort with their eyes elsewhere (owner, 2026-10-03).
+				notifier.notify(resolved(config.sortingDoneNotification()), "You have sorted all your salvage.");
+				break;
+			case WAITING_FOR_WRECK:
+				WreckTracker.NextRise next = session.view().nextWreck;
+				notifier.notify(resolved(config.waitingNotification()), "Waiting for a wreck: every wreck in reach is down."
+					+ (next != null && !next.overdue ? " Next in at most " + Durations.countdown(next.withinMillis) + "." : ""));
 				break;
 			case WORLD_TIP:
 				if (config.worldTip())

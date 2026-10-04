@@ -434,6 +434,57 @@ public class AfkSessionTest
 	}
 
 	@Test
+	public void waitingForAWreckIsSaidOncePerStretchAfterTenSeconds()
+	{
+		twoCrewOnHooks();
+		ticks(10);
+		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, now);
+		ticks(10);
+		assertEquals("six seconds in: not yet", 0, count(Notice.WAITING_FOR_WRECK));
+		ticks(10);
+		assertEquals(1, count(Notice.WAITING_FOR_WRECK));
+		ticks(40);
+		assertEquals("not repeated while the wait goes on", 1, count(Notice.WAITING_FOR_WRECK));
+		// A wreck rises, then sinks again: a new stretch, said again.
+		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK, now);
+		ticks(5);
+		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, now);
+		ticks(25);
+		assertEquals(2, count(Notice.WAITING_FOR_WRECK));
+	}
+
+	@Test
+	public void doneSortingIsSaidFiveSecondsAfterTheGameSaysSoUnlessSortingResumes()
+	{
+		twoCrewOnHooks();
+		ticks(2);
+		session.sortingDoneLine(now);
+		ticks(7);
+		assertEquals("4.2 s in: not yet", 0, count(Notice.SORTING_DONE));
+		ticks(2);
+		assertEquals(1, count(Notice.SORTING_DONE));
+		ticks(10);
+		assertEquals("said once", 1, count(Notice.SORTING_DONE));
+	}
+
+	@Test
+	public void doneSortingIsDroppedWhenSortingStartsAgainWithinTheGrace()
+	{
+		twoCrewOnHooks();
+		ticks(2);
+		session.sortingDoneLine(now);
+		animation = SORTING;
+		ticks(1);
+		animation = -1;
+		ticks(1);
+		animation = SORTING;
+		ticks(3);
+		animation = -1;
+		ticks(20);
+		assertEquals("the old animation finishing does not count; starting again does", 0, count(Notice.SORTING_DONE));
+	}
+
+	@Test
 	public void theWreckSinksAndTheTimerWaits()
 	{
 		twoCrewOnHooks();

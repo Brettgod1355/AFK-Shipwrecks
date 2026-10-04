@@ -263,12 +263,38 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "waitingNotification",
+		name = "Waiting for a wreck",
+		description = "Notify once every wreck in reach has been down for ten seconds, with the latest the next can rise "
+			+ "when that is known. Off unless you want it.",
+		section = REMINDERS,
+		position = 5
+	)
+	default Notification waitingNotification()
+	{
+		return Notification.OFF;
+	}
+
+	@ConfigItem(
+		keyName = "sortingDoneNotification",
+		name = "Done sorting at the station",
+		description = "Notify five seconds after the game says you have no more salvage to sort, unless you have started "
+			+ "sorting again by then. Off unless you want it.",
+		section = REMINDERS,
+		position = 6
+	)
+	default Notification sortingDoneNotification()
+	{
+		return Notification.OFF;
+	}
+
+	@ConfigItem(
 		keyName = "reminderGraceSeconds",
 		name = "Grace period",
 		description = "How long a hook may stand empty before the first reminder. Using the cargo hold buys a "
 			+ "little extra; settling in to sort shortens it.",
 		section = REMINDERS,
-		position = 5
+		position = 7
 	)
 	@Range(min = 3, max = 60)
 	@Units(Units.SECONDS)
@@ -282,7 +308,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Repeat every",
 		description = "Remind again this often while the hook stays empty. 0 reminds once.",
 		section = REMINDERS,
-		position = 6
+		position = 8
 	)
 	@Range(min = 0, max = 600)
 	@Units(Units.SECONDS)
@@ -297,7 +323,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Notify shortly before the game logs you out for idling while you are on your own boat, so a "
 			+ "full-hold alert does not arrive after you are gone.",
 		section = REMINDERS,
-		position = 7
+		position = 9
 	)
 	default Notification idleLogoutNotification()
 	{
@@ -309,7 +335,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Warn before logout",
 		description = "How long before the idle logout to warn. 0 never warns.",
 		section = REMINDERS,
-		position = 8
+		position = 10
 	)
 	@Range(min = 0, max = 600)
 	@Units(Units.SECONDS)

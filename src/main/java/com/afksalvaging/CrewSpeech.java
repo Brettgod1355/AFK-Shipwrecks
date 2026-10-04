@@ -23,6 +23,8 @@ public final class CrewSpeech
 	private static final String[] CREW_SALVAGE = {"hook some salvage", "put it in the cargo hold"};
 	/** Game message when the player deposits carried cargo without opening the hold. */
 	private static final String PLAYER_DEPOSIT = "you deposit some cargo into the cargo hold";
+	/** Game message when the salvaging station has nothing left to sort. */
+	private static final String SORTING_DONE = "no more salvage to sort";
 	/** Game message when the boat is somewhere it may not salvage. */
 	private static final String HAZARDOUS = "not safe to salvage while in hazardous waters";
 	/** The ghostly cabin boy only ever says variations of "Wooo wooo." */
@@ -60,6 +62,12 @@ public final class CrewSpeech
 	public static boolean reportsPlayerDeposit(String text)
 	{
 		return plain(text).contains(PLAYER_DEPOSIT);
+	}
+
+	/** Whether the game says the player has sorted everything at the station. */
+	public static boolean reportsSortingDone(String text)
+	{
+		return plain(text).contains(SORTING_DONE);
 	}
 
 	/** Whether the game refused to salvage because the boat is in hazardous waters. */

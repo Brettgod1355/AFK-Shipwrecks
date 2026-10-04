@@ -144,9 +144,11 @@ for a wreck, stay); show clock time; clock format (12-hour or 24-hour); count sa
 `596, 597`); salvaging world tip; salvaging world alert (a flashing notice mid-screen while you wait for a
 wreck off those worlds, on by default).
 
-**Reminders**: five RuneLite notifications you can shape separately (hook empty with a crewmate
+**Reminders**: seven RuneLite notifications you can shape separately (hook empty with a crewmate
 free; your hook is idle; a better crewmate is free; crew stopped because your level is too low;
-idle logout coming), whether the swap also flashes mid-screen (on by default), the
+idle logout coming; and two that are off unless you want them: waiting for a wreck, once every
+wreck in reach has been down ten seconds, and done sorting at the station, five seconds after the
+game says so), whether the swap also flashes mid-screen (on by default), the
 grace period before the first reminder (10 s by default; using the hold buys a little more,
 settling in to sort shortens it), how often to repeat, and how long before the idle logout to
 warn (60 s; 0 never).

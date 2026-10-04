@@ -43,6 +43,10 @@ public final class AfkSession
 	public static final long AVAILABILITY_PRIOR_WEIGHT_MILLIS = 5 * 60_000L;
 	/** How long the crew must have waited for a wreck before the world tip is offered. */
 	public static final long WORLD_TIP_AFTER_MILLIS = 60_000;
+	/** How long every wreck in reach must have been down before the (optional) waiting notification. */
+	public static final long WAITING_ALERT_AFTER_MILLIS = 10_000;
+	/** Grace after "no more salvage to sort" before the (optional) done-sorting notification (owner: five seconds). */
+	public static final long SORTING_DONE_GRACE_MILLIS = 5_000;
 	/** Client ticks are 20 ms; the game's idle timeout is measured in them. */
 	public static final int CLIENT_TICK_MILLIS = 20;
 	/** Inventory slots. */
@@ -146,6 +150,10 @@ public final class AfkSession
 		HOOK_IDLE,
 		/** A stronger crewmate is idle while a weaker one works a hook. */
 		BETTER_CREW,
+		/** Every wreck in reach has been down for a little while. */
+		WAITING_FOR_WRECK,
+		/** The station ran out of salvage to sort a few seconds ago and the player has not started again. */
+		SORTING_DONE,
 		BOOST_DROPPED,
 		WORLD_TIP,
 		/** The game will log the player out for idling soon, and they are aboard their own boat. */
@@ -232,6 +240,9 @@ public final class AfkSession
 	private WorldPoint hazardAt;
 	private long waitingSince = -1;
 	private boolean worldTipGiven;
+	private boolean waitingNotified;
+	/** When the game last said there was no more salvage to sort, or -1. */
+	private long sortingDoneAt = -1;
 	private boolean boostDropNotified;
 	private boolean idleWarned;
 	private long lastAvailabilityAt = Long.MIN_VALUE;
@@ -446,6 +457,12 @@ public final class AfkSession
 		}
 	}
 
+	/** The game said there is no more salvage to sort; the notice follows after a grace, unless sorting starts again. */
+	public void sortingDoneLine(long now)
+	{
+		sortingDoneAt = now;
+	}
+
 	/** The player clicked something else before reaching the hold, so the deposit or withdrawal is off. */
 	public void holdActionCancelled()
 	{
@@ -495,6 +512,8 @@ public final class AfkSession
 		activity.reset();
 		waitingSince = -1;
 		worldTipGiven = false;
+		waitingNotified = false;
+		sortingDoneAt = -1;
 		hazardous = false;
 		countdown.reset();
 	}
@@ -534,6 +553,8 @@ public final class AfkSession
 		hazardAt = null;
 		waitingSince = -1;
 		worldTipGiven = false;
+		waitingNotified = false;
+		sortingDoneAt = -1;
 		boostDropNotified = false;
 		idleWarned = false;
 		lastAvailabilityAt = Long.MIN_VALUE;
@@ -854,6 +875,32 @@ public final class AfkSession
 		else
 		{
 			idleWarned = false;
+		}
+
+		if (sortingDoneAt >= 0)
+		{
+			if (PlayerActivity.fromAnimation(in.animation) == PlayerActivity.SORTING && now - sortingDoneAt >= 1_200)
+			{
+				// Sorting again within the grace (a tick or two after the line is the old animation finishing): more to sort after all.
+				sortingDoneAt = -1;
+			}
+			else if (now - sortingDoneAt >= SORTING_DONE_GRACE_MILLIS)
+			{
+				sortingDoneAt = -1;
+				notices.add(Notice.SORTING_DONE);
+			}
+		}
+
+		if (waitingSince < 0)
+		{
+			waitingNotified = false;
+		}
+		else if (!waitingNotified && estimate.getState() == AfkEstimate.State.WAITING_FOR_WRECK
+			&& now - waitingSince >= WAITING_ALERT_AFTER_MILLIS)
+		{
+			// Once per stretch of waiting, after a pause in case the next wreck rises at once.
+			waitingNotified = true;
+			notices.add(Notice.WAITING_FOR_WRECK);
 		}
 
 		boolean showTip = false;
