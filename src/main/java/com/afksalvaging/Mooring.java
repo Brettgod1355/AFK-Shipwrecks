@@ -85,7 +85,14 @@ public enum Mooring
 	DRUMSTICK_ISLE("Drumstick Isle", 2150, 3530, 79, null, false, null),
 	WEISS("Weiss", 2860, 3972, 80, Quest.MAKING_FRIENDS_WITH_MY_ARM, true, null),
 	BRITTLE_ISLE("Brittle Isle", 1954, 4056, 81, null, false, null),
-	GRIMSTONE("Grimstone", 2927, 4056, 87, null, false, null);
+	GRIMSTONE("Grimstone", 2927, 4056, 87, null, false, null),
+	/**
+	 * Not a dock: the banking vessel in the Barracuda Belt, banked at from your own deck. Its position
+	 * is not in the map data (it is a ship), so it is triangulated from the distances the wiki gives
+	 * to seven docks (Bank boat page, 2026-10-03), to within about ten tiles; the Barracuda Belt needs
+	 * level 57 Sailing (Shrouded Ocean page).
+	 */
+	BANK_BOAT("Bank boat", 2249, 2537, 57, null, false, "you bank from your deck; there is no dock");
 
 	private final String displayName;
 	private final WorldPoint point;
@@ -104,7 +111,13 @@ public enum Mooring
 	private static final Set<Mooring> BANKS_CARGO = Collections.unmodifiableSet(EnumSet.of(
 		PORT_SARIM, THE_PANDEMONIUM, LANDS_END, PORT_PISCARILLIUS, CATHERBY, ARDOUGNE, PORT_KHAZARD,
 		CIVITAS_ILLA_FORTIS, CORSAIR_COVE, ALDARIN, RUINS_OF_UNKAH, VOID_KNIGHTS_OUTPOST, PORT_ROBERTS, RED_ROCK,
-		ETCETERIA, DEEPFIN_POINT, JATIZSO, NEITIZNOT, PRIFDDINAS, PISCATORIS, LUNAR_ISLE));
+		ETCETERIA, DEEPFIN_POINT, JATIZSO, NEITIZNOT, PRIFDDINAS, PISCATORIS, LUNAR_ISLE, BANK_BOAT));
+
+	/**
+	 * Places in the list that are not docks: the bank boat is banked at from your own deck and
+	 * cannot be boarded or stepped off onto, so it is never "the nearest dock you can use".
+	 */
+	private static final Set<Mooring> NOT_A_DOCK = Collections.unmodifiableSet(EnumSet.of(BANK_BOAT));
 
 	/**
 	 * @param sailingLevel  Sailing level to disembark here, not boostable (wiki: Mooring point)
@@ -201,10 +214,16 @@ public enum Mooring
 		return displayName;
 	}
 
-	/** Whether this is a port where the crew bank the hold's contents as the player steps off. */
+	/** Whether the hold can be banked here: a dock where the crew bank it as the player steps off, or the bank boat. */
 	public boolean banksCargo()
 	{
 		return BANKS_CARGO.contains(this);
+	}
+
+	/** Whether the player can disembark here at all. */
+	public boolean isDock()
+	{
+		return !NOT_A_DOCK.contains(this);
 	}
 
 	/** The mooring in the top-level world. */

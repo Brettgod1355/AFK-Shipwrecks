@@ -697,10 +697,10 @@ public interface AfkSalvagingConfig extends Config
 
 	@ConfigItem(
 		keyName = "nearestDock",
-		name = "Show nearest port and mooring",
-		description = "Name the nearest port (where your crew bank the hold as you step off) and the nearest mooring of "
-			+ "any kind at the top of the sidebar, each with buttons to show it on the world map and to route there "
-			+ "with the Shortest Path plugin.",
+		name = "Show nearest docks",
+		description = "Name the nearest dock you can use and the nearest dock where your crew bank the hold as you step off "
+			+ "(a dock with a bank deposit box, or the bank boat) at the top of the sidebar, each with buttons to show "
+			+ "it on the world map and to route there with the Shortest Path plugin.",
 		section = SPOTS,
 		position = 11
 	)
@@ -712,8 +712,8 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "dockRequirements",
 		name = "Only docks I can use",
-		description = "Name the nearest port and mooring whose Sailing level (unboosted) and quest you meet, and say what "
-			+ "a nearer one needs when there is one. Off names the nearest whatever they need.",
+		description = "Name only docks whose Sailing level (unboosted) and quest you meet, and say what a nearer one "
+			+ "needs when there is one. Off names the nearest whatever they need.",
 		section = SPOTS,
 		position = 13
 	)

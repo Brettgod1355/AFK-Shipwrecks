@@ -831,11 +831,13 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			spotsPanel.setPosition(in.playerPoint);
 			updateSeaDistances(in.playerPoint);
-			ToIntFunction<Mooring> toDock = dockDistance(in.playerPoint);
-			// Two answers (owner, 2026-10-03): the nearest port, where the crew bank the hold as you step
-			// off, and the nearest mooring of any kind, which is just the nearest place to get off.
-			ToIntFunction<Mooring> toPort = toDock == null ? null
-				: dock -> dock.banksCargo() ? toDock.applyAsInt(dock) : Integer.MAX_VALUE;
+			ToIntFunction<Mooring> toAny = dockDistance(in.playerPoint);
+			// Two answers (owner, 2026-10-03): the nearest dock you can step off at, and the nearest place
+			// the hold gets banked, a dock where the crew bank it as you step off or the bank boat.
+			ToIntFunction<Mooring> toDock = toAny == null ? null
+				: dock -> dock.isDock() ? toAny.applyAsInt(dock) : Integer.MAX_VALUE;
+			ToIntFunction<Mooring> toPort = toAny == null ? null
+				: dock -> dock.banksCargo() ? toAny.applyAsInt(dock) : Integer.MAX_VALUE;
 			Mooring nearest = Mooring.nearest(toDock);
 			Mooring mooring = nearest;
 			Mooring port = Mooring.nearest(toPort);

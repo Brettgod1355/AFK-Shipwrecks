@@ -63,11 +63,11 @@ stopped, and the fact that your own hook does not restart itself.
   you to install it), a star to pin it to the top, and Auto, which marks it as the one spot to
   route to by itself whenever you board your boat from a dock. The dropdowns are remembered.
 - **Knows where the docks are, and which you can use.** The top of the sidebar names two: the
-  nearest port you can use, meaning a dock with a bank deposit box where your first crewmate banks
-  the hold's contents as you step off (21 of the 61, from the wiki), and the nearest mooring of any
-  kind you can use, which is just the nearest place to get off. Each sits in its own box with its
-  distance and its own Map and Route buttons; the mooring box is left out when the mooring is the
-  port itself and nothing nearer wants naming. Each of the
+  nearest dock you can use, and the nearest dock where your crew bank the hold, meaning one with a
+  bank deposit box where your first crewmate banks the hold's contents as you step off (21 of the
+  61 docks, from the wiki) or the bank boat in the Barracuda Belt, which you bank at from your own
+  deck. Each sits in its own box with its distance and its own Map and Route buttons; the banking
+  box is left out when the dock you can use is itself one where the crew bank. Each of the
   61 docks carries the Sailing level (not boostable) and the quest it needs, from the wiki; a nearer
   dock you do not yet qualify for is named with what it needs. Things the client cannot see, such as
   a first visit to Kourend or Varlamore, the items worn for Entrana, or the raft needed for
@@ -204,9 +204,9 @@ own map data by the tool in `tools/seamap`) and finds the shortest way over it f
 so a spot on the far side of a peninsula reads as the voyage round it rather than the crow's flight
 across. It is a few tiles out at most, and it shows once you are on the water or at a dock; inland
 there is no sea to measure from, so the rows show no distance. Sort: nearest first uses the same
-distances. The nearest port and mooring are the nearest of the same moorings the World Map plugin
-draws: by sea when you are afloat, and as the crow flies when you are ashore, since then you walk
-to them. A route
+distances. The two docks are the nearest of the same moorings the World Map plugin draws (plus the
+bank boat): by sea when you are afloat, and as the crow flies when you are ashore, since then you
+walk to them. A route
 to a spot, whether you pressed
 Route or it was the Auto spot, is cleared again once you pull up to one of the spot's wrecks or
 step off your boat, so the line does not hang about after it has done its job.

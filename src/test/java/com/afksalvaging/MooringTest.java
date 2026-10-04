@@ -23,8 +23,17 @@ public class MooringTest
 	@Test
 	public void everyDockOnTheMapIsListedOnce()
 	{
-		// RuneLite's World Map plugin draws 61 mooring icons (1.13.1).
-		assertEquals(61, Mooring.values().length);
+		// RuneLite's World Map plugin draws 61 mooring icons (1.13.1); the bank boat is the one entry that is no dock.
+		int docks = 0;
+		for (Mooring dock : Mooring.values())
+		{
+			if (dock.isDock())
+			{
+				docks++;
+			}
+		}
+		assertEquals(61, docks);
+		assertEquals(62, Mooring.values().length);
 		Set<String> names = new HashSet<>();
 		Set<WorldPoint> points = new HashSet<>();
 		for (Mooring dock : Mooring.values())
@@ -107,10 +116,14 @@ public class MooringTest
 				ports++;
 			}
 		}
-		assertEquals("the wiki's Bank deposit box column, 2026-10-03", 21, ports);
+		assertEquals("the wiki's Bank deposit box column, 2026-10-03, plus the bank boat", 22, ports);
 		assertTrue(Mooring.PORT_SARIM.banksCargo());
 		assertTrue(Mooring.ETCETERIA.banksCargo());
 		assertTrue("an island with a bank is still not a port", !Mooring.RELLEKKA.banksCargo());
 		assertTrue(!Mooring.WYRMSCRAIG_CAVERN.banksCargo());
+		// The bank boat banks the hold but is no dock: never the nearest dock you can use.
+		assertTrue(Mooring.BANK_BOAT.banksCargo());
+		assertTrue(!Mooring.BANK_BOAT.isDock());
+		assertTrue(Mooring.RELLEKKA.isDock());
 	}
 }

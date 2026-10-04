@@ -47,7 +47,8 @@ import net.runelite.cache.util.XteaKeyManager;
  * is what stops the flood climbing onto land.
  * <p>
  * Usage, from the repository root:
- * {@code ./gradlew -p tools/seamap run --args="<cache dir> <output dir> [keys.json]"}.
+ * {@code ./gradlew -p tools/seamap run --args="<cache dir> <output dir> [keys.json]"}; or
+ * {@code --args="<cache dir> --find <object id> [keys.json]"} to print where an object stands.
  * The keys file (OpenRS2 format, {@code mapsquare}/{@code key} renamed to {@code region}/{@code keys})
  * is optional: without it the objects at sea (rocks) are unknown, which only costs a little accuracy.
  */
@@ -138,13 +139,15 @@ public final class SeaMapDumper
 			System.err.println("usage: SeaMapDumper <cache dir> <output dir> [keys.json]");
 			System.exit(2);
 		}
-		File out = new File(args[1]);
+		boolean finding = "--find".equals(args[1]);
+		File out = new File(finding ? "." : args[1]);
 		out.mkdirs();
 		KeyProvider keys = region -> null;
-		if (args.length > 2)
+		String keysPath = finding ? (args.length > 3 ? args[3] : null) : (args.length > 2 ? args[2] : null);
+		if (keysPath != null)
 		{
 			XteaKeyManager manager = new XteaKeyManager();
-			try (FileInputStream in = new FileInputStream(args[2]))
+			try (FileInputStream in = new FileInputStream(keysPath))
 			{
 				manager.loadKeys(in);
 			}
@@ -162,6 +165,24 @@ public final class SeaMapDumper
 			regions.calculateBounds();
 			ObjectManager objects = new ObjectManager(store);
 			objects.load();
+			if ("--find".equals(args[1]) && args.length > 2)
+			{
+				// Where an object stands in the world, for placing things like the bank boat exactly.
+				int wanted = Integer.parseInt(args[2]);
+				for (Region region : regions.getRegions())
+				{
+					for (Location loc : region.getLocations())
+					{
+						if (loc.getId() == wanted)
+						{
+							Position pos = loc.getPosition();
+							System.out.printf("object %d at %d, %d, plane %d (type %d, rotation %d)%n",
+								wanted, pos.getX(), pos.getY(), pos.getZ(), loc.getType(), loc.getOrientation());
+						}
+					}
+				}
+				return;
+			}
 			OverlayManager overlays = new OverlayManager(store);
 			overlays.load();
 			SeaMapDumper dumper = new SeaMapDumper(regions, objects, overlays);

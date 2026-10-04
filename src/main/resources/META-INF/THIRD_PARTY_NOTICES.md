@@ -30,6 +30,9 @@ collision map; no code was copied from it.
 The salvaging hotspot list in `SalvagingSpot.java` (29 world points and the eight salvage names)
 is taken from RuneLite's own World Map plugin, and the mooring list in `Mooring.java` (61 dock
 names and world points, also used to describe where each spot is) is taken from the same plugin.
+The one extra entry, the bank boat, is not a dock and comes from the OSRS Wiki's "Bank boat" and
+"Barracuda Belt" pages (read 2026-10-03): its position is triangulated from the distances the
+wiki gives to seven docks, to within about ten tiles.
 Both are in
 [runelite/runelite](https://github.com/runelite/runelite), `runelite-client`, version 1.13.1,
 `net/runelite/client/plugins/worldmap/`:
