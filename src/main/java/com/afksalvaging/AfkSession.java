@@ -23,6 +23,8 @@ public final class AfkSession
 {
 	/** Tiles from a hook within which a wreck can be worked. */
 	public static final int HOOK_RANGE = 8;
+	/** How near another boat's centre must be to a wreck to be taken as working it: hook reach plus half a sloop. */
+	public static final int OTHER_BOAT_REACH = HOOK_RANGE + 5;
 	/** Tiles from the player used when no hook position is known. */
 	public static final int PLAYER_RANGE = 12;
 	/** Ticks the boat must have stood still before it counts as parked. */
@@ -128,6 +130,8 @@ public final class AfkSession
 		public WorldPoint boatPoint;
 		/** Where the player stands, in the top-level world. */
 		public WorldPoint playerPoint;
+		/** Other players' boats in view, in the top-level world; ours left out. */
+		public List<WorldPoint> otherBoats = Collections.emptyList();
 		public boolean cargoInterfaceOpen;
 		/** Milliseconds before the game logs the player out for idling, or -1 when not known. */
 		public long idleLogoutMillis = -1;
@@ -746,7 +750,8 @@ public final class AfkSession
 		est.onlyHigherWrecksInReach = higherWrecksUp > 0 && !wreckInReach;
 		est.hazardous = hazardous;
 		est.stalled = rate.isStalled() && expected > 0;
-		wrecks.forgetStaleClocks(settings.salvagingWorld, now);
+		wrecks.noteBoatsNear(in.otherBoats, OTHER_BOAT_REACH, now);
+		wrecks.forgetStaleClocks(now);
 		est.wreckWindowMillis = wrecks.allSunkWithin(points, range, level, now);
 		est.availability = wrecks.availability(settings.salvagingWorld ? AVAILABILITY_PRIOR_SALVAGING_WORLD
 			: AVAILABILITY_PRIOR_OTHER_WORLD, AVAILABILITY_PRIOR_WEIGHT_MILLIS, now);
@@ -879,7 +884,7 @@ public final class AfkSession
 		view.higherWrecksUp = higherWrecksUp;
 		view.wreckWindowMillis = est.wreckWindowMillis;
 		view.wreckWindowAnchored = wrecks.allAnchored(points, range, level);
-		view.nextWreck = aboard ? wrecks.nextRise(points, range, level, settings.salvagingWorld, now) : null;
+		view.nextWreck = aboard ? wrecks.nextRise(points, range, level, now) : null;
 		view.wreckType = type;
 		view.levelNeeded = levelNeeded;
 		view.waitingMillis = waitingSince < 0 ? -1 : now - waitingSince;

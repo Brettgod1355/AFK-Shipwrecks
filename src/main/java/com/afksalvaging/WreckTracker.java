@@ -46,8 +46,8 @@ public final class WreckTracker
 		private long workedSince;
 		private long sunkAt;
 		private long lastSeenAt;
-		/** When we saw this wreck rise, or 0 when it was already up when first seen. */
-		private long roseAt;
+		/** When another player's boat was first seen beside this wreck while it was up, or 0. */
+		private long othersSince;
 
 		Site(WorldPoint point, ShipwreckType type)
 		{
@@ -105,26 +105,23 @@ public final class WreckTracker
 		}
 
 		/**
-		 * The latest this wreck should sink, as a time, taking its clock from our own salvaging when
-		 * we have worked it, else from its rise when the world is one where every wreck is worked at
-		 * once, else -1: nothing is known. May lie in the past when the wreck has outlived its clock.
+		 * The latest this wreck should sink, as a time: its lifetime from when somebody started on
+		 * it, which is when our own hook first rolled on it or when another boat was first seen
+		 * beside it, whichever came first. -1 when nobody has been seen working it. May lie in the
+		 * past when the wreck has outlived its clock.
 		 */
-		long sinksBy(boolean workedFromRise)
+		long sinksBy()
 		{
 			if (!active)
 			{
 				return -1;
 			}
-			long lifetime = type.getLifetimeSeconds() * 1000L;
-			if (worked)
+			long since = worked ? workedSince : 0;
+			if (othersSince > 0 && (since == 0 || othersSince < since))
 			{
-				return workedSince + lifetime;
+				since = othersSince;
 			}
-			if (workedFromRise && roseAt > 0)
-			{
-				return roseAt + lifetime;
-			}
-			return -1;
+			return since == 0 ? -1 : since + type.getLifetimeSeconds() * 1000L;
 		}
 	}
 
@@ -149,19 +146,49 @@ public final class WreckTracker
 
 	/**
 	 * Writes off the clock of any wreck that has outlived it by {@link #CLOCK_GRACE_MILLIS}: the
-	 * lifetimes are the wiki's averages and "worked from its rise" is an assumption, so a wreck
-	 * can last longer than either says. Such a wreck gives no bound until it is worked again.
+	 * lifetimes are the wiki's averages and a boat beside a wreck may not have started on it at
+	 * once, so a wreck can last longer than the clock says. Such a wreck gives no bound until it
+	 * is seen worked again.
 	 */
-	public void forgetStaleClocks(boolean salvagingWorld, long now)
+	public void forgetStaleClocks(long now)
 	{
 		for (Site site : sites.values())
 		{
-			long by = site.sinksBy(salvagingWorld);
+			long by = site.sinksBy();
 			if (by >= 0 && now - by > CLOCK_GRACE_MILLIS)
 			{
 				site.worked = false;
 				site.workedSince = 0;
-				site.roseAt = 0;
+				site.othersSince = 0;
+			}
+		}
+	}
+
+	/**
+	 * Other players' boats seen this tick, as points in the top-level world. A boat within
+	 * {@code reach} of a wreck that is up is taken to be working it, and the wreck's clock starts
+	 * the first time that is seen (the wiki: the despawn timer starts when a player begins to
+	 * salvage). The caller leaves our own boat out; our hooks have their own clock.
+	 */
+	public void noteBoatsNear(List<WorldPoint> boats, int reach, long now)
+	{
+		if (boats.isEmpty())
+		{
+			return;
+		}
+		for (Site site : sites.values())
+		{
+			if (!site.active || !site.present || site.othersSince > 0)
+			{
+				continue;
+			}
+			for (WorldPoint boat : boats)
+			{
+				if (boat.getPlane() == site.point.getPlane() && boat.distanceTo2D(site.point) <= reach)
+				{
+					site.othersSince = now;
+					break;
+				}
 			}
 		}
 	}
@@ -198,7 +225,7 @@ public final class WreckTracker
 			site.worked = false;
 			site.workedSince = 0;
 			site.sunkAt = 0;
-			site.roseAt = now;
+			site.othersSince = 0;
 		}
 		else if (!activeNow && site.active)
 		{
@@ -379,15 +406,14 @@ public final class WreckTracker
 	/**
 	 * When a wreck should next rise at the sites in reach, while none is up there. The wrecks of an
 	 * area share one pool and one rises the moment another sinks (wiki, Shipwreck salvaging), so
-	 * the answer is the earliest sink among the other wrecks in view. A wreck's clock runs from
-	 * when we worked it; on a salvaging world, where every wreck is worked from the moment it
-	 * rises, from its rise. Certain when every sunk site in view is in reach, so the next rise can
-	 * land nowhere else; otherwise only likely.
+	 * the answer is the earliest sink among the other wrecks in view whose clock is known: a wreck
+	 * our hook has rolled on, or one a boat has been seen beside. Certain when every sunk site in
+	 * view is in reach, so the next rise can land nowhere else; otherwise only likely.
 	 *
 	 * @return null when a wreck is up in reach, no sunk site is in reach, or no other wreck has a
 	 * clock to go by
 	 */
-	public NextRise nextRise(List<WorldPoint> references, int range, int sailingLevel, boolean salvagingWorld, long now)
+	public NextRise nextRise(List<WorldPoint> references, int range, int sailingLevel, long now)
 	{
 		List<Site> inReach = nearby(references, range);
 		boolean sunkInReach = false;
@@ -417,7 +443,7 @@ public final class WreckTracker
 				certain = false;
 				continue;
 			}
-			long by = site.sinksBy(salvagingWorld);
+			long by = site.sinksBy();
 			if (by >= 0 && (earliest < 0 || by < earliest))
 			{
 				earliest = by;

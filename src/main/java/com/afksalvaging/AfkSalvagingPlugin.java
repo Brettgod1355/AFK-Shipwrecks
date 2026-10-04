@@ -796,6 +796,7 @@ public class AfkSalvagingPlugin extends Plugin
 		in.boostedSailingLevel = client.getBoostedSkillLevel(Skill.SAILING);
 		in.hooks = hookInputs(boatEntity);
 		in.boatPoint = boatEntity == null ? null : topLevelPoint(boatEntity);
+		in.otherBoats = otherBoatPoints(boatEntity);
 		in.playerPoint = playerTopLevelPoint();
 		in.cargoInterfaceOpen = isCargoInterfaceOpen();
 		in.idleLogoutMillis = AfkSession.idleLogoutMillis(client.getIdleTimeout(), client.getMouseIdleTicks(), client.getKeyboardIdleTicks());
@@ -2412,6 +2413,30 @@ public class AfkSalvagingPlugin extends Plugin
 	{
 		LocalPoint local = boat.getLocalLocation();
 		return local == null ? null : WorldPoint.fromLocal(client, local);
+	}
+
+	/** Every other boat in view, as a point in the top-level world: a boat beside a wreck is working it. */
+	private List<WorldPoint> otherBoatPoints(WorldEntity ours)
+	{
+		WorldView top = client.getTopLevelWorldView();
+		if (top == null)
+		{
+			return Collections.emptyList();
+		}
+		List<WorldPoint> points = new ArrayList<>();
+		for (WorldEntity boat : top.worldEntities())
+		{
+			if (boat == ours)
+			{
+				continue;
+			}
+			WorldPoint point = topLevelPoint(boat);
+			if (point != null)
+			{
+				points.add(point);
+			}
+		}
+		return points;
 	}
 
 	private List<AfkSession.HookInput> hookInputs(WorldEntity boat)

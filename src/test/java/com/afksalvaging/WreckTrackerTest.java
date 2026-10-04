@@ -179,34 +179,37 @@ public class WreckTrackerTest
 	}
 
 	@Test
-	public void theNextWreckHereIsTheEarliestOtherSinkOnASalvagingWorld()
+	public void theNextWreckHereIsTheEarliestSinkAmongWrecksSeenWorked()
 	{
 		WreckTracker tracker = new WreckTracker();
 		long lifetime = ShipwreckType.MERCHANT.getLifetimeSeconds() * 1000L;
-		// Ours has sunk; the far one rose at 10 s and, on a salvaging world, was worked from then.
+		// Ours has sunk; the far one is up, and nobody has been seen on it: nothing to go by.
 		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, 0);
-		tracker.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, 0);
-		tracker.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 10_000);
-		WreckTracker.NextRise next = tracker.nextRise(HOOKS, RANGE, LEVEL, true, 20_000);
+		tracker.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);
+		assertNull(tracker.nextRise(HOOKS, RANGE, LEVEL, 5_000));
+		// Another boat pulls up beside it at 10 s: its clock starts then.
+		List<WorldPoint> beside = Collections.singletonList(new WorldPoint(FAR.getX() + 6, FAR.getY(), 0));
+		tracker.noteBoatsNear(beside, AfkSession.OTHER_BOAT_REACH, 10_000);
+		tracker.noteBoatsNear(beside, AfkSession.OTHER_BOAT_REACH, 15_000);
+		WreckTracker.NextRise next = tracker.nextRise(HOOKS, RANGE, LEVEL, 20_000);
 		assertNotNull(next);
 		assertEquals(10_000 + lifetime - 20_000, next.withinMillis);
 		assertTrue("ours is the only empty site in view", next.certain);
-		// Off a salvaging world nobody may be working the far wreck: nothing to go by.
-		assertNull(tracker.nextRise(HOOKS, RANGE, LEVEL, false, 20_000));
+		// A boat far from any wreck starts nothing.
+		WreckTracker quiet = new WreckTracker();
+		quiet.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, 0);
+		quiet.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);
+		quiet.noteBoatsNear(Collections.singletonList(new WorldPoint(1900, 4100, 0)), AfkSession.OTHER_BOAT_REACH, 10_000);
+		assertNull(quiet.nextRise(HOOKS, RANGE, LEVEL, 20_000));
 		// Another empty site out of reach: the next wreck may rise there instead.
 		WorldPoint other = new WorldPoint(1760, 4000, 0);
 		tracker.observe(other, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, 20_000);
-		next = tracker.nextRise(HOOKS, RANGE, LEVEL, true, 20_000);
+		next = tracker.nextRise(HOOKS, RANGE, LEVEL, 20_000);
 		assertNotNull(next);
 		assertFalse(next.certain);
 		// A wreck up in reach: we are not waiting.
 		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 30_000);
-		assertNull(tracker.nextRise(HOOKS, RANGE, LEVEL, true, 30_000));
-		// A far wreck first seen already up has no clock until we work it.
-		WreckTracker fresh = new WreckTracker();
-		fresh.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, 0);
-		fresh.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);
-		assertNull(fresh.nextRise(HOOKS, RANGE, LEVEL, true, 5_000));
+		assertNull(tracker.nextRise(HOOKS, RANGE, LEVEL, 30_000));
 	}
 
 	@Test
@@ -215,18 +218,21 @@ public class WreckTrackerTest
 		WreckTracker tracker = new WreckTracker();
 		long lifetime = ShipwreckType.MERCHANT.getLifetimeSeconds() * 1000L;
 		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, 0);
-		tracker.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, 0);
-		tracker.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 10_000);
+		tracker.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);
+		tracker.noteBoatsNear(Collections.singletonList(new WorldPoint(FAR.getX() + 6, FAR.getY(), 0)), AfkSession.OTHER_BOAT_REACH, 10_000);
 		long due = 10_000 + lifetime;
-		WreckTracker.NextRise next = tracker.nextRise(HOOKS, RANGE, LEVEL, true, due - 1);
+		WreckTracker.NextRise next = tracker.nextRise(HOOKS, RANGE, LEVEL, due - 1);
 		assertFalse(next.overdue);
 		// Past the clock: no "0:00", just "any moment".
-		next = tracker.nextRise(HOOKS, RANGE, LEVEL, true, due + 5_000);
+		next = tracker.nextRise(HOOKS, RANGE, LEVEL, due + 5_000);
 		assertTrue(next.overdue);
 		assertEquals(0, next.withinMillis);
-		// A minute past it the clock was simply wrong; nothing to go by until the wreck is worked again.
-		tracker.forgetStaleClocks(true, due + WreckTracker.CLOCK_GRACE_MILLIS + 1);
-		assertNull(tracker.nextRise(HOOKS, RANGE, LEVEL, true, due + WreckTracker.CLOCK_GRACE_MILLIS + 1));
+		// A minute past it the clock was simply wrong; nothing to go by until the wreck is seen worked again.
+		tracker.forgetStaleClocks(due + WreckTracker.CLOCK_GRACE_MILLIS + 1);
+		assertNull(tracker.nextRise(HOOKS, RANGE, LEVEL, due + WreckTracker.CLOCK_GRACE_MILLIS + 1));
+		// Seen worked again, the clock restarts.
+		tracker.noteBoatsNear(Collections.singletonList(new WorldPoint(FAR.getX() + 6, FAR.getY(), 0)), AfkSession.OTHER_BOAT_REACH, due + 70_000);
+		assertNotNull(tracker.nextRise(HOOKS, RANGE, LEVEL, due + 70_000));
 	}
 
 	@Test
