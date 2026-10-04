@@ -7,9 +7,13 @@ package com.afksalvaging;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -21,6 +25,7 @@ import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -34,6 +39,8 @@ import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.components.materialtabs.MaterialTab;
 import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
+import net.runelite.client.util.ImageUtil;
+import net.runelite.client.util.LinkBrowser;
 
 /**
  * The sidebar: every salvaging hotspot, filtered and sorted from two dropdowns, each with buttons
@@ -93,6 +100,10 @@ public class SalvagingSpotPanel extends PluginPanel
 	private Map<SortRule, List<String[]>> lastSortLists = new EnumMap<>(SortRule.class);
 	/** Text widths that wrap inside the panel: the top block, and a row with its own padding. */
 	private static final int TOP_TEXT_WIDTH = 190;
+	static final String DISCORD_URL = "https://discord.gg/c85DK83jWx";
+	static final String GITHUB_URL = "https://github.com/Brettgod1355/AFK-Shipwrecks";
+	/** The link icons' size beside the title, in pixels. */
+	private static final int LINK_ICON_SIZE = 16;
 	private static final int ROW_TEXT_WIDTH = 172;
 	private static final String[][] FILTERS = {
 		{SpotList.FILTER_ALL, "All wrecks"},
@@ -158,8 +169,18 @@ public class SalvagingSpotPanel extends PluginPanel
 		JLabel title = new JLabel("AFK Shipwrecks");
 		title.setFont(FontManager.getRunescapeBoldFont());
 		title.setForeground(Color.WHITE);
-		title.setAlignmentX(LEFT_ALIGNMENT);
-		top.add(title);
+		// The community and the code, one click from the title (owner, 2026-10-04).
+		JPanel links = new JPanel(new GridLayout(1, 2, 6, 0));
+		links.setOpaque(false);
+		links.add(link("discord_icon.png", "Join the AFK Shipwrecks Discord", DISCORD_URL));
+		links.add(link("github_icon.png", "AFK Shipwrecks on GitHub: code, bug reports and requests", GITHUB_URL));
+		JPanel titleRow = new JPanel(new BorderLayout());
+		titleRow.setOpaque(false);
+		titleRow.add(title, BorderLayout.WEST);
+		titleRow.add(links, BorderLayout.EAST);
+		titleRow.setAlignmentX(LEFT_ALIGNMENT);
+		titleRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, LINK_ICON_SIZE + 4));
+		top.add(titleRow);
 		top.add(Box.createVerticalStrut(6));
 		// The tools sit at the top so they are not buried under the spot list (owner, 2026-10-02).
 		top.add(toolsBlock());
@@ -872,6 +893,42 @@ public class SalvagingSpotPanel extends PluginPanel
 		{
 			actions.addSuggestedDrops();
 		}
+	}
+
+	/**
+	 * A small icon that opens a web page in the browser, dim until the mouse is over it. The icons
+	 * are RuneLite's own, from its Info panel (BSD 2-Clause, see THIRD_PARTY_NOTICES).
+	 */
+	private static JLabel link(String iconFile, String tooltip, String url)
+	{
+		BufferedImage image = ImageUtil.resizeImage(ImageUtil.loadImageResource(SalvagingSpotPanel.class, iconFile),
+			LINK_ICON_SIZE, LINK_ICON_SIZE);
+		ImageIcon bright = new ImageIcon(image);
+		ImageIcon dim = new ImageIcon(ImageUtil.alphaOffset(image, 0.6f));
+		JLabel label = new JLabel(dim);
+		label.setToolTipText(tooltip);
+		label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		label.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				LinkBrowser.browse(url);
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e)
+			{
+				label.setIcon(bright);
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e)
+			{
+				label.setIcon(dim);
+			}
+		});
+		return label;
 	}
 
 	private static JPanel buttons(JButton left, JButton right)

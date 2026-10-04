@@ -47,6 +47,20 @@ Both files are licensed under the BSD 2-Clause License, the same text as this pr
 in the copy of this file shipped inside the plugin JAR. The data was transcribed into this
 project's own enum, with the "where" descriptions computed from it; no source code was copied.
 
+## Icons taken from RuneLite's Info panel (BSD 2-Clause)
+
+The two link icons beside the sidebar's title, `discord_icon.png` and `github_icon.png` in
+`src/main/resources/com/afksalvaging/`, are copied unchanged from
+[runelite/runelite](https://github.com/runelite/runelite), `runelite-client`, version 1.13.1,
+`net/runelite/client/plugins/info/`, where `InfoPanel.java` uses them:
+
+- `InfoPanel.java`: Copyright (c) 2018 Abex; Copyright (c) 2018, Psikoi <https://github.com/psikoi>.
+  All rights reserved.
+
+Licensed under the BSD 2-Clause License, the same text as this project's [LICENSE](LICENSE); the
+copyright notices are reproduced here and in the copy of this file inside the plugin JAR. They only
+link to this plugin's Discord server and GitHub repository.
+
 ## Gradle wrapper
 
 The wrapper scripts, JAR, and properties originate from the RuneLite example
