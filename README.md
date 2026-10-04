@@ -32,8 +32,9 @@ stopped, and the fact that your own hook does not restart itself.
   aboard can take the hook (a crewmate needs enough deckhandiness for it) and a wreck is up, it
   asks you to click the hook instead, because unlike your crew you do not restart by yourself.
   And if a crewmate with more deckhandiness is sitting idle while a weaker one works a hook, it
-  says who to swap, once the pair has stood ten seconds, and the overlay shows a Swap line until
-  you do. That one only speaks when every hook is manned; an empty hook comes first.
+  says who to swap, once the pair has stood ten seconds, and a flashing "SWAP CREW" notice sits in
+  the middle of the screen (and a Swap line on the overlay) until you do. That one only speaks
+  when every hook is manned; an empty hook comes first.
 - **Crew stopped.** Crew salvage on your level, boosted or not. If it drops below what the wreck
   needs they stop; the plugin says so.
 - **Full-hold alert.** Sound, tray popup, screen flash, focus, whatever you set up in RuneLite,
@@ -131,7 +132,7 @@ wreck off those worlds, on by default).
 
 **Reminders**: five RuneLite notifications you can shape separately (hook empty with a crewmate
 free; your hook is idle; a better crewmate is free; crew stopped because your level is too low;
-idle logout coming), the
+idle logout coming), whether the swap also flashes mid-screen (on by default), the
 grace period before the first reminder (10 s by default; using the hold buys a little more,
 settling in to sort shortens it), how often to repeat, and how long before the idle logout to
 warn (60 s; 0 never).

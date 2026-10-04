@@ -48,7 +48,8 @@ public final class SalvagingTips
 			+ "stop, and the plugin says so.",
 		"Your own hook does not restart when the wreck sinks; your crew do. The plugin reminds you to click it. If a "
 			+ "deckhandier crewmate sits idle while a weaker one works a hook, it says who to swap, once, with its own "
-			+ "notification under Reminders, and the overlay shows a Swap line until you do.",
+			+ "notification under Reminders, and a flashing SWAP CREW notice sits mid-screen (with a Swap line on the "
+			+ "overlay) until you do.",
 		"A minute before the game logs you out for idling, while you are on your own boat, the plugin sends a "
 			+ "notification (Reminders settings: how long before, or never). It cannot press a key for you.",
 		"\"Countdown infobox\" in the Overlay settings puts the time to a full hold in a small box among RuneLite's "

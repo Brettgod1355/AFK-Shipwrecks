@@ -240,6 +240,9 @@ public class AfkSalvagingPlugin extends Plugin
 	@Inject
 	private HoldSalvageOverlay holdSalvageOverlay;
 
+	@Inject
+	private CrewSwapOverlay swapOverlay;
+
 	/** The spot last sent to the map or routed to; the sidebar highlights it. */
 	private SalvagingSpot pickedSpot;
 	/** The route to a salvaging spot that Shortest Path is drawing for us, or null. */
@@ -322,6 +325,7 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.add(holdOverlay);
 		overlayManager.add(worldOverlay);
 		overlayManager.add(holdSalvageOverlay);
+		overlayManager.add(swapOverlay);
 		overlayManager.add(sortOverlay);
 		markStore = new MarkStore(configManager);
 		if (markStore.migrate())
@@ -348,6 +352,7 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.remove(holdOverlay);
 		overlayManager.remove(worldOverlay);
 		overlayManager.remove(holdSalvageOverlay);
+		overlayManager.remove(swapOverlay);
 		overlayManager.remove(sortOverlay);
 		removeInfoBox();
 		if (worldRequest != null)
