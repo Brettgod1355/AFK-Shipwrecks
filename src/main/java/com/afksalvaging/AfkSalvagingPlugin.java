@@ -120,7 +120,9 @@ import org.slf4j.LoggerFactory;
 		"cargo", "cargo hold", "hold", "capacity", "full", "salvage", "salvaging", "shipwreck", "wreck",
 		"crew", "crewmate", "deckhand", "hook", "salvaging hook", "timer", "eta", "countdown", "estimate",
 		"alert", "notification", "notify", "reminder", "warning", "sound", "overlay", "counter", "banner",
-		"afk", "idle"
+		"afk", "idle",
+		"shipwrecks", "port", "dock", "mooring", "double spot", "spots", "map", "route", "shortest path", "distance",
+		"sidebar", "inventory", "sort", "sorting", "deposit", "drop", "alch", "highlight", "outline"
 	}
 )
 public class AfkSalvagingPlugin extends Plugin
