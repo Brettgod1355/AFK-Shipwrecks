@@ -10,12 +10,12 @@ stopped, and the fact that your own hook does not restart itself.
 
 ## See it in action
 
-<img src="docs/images/overlays.webp" width="720" alt="A 16 second clip, parked in a double spot as the hold fills: the overlay counts down, the Cargo hold nearly full banner appears at 208 of 210, then Cargo hold full at 210 with the screen flashing and the infobox reading Full; the hold is opened and emptied, and the timer starts again">
+https://github.com/user-attachments/assets/6f1cf6bd-e389-4eec-a42c-ddaa5d2442fa
 
 Parked in a double spot as the hold fills: the overlay counting down, the nearly-full and full
 banners, the countdown infobox in the corner, then emptying the hold and the timer starting over.
 
-<img src="docs/images/parking.webp" width="720" alt="A 17 second clip, sailing in to a Fremennik salvaging spot: the overlay says no wreck site in reach, the yellow reach boxes and the green double spot box appear, the label counts 1 of 2 hooks in, then Double spot - Parked, the wrecks are outlined in cyan, and once the boat has stopped the words Parked in double spot sit in the middle of the boat">
+https://github.com/user-attachments/assets/6b5b42ff-b842-4c68-9973-07f69d166191
 
 Sailing in and parking: the reach boxes and the double spot appear as you arrive, the label counts
 your hooks in, and once both are in it says you are parked.
