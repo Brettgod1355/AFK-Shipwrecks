@@ -1,15 +1,70 @@
 # Third-party notices
 
-Cargo Hold Alert is an independent project. It is not an official RuneLite product and is
-not affiliated with Jagex.
+AFK Shipwrecks (formerly Cargo Hold Alert) is an independent project. It is not an official
+RuneLite product and is not affiliated with Jagex.
 
 ## RuneLite
 
 The build and launcher follow the official
 [example plugin](https://github.com/runelite/example-plugin). RuneLite is a
 build/runtime dependency and is not bundled in the plugin JAR. Game identifiers
-(item containers, objects, varbits and interfaces) are referenced from the RuneLite
-API's `net.runelite.api.gameval` classes at compile time.
+(item containers, objects, NPCs, animations, varbits, database tables and interfaces)
+are referenced from the RuneLite API's `net.runelite.api.gameval` classes at compile time.
+
+## The sea map (game data, read with RuneLite's cache library)
+
+`src/main/resources/com/afksalvaging/seamap.bin` records which four-tile cells of the game's
+surface are open water a boat can reach, and is what the sidebar's sailing distances are measured
+over. It is generated, not drawn: `tools/seamap/src/main/java/SeaMapDumper.java` reads the Old School RuneScape
+game cache (the same files the client downloads) with RuneLite's `cache` library
+([runelite/runelite](https://github.com/runelite/runelite), module `cache`, version 1.13.1,
+BSD 2-Clause) and the per-region XTEA keys published by the
+[OpenRS2 Archive](https://archive.openrs2.org/), and floods outward from the salvaging spots over
+every unblocked tile whose ground overlay is water. The map data itself is Jagex's; this file
+holds only one bit per cell derived from it. The approach, flooding the cache's tile flags, follows
+what the [Shortest Path](https://github.com/Skretzo/shortest-path) plugin does for its walking
+collision map; no code was copied from it.
+
+## Data taken from RuneLite's World Map plugin (BSD 2-Clause)
+
+The salvaging hotspot list in `SalvagingSpot.java` (29 world points and the eight salvage names)
+is taken from RuneLite's own World Map plugin, and the mooring list in `Mooring.java` (61 dock
+names and world points, also used to describe where each spot is) is taken from the same plugin.
+The one extra entry, the bank boat, is not a dock and comes from the OSRS Wiki's "Bank boat" and
+"Barracuda Belt" pages (read 2026-10-03): its position is triangulated from the distances the
+wiki gives to seven docks, to within about ten tiles.
+Both are in
+[runelite/runelite](https://github.com/runelite/runelite), `runelite-client`, version 1.13.1,
+`net/runelite/client/plugins/worldmap/`:
+
+- `SalvagingSpotLocation.java`: Copyright (c) 2026, Sam Szotkowski <https://github.com/samszotkowski>.
+  All rights reserved.
+- `MooringLocation.java`: Copyright (c) 2025, coopermor <https://github.com/coopermor>.
+  All rights reserved.
+
+Both files are licensed under the BSD 2-Clause License, the same text as this project's
+[LICENSE](LICENSE), which requires that these copyright notices be reproduced; they are, here and
+in the copy of this file shipped inside the plugin JAR. The data was transcribed into this
+project's own enum, with the "where" descriptions computed from it; no source code was copied.
+
+## Discord and GitHub logos (trademarks, used as link buttons)
+
+The two buttons beside the sidebar's title show the brands' own logos, taken from their official
+brand pages on 2026-10-04 and only scaled down, never recoloured or redrawn:
+
+- Discord: `discord_white.png` and `discord_blurple.png` are `Discord-Symbol-White.png` and
+  `Discord-Symbol-Blurple.png` from the white and colour "Symbol" downloads at
+  <https://discord.com/branding>, which lists white and Blurple among the logo's colours.
+- GitHub: `github_white.png` is `GitHub_Invertocat_White.png` from `GitHub_Logos.zip` at
+  <https://brand.github.com/foundations/logo>. The pack has no green file, so `github_green.png` is
+  the green Invertocat cut from the same page's colour illustration
+  (<https://brand.github.com/_next/static/media/logo-04.c5edeefa.png>), with the black around it made
+  transparent and its pixels otherwise unchanged; the page allows the mark "in white, black, or in
+  few cases grey or green", and its use "as a social button to link to your GitHub profile or project".
+
+Discord and the Discord logo are trademarks of Discord Inc.; GitHub and the Invertocat are
+trademarks of GitHub, Inc. They are used only to link to this plugin's own Discord server and GitHub
+repository, and imply no endorsement by either company.
 
 ## Gradle wrapper
 
@@ -22,11 +77,41 @@ development tooling is not included in the plugin JAR.
 
 ## Behaviour references (no code copied)
 
-- Cargo hold capacities for each tier and boat size were checked against the
-  [Old School RuneScape Wiki](https://oldschool.runescape.wiki/w/Cargo_hold). Only the
-  figures are used; no wiki text or images are included.
-- The [Sailing](https://github.com/LlemonDuck/sailing) plugin by LlemonDuck
-  (BSD 2-Clause) was consulted to confirm which game objects and item containers
-  represent a boat's cargo hold and which crewmate line reports a full hold. Cargo
-  Full's detection and alert code was written independently and none of that
-  project's source is included.
+- Game figures were checked against the [Old School RuneScape Wiki](https://oldschool.runescape.wiki),
+  whose content is licensed [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/).
+  This plugin uses only the numbers, which are facts about the game rather than the wiki's
+  writing; the wiki is credited as their source all the same:
+  cargo hold capacities per tier and boat size, and the list of items the hold accepts that
+  `HoldWhitelist` starts from ([Cargo hold](https://oldschool.runescape.wiki/w/Cargo_hold), with
+  [Cannonball](https://oldschool.runescape.wiki/w/Cannonball) and
+  [Repair kits](https://oldschool.runescape.wiki/w/Repair_kits) for the ship cannonballs and kits it links
+  to, item ids from the wiki's item data, read 2026-10-02; the dragon chainshot and incendiary
+  cannonballs, which that table lacks, were added from RuneLite's own item list),
+  shipwreck levels, lifetimes, salvaging and sorting XP, spawn mechanics and the crew and player roll
+  cadence ([Shipwreck salvaging](https://oldschool.runescape.wiki/w/Shipwreck_salvaging) and the
+  individual shipwreck pages, whose success charts give the per-hook chance out of 256 at levels 1
+  and 99), hook tiers and their deckhandiness requirements
+  ([Salvaging hook](https://oldschool.runescape.wiki/w/Salvaging_hook)), crewmates' deckhandiness
+  and the crew size per level ([Crew Management](https://oldschool.runescape.wiki/w/Crew_Management)),
+  the official salvaging worlds ([World](https://oldschool.runescape.wiki/w/World)), and the Sailing
+  level and quest each dock needs ([Mooring point](https://oldschool.runescape.wiki/w/Mooring_point)
+  and [Last Light](https://oldschool.runescape.wiki/w/Last_Light), read 2026-10-02). The same
+  salvaging page's update history is where "double salvage spots" is named as a game feature. The
+  suggested drops (`SuggestedDrops`) are items the owner picked from the shipwreck salvage tables of
+  the wiki's shipwreck pages (read 2026-10-04), matched to item ids by name in the game cache. Only
+  the figures and item names are used; no wiki text or images are included.
+- The [Sailing](https://github.com/LlemonDuck/sailing) plugin by LlemonDuck (BSD 2-Clause) was
+  consulted to confirm which game objects represent a boat's cargo hold and salvaging hooks, which
+  crewmate line reports a full hold, which varbits hold the crew slots and their assignments, and
+  how a crewmate's stats are read from the game's crew table, and its wreck highlight was looked at
+  when the double salvage spot boxes were designed. This plugin's detection, alert and double-spot
+  code was written independently and none of that project's source is included.
+- The [Shortest Path](https://github.com/Skretzo/shortest-path) plugin (BSD 2-Clause) was read, at
+  its commit `038a190` of 2026-10-01, to learn the plugin messages it listens for: namespace
+  `shortestpath`, names `path` and `clear`, and the `target` key. `ShortestPathMessages.java` builds
+  those messages; nothing of that project is included and it is not a dependency.
+- The [Salvaging AFK Timer](https://github.com/silly-build/salvaging-afk-timer) plugin by
+  silly-build (BSD 2-Clause) was consulted to confirm the player animations for salvaging and
+  sorting, the shipwreck and stump objects, and the crystal extractor's XP. This plugin's
+  estimation, tracking and overlay code was written independently and none of that project's
+  source is included.
