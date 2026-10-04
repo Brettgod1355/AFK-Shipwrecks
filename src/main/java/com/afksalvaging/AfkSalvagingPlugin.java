@@ -1219,11 +1219,9 @@ public class AfkSalvagingPlugin extends Plugin
 				}
 				named.put(rule, rows);
 			}
-			SalvagingSpotPanel.SortDefaults defaults = new SalvagingSpotPanel.SortDefaults(
-				config.alchThreshold(), config.geOverAlchPercent());
 			if (spotsPanel != null)
 			{
-				spotsPanel.setSortLists(named, defaults);
+				spotsPanel.setSortLists(named);
 			}
 		});
 	}

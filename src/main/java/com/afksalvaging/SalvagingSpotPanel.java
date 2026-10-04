@@ -87,7 +87,6 @@ public class SalvagingSpotPanel extends PluginPanel
 	private final Color good = Palette.GOOD;
 	private final Map<SortRule, Color> sortColours = new EnumMap<>(SortRule.class);
 	private Map<SortRule, List<String[]>> lastSortLists = new EnumMap<>(SortRule.class);
-	private SortDefaults lastSortDefaults = SortDefaults.NONE;
 	/** Text widths that wrap inside the panel: the top block, and a row with its own padding. */
 	private static final int TOP_TEXT_WIDTH = 190;
 	private static final int ROW_TEXT_WIDTH = 172;
@@ -344,66 +343,21 @@ public class SalvagingSpotPanel extends PluginPanel
 	}
 
 	/** What each list does for items nobody marked, for showing under the marks. */
-	public static final class SortDefaults
-	{
-		final int alchThreshold;
-		final int geOverAlchPercent;
-
-		public SortDefaults(int alchThreshold, int geOverAlchPercent)
-		{
-			this.alchThreshold = alchThreshold;
-			this.geOverAlchPercent = geOverAlchPercent;
-		}
-
-		static final SortDefaults NONE = new SortDefaults(0, 0);
-	}
-
-	/** The default rule of one list, in words. */
-	static String defaultLine(SortRule rule, SortDefaults defaults)
-	{
-		switch (rule)
-		{
-			case KEEP:
-				return defaults.geOverAlchPercent > 0
-					? "By default: items whose Grand Exchange price beats their alch value by "
-						+ defaults.geOverAlchPercent + "% or more."
-					: "By default: nothing; only what you mark.";
-			case HOLD:
-				return "By default: the plain cannonballs, steel to dragon, listed above, never noted; × takes one off, and "
-					+ "marking it "
-					+ "Deposit again brings it back. Other things the hold takes, such as repair kits or fish, get no "
-					+ "box unless you mark them here.";
-			case ALCH:
-				return "By default: tradeable items that alch for at least "
-					+ String.format("%,d", defaults.alchThreshold) + " coins.";
-			default:
-				return "By default: nothing; only what you mark. Unmarked items that fit no list get no box.";
-		}
-	}
-
 	/**
-	 * The sorting lists: the player's marks with item names (each row {id, name}), then each list's
-	 * default. Safe to call from any thread.
+	 * The sorting lists: the player's marks with item names (each row {id, name}) and the default
+	 * deposits (a third element says so), listed alike (owner, 2026-10-03). Safe to call from any thread.
 	 */
-	public void setSortLists(Map<SortRule, List<String[]>> lists, SortDefaults defaults)
+	public void setSortLists(Map<SortRule, List<String[]>> lists)
 	{
 		SwingUtilities.invokeLater(() ->
 		{
 			lastSortLists = lists;
-			lastSortDefaults = defaults;
 			sortLists.removeAll();
 			Map<SortRule, Color> colours = sortColours;
 			for (SortRule rule : SortRule.values())
 			{
 				List<String[]> rows = lists.get(rule);
-				int count = 0;
-				for (String[] row : rows == null ? Collections.<String[]>emptyList() : rows)
-				{
-					if (row.length == 2)
-					{
-						count++;
-					}
-				}
+				int count = rows == null ? 0 : rows.size();
 				JLabel heading = new JLabel(rule.getLabel() + (count == 0 ? ": nothing marked" : ": " + count + " marked"));
 				heading.setFont(FontManager.getRunescapeBoldFont());
 				heading.setForeground(colours.getOrDefault(rule, Color.WHITE));
@@ -419,9 +373,9 @@ public class SalvagingSpotPanel extends PluginPanel
 						line.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
 						// A third element marks a default entry: listed like a mark, taken off like one.
 						boolean isDefault = row.length > 2;
-						JLabel name = new JLabel(isDefault ? row[1] + " · default" : row[1]);
+						JLabel name = new JLabel(row[1]);
 						small(name);
-						name.setForeground(isDefault ? ColorScheme.LIGHT_GRAY_COLOR : Color.WHITE);
+						name.setForeground(Color.WHITE);
 						JButton remove = button("×", isDefault ? "Take " + row[1] + " out of the defaults; marking it again brings it back."
 							: "Take " + row[1] + " off the list.");
 						remove.setMargin(new Insets(0, 4, 0, 4));
@@ -432,11 +386,6 @@ public class SalvagingSpotPanel extends PluginPanel
 						sortLists.add(line);
 					}
 				}
-				JLabel ruleText = new JLabel(html(defaultLine(rule, defaults), TOP_TEXT_WIDTH));
-				small(ruleText);
-				ruleText.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-				ruleText.setAlignmentX(LEFT_ALIGNMENT);
-				sortLists.add(ruleText);
 				sortLists.add(Box.createVerticalStrut(8));
 			}
 			sortLists.revalidate();
@@ -456,7 +405,7 @@ public class SalvagingSpotPanel extends PluginPanel
 			{
 				sortColours.put(entry.getKey(), opaque(entry.getValue()));
 			}
-			setSortLists(lastSortLists, lastSortDefaults);
+			setSortLists(lastSortLists);
 		});
 	}
 
