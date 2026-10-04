@@ -103,8 +103,11 @@ public class SalvagingSpotPanel extends PluginPanel
 	private final JPanel list = new JPanel();
 	private final JLabel levelNote = new JLabel();
 	private final JLabel status = new JLabel();
-	private final JPanel dockBlock = new JPanel(new BorderLayout(0, 4));
-	private final JLabel dockLabel = new JLabel();
+	/** Two boxes (owner, 2026-10-03: "separate these into their own boxes"): the port, and the mooring. */
+	private final JPanel portBlock = new JPanel(new BorderLayout(0, 4));
+	private final JLabel portLabel = new JLabel();
+	private final JPanel mooringBlock = new JPanel(new BorderLayout(0, 4));
+	private final JLabel mooringLabel = new JLabel();
 	private final JLabel statsLabel = new JLabel();
 	private final JPanel sortLists = new JPanel();
 	private final JTextField sortName = new JTextField();
@@ -214,31 +217,21 @@ public class SalvagingSpotPanel extends PluginPanel
 		top.add(status);
 		top.add(Box.createVerticalStrut(6));
 
-		dockBlock.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		dockBlock.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
-		dockBlock.setAlignmentX(LEFT_ALIGNMENT);
-		dockBlock.setMaximumSize(new Dimension(Integer.MAX_VALUE, 220));
-		small(dockLabel);
-		dockLabel.setForeground(Color.WHITE);
-		dockBlock.add(dockLabel, BorderLayout.CENTER);
 		JButton portMap = button("Map", "Show the nearest port you can use on the world map.");
 		portMap.addActionListener(e -> withDock(port, actions::showDockOnMap));
 		JButton portRoute = button("Route", "Ask the Shortest Path plugin to draw a route to the nearest port you can use.");
 		portRoute.addActionListener(e -> withDock(port, actions::routeToDock));
+		portButtons = buttons(portMap, portRoute);
+		dockBox(portBlock, portLabel, portButtons);
+		top.add(portBlock);
+		top.add(Box.createVerticalStrut(4));
 		JButton mooringMap = button("Map", "Show the nearest mooring you can use on the world map.");
 		mooringMap.addActionListener(e -> withDock(mooring, actions::showDockOnMap));
 		JButton mooringRoute = button("Route", "Ask the Shortest Path plugin to draw a route to the nearest mooring you can use.");
 		mooringRoute.addActionListener(e -> withDock(mooring, actions::routeToDock));
-		JPanel dockButtons = new JPanel();
-		dockButtons.setLayout(new BoxLayout(dockButtons, BoxLayout.Y_AXIS));
-		dockButtons.setOpaque(false);
-		portButtons = dockButtonRow("Port", portMap, portRoute);
-		dockButtons.add(portButtons);
-		mooringButtons = dockButtonRow("Mooring", mooringMap, mooringRoute);
-		dockButtons.add(mooringButtons);
-		dockBlock.add(dockButtons, BorderLayout.SOUTH);
-		dockBlock.setVisible(false);
-		top.add(dockBlock);
+		mooringButtons = buttons(mooringMap, mooringRoute);
+		dockBox(mooringBlock, mooringLabel, mooringButtons);
+		top.add(mooringBlock);
 		top.add(Box.createVerticalStrut(6));
 
 		small(statsLabel);
@@ -620,7 +613,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		SwingUtilities.invokeLater(() ->
 		{
 			dockShownSetting = shown;
-			dockBlock.setVisible(shown && (port != null || mooring != null || nearestDock != null) && position != null);
+			showDockBoxes(shown);
 			revalidate();
 		});
 	}
@@ -669,61 +662,72 @@ public class SalvagingSpotPanel extends PluginPanel
 		}
 	}
 
-	/** A row of the dock block's buttons: what they are for, then Map and Route. */
-	private JPanel dockButtonRow(String what, JButton map, JButton route)
+	/** Dresses one dock box: the text in the middle, Map and Route under it. */
+	private static void dockBox(JPanel block, JLabel label, JPanel buttons)
 	{
-		JPanel row = new JPanel(new BorderLayout(6, 0));
-		row.setOpaque(false);
-		row.setAlignmentX(LEFT_ALIGNMENT);
-		JLabel label = new JLabel(what);
+		block.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		block.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
+		block.setAlignmentX(LEFT_ALIGNMENT);
+		block.setMaximumSize(new Dimension(Integer.MAX_VALUE, 140));
 		small(label);
-		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-		row.add(label, BorderLayout.WEST);
-		row.add(buttons(map, route), BorderLayout.CENTER);
-		return row;
+		label.setForeground(Color.WHITE);
+		block.add(label, BorderLayout.CENTER);
+		block.add(buttons, BorderLayout.SOUTH);
+		block.setVisible(false);
+	}
+
+	/** Shows or hides the two dock boxes as the setting and what is known allow. */
+	private void showDockBoxes(boolean shown)
+	{
+		boolean known = position != null && (port != null || mooring != null || nearestDock != null);
+		portBlock.setVisible(shown && known);
+		// The mooring box is left out when the mooring is the port itself and nothing nearer wants naming.
+		boolean mooringNews = mooring == null || mooring != port || (nearestDock != null && nearestDock != port);
+		mooringBlock.setVisible(shown && known && mooringNews);
+		revalidate();
 	}
 
 	private void refreshDock()
 	{
 		if (position == null || (port == null && mooring == null && nearestDock == null))
 		{
-			dockLabel.setText("");
+			portLabel.setText("");
+			mooringLabel.setText("");
+			showDockBoxes(dockShownSetting);
 			return;
 		}
-		StringBuilder text = new StringBuilder();
+		StringBuilder portText = new StringBuilder();
 		if (port != null)
 		{
-			text.append("<b>Nearest port you can use:</b> ").append(port.getDisplayName())
+			portText.append("<b>Nearest port you can use:</b> ").append(port.getDisplayName())
 				.append("<br>").append(dockDistance(port)).append(" · crew bank the hold here");
 		}
 		else
 		{
-			text.append("<b>No port you can use yet</b> (where the crew bank the hold).");
+			portText.append("<b>No port you can use yet</b> (where the crew bank the hold).");
 		}
+		StringBuilder mooringText = new StringBuilder();
 		boolean mooringShown = mooring != null && mooring != port;
 		if (mooringShown)
 		{
-			text.append("<br><b>Nearest mooring you can use:</b> ").append(mooring.getDisplayName())
+			mooringText.append("<b>Nearest mooring you can use:</b> ").append(mooring.getDisplayName())
 				.append("<br>").append(dockDistance(mooring));
 		}
 		else if (mooring == null)
 		{
-			text.append("<br><b>No mooring you can use yet.</b>");
+			mooringText.append("<b>No mooring you can use yet.</b>");
 		}
 		if (nearestDock != null && nearestDock != port && nearestDock != mooring)
 		{
-			text.append("<br><i>Nearer but not yet: ").append(nearestDock.getDisplayName()).append(", ")
-				.append(dockDistance(nearestDock)).append(": needs ")
-				.append(nearestDock.requirementText()).append(".</i>");
+			mooringText.append(mooringText.length() == 0 ? "" : "<br>").append("<i>Nearer but not yet: ")
+				.append(nearestDock.getDisplayName()).append(", ").append(dockDistance(nearestDock))
+				.append(": needs ").append(nearestDock.requirementText()).append(".</i>");
 		}
 		portButtons.setVisible(port != null);
 		mooringButtons.setVisible(mooringShown);
-		dockLabel.setText(html(text.toString(), ROW_TEXT_WIDTH));
-		if (!dockBlock.isVisible() && dockShownSetting)
-		{
-			dockBlock.setVisible(true);
-			revalidate();
-		}
+		portLabel.setText(html(portText.toString(), ROW_TEXT_WIDTH));
+		mooringLabel.setText(html(mooringText.toString(), ROW_TEXT_WIDTH));
+		showDockBoxes(dockShownSetting);
 	}
 
 	private void refreshDistances()

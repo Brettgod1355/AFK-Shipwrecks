@@ -63,8 +63,9 @@ stopped, and the fact that your own hook does not restart itself.
 - **Knows where the docks are, and which you can use.** The top of the sidebar names two: the
   nearest port you can use, meaning a dock with a bank deposit box where your first crewmate banks
   the hold's contents as you step off (21 of the 61, from the wiki), and the nearest mooring of any
-  kind you can use, which is just the nearest place to get off. Each has its distance and its own
-  Map and Route buttons; the mooring line is left out when it is the port itself. Each of the
+  kind you can use, which is just the nearest place to get off. Each sits in its own box with its
+  distance and its own Map and Route buttons; the mooring box is left out when the mooring is the
+  port itself and nothing nearer wants naming. Each of the
   61 docks carries the Sailing level (not boostable) and the quest it needs, from the wiki; a nearer
   dock you do not yet qualify for is named with what it needs. Things the client cannot see, such as
   a first visit to Kourend or Varlamore, the items worn for Entrana, or the raft needed for
