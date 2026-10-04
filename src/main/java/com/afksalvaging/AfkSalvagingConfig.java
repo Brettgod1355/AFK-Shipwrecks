@@ -691,7 +691,7 @@ public interface AfkSalvagingConfig extends Config
 	)
 	default Color doubleSpotParkedColor()
 	{
-		return new Color(255, 255, 255, 230);
+		return new Color(51, 255, 255, 67);
 	}
 
 	@ConfigItem(
@@ -775,7 +775,7 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "inventorySort",
 		name = "Box inventory items",
-		description = "Draw a coloured box round each item in your inventory: keep (yellow), deposit (cyan), alch (green) "
+		description = "Draw a coloured box round each item in your inventory: keep (sage), deposit (cyan), alch (green) "
 			+ "or drop (red). Unmarked items are sorted by what they are: plain steel to dragon cannonballs (never noted) to deposit, "
 			+ "items that alch for at least the threshold to alch, and everything else gets no box. Drop is only "
 			+ "what you mark. Shift-right-click an item to mark it.",
@@ -884,7 +884,7 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(keyName = "keepColor", name = "Keep colour", description = "", section = SORTING, position = 6)
 	default Color keepColor()
 	{
-		return new Color(255, 215, 40, 220);
+		return new Color(154, 163, 122, 255);
 	}
 
 	@Alpha

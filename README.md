@@ -90,7 +90,7 @@ stopped, and the fact that your own hook does not restart itself.
   Read the section below before trusting them to the tile.
 
 - **Sorts your inventory for you to act on.** On your boat at a salvaging spot, inventory items
-  get a coloured box: yellow keep (an outline only, so what stays is not tinted), cyan deposit
+  get a coloured box: sage keep (an outline only, so what stays is not tinted), cyan deposit
   (into the cargo hold), green alch, red drop. With
   nothing marked, only two kinds get a box: the plain steel to dragon cannonballs are Deposit (never noted ones, which
   the hold refuses; each is listed in the Sorting tab with an × that takes it out of the defaults,
@@ -179,7 +179,7 @@ inside the open hold so it is easy to find and click (on by default); and the fo
 
 **Salvage spots**: show the sidebar; wreck reach boxes (hidden while you are parked, on by default) and their
 colour (yellow); double spot boxes (on or off), their colour (green) and the colour they change to once
-you are parked (white); whether to label the double spot boxes; how long after the boat stops they go (20 s; 0 never); show the
+you are parked (a faint cyan); whether to label the double spot boxes; how long after the boat stops they go (20 s; 0 never); show the
 nearest port and mooring; and auto
 route when boarding (the spot itself is marked in the sidebar). Favourites, the dropdown choices
 and the Auto spot are kept per character, filed against the id Jagex gives the account rather than

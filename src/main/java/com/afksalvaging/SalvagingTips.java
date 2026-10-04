@@ -62,7 +62,7 @@ public final class SalvagingTips
 		"\"Countdown infobox\" in the Overlay settings puts the time to a full hold in a small box among RuneLite's "
 			+ "infoboxes, with the detail on hover, for when the overlay is hidden.",
 		"Inventory sorting boxes each item on your boat at a salvaging spot (with the hold open, only the deposits, "
-			+ "in the panel beside it): yellow keep, cyan deposit (ship "
+			+ "in the panel beside it): sage keep, cyan deposit (ship "
 			+ "steel to dragon cannonballs by default, each listed in the Sorting tab with an × that takes it out), green "
 			+ "alch (at or "
 			+ "above the \"Alch from\" value), red drop (only what you mark). "
