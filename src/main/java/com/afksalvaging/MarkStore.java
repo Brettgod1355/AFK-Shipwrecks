@@ -23,11 +23,96 @@ import net.runelite.client.config.RuneScapeProfile;
  */
 final class MarkStore
 {
-	private final ConfigManager configManager;
+	/**
+	 * The few things the marks need from RuneLite's settings, so the rules here can be tested
+	 * without a running client (review, 2026-10-04: none of this was tested).
+	 */
+	interface Settings
+	{
+		/** The character logged in, by the key their settings are filed under, or null. */
+		String ownProfile();
+
+		/** Every character RuneLite knows, by that key. */
+		List<String> profiles();
+
+		/** A plugin-wide setting, from before the marks were kept per character. */
+		String get(String key);
+
+		String get(String profile, String key);
+
+		void set(String profile, String key, String value);
+
+		void unset(String key);
+
+		void unset(String profile, String key);
+	}
+
+	private final Settings settings;
 
 	MarkStore(ConfigManager configManager)
 	{
-		this.configManager = configManager;
+		this(new Settings()
+		{
+			@Override
+			public String ownProfile()
+			{
+				return configManager.getRSProfileKey();
+			}
+
+			/**
+			 * The per-character settings live in RuneLite's own store, not the plugin's, so
+			 * {@code getConfigurationKeys} never sees them (an adversarial review caught the first
+			 * version using it, 2026-10-03); {@code getRSProfiles} is the list to ask.
+			 */
+			@Override
+			public List<String> profiles()
+			{
+				List<String> profiles = new ArrayList<>();
+				for (RuneScapeProfile profile : configManager.getRSProfiles())
+				{
+					if (profile.getKey() != null && !profiles.contains(profile.getKey()))
+					{
+						profiles.add(profile.getKey());
+					}
+				}
+				return profiles;
+			}
+
+			@Override
+			public String get(String key)
+			{
+				return configManager.getConfiguration(AfkSalvagingConfig.GROUP, key);
+			}
+
+			@Override
+			public String get(String profile, String key)
+			{
+				return configManager.getConfiguration(AfkSalvagingConfig.GROUP, profile, key);
+			}
+
+			@Override
+			public void set(String profile, String key, String value)
+			{
+				configManager.setConfiguration(AfkSalvagingConfig.GROUP, profile, key, value);
+			}
+
+			@Override
+			public void unset(String key)
+			{
+				configManager.unsetConfiguration(AfkSalvagingConfig.GROUP, key);
+			}
+
+			@Override
+			public void unset(String profile, String key)
+			{
+				configManager.unsetConfiguration(AfkSalvagingConfig.GROUP, profile, key);
+			}
+		});
+	}
+
+	MarkStore(Settings settings)
+	{
+		this.settings = settings;
 	}
 
 	/** The setting one list is kept under, the same name whichever character it belongs to. */
@@ -65,12 +150,12 @@ final class MarkStore
 	SalvageSorter.Lists load()
 	{
 		SalvageSorter.Lists lists = new SalvageSorter.Lists();
-		String own = configManager.getRSProfileKey();
+		String own = settings.ownProfile();
 		if (own != null)
 		{
 			read(lists, own);
 		}
-		for (String profile : profiles())
+		for (String profile : settings.profiles())
 		{
 			if (!profile.equals(own))
 			{
@@ -84,9 +169,9 @@ final class MarkStore
 	{
 		for (SortRule rule : SortRule.values())
 		{
-			into.add(rule, SalvageSorter.Lists.parse(configManager.getConfiguration(AfkSalvagingConfig.GROUP, profile, keyFor(rule))));
+			into.add(rule, SalvageSorter.Lists.parse(settings.get(profile, keyFor(rule))));
 		}
-		into.addExcluded(SalvageSorter.Lists.parse(configManager.getConfiguration(AfkSalvagingConfig.GROUP, profile, EXCLUDED_KEY)));
+		into.addExcluded(SalvageSorter.Lists.parse(settings.get(profile, EXCLUDED_KEY)));
 	}
 
 	/**
@@ -113,18 +198,18 @@ final class MarkStore
 	/** Puts the item under one key of the character logged in (null: nowhere) and nowhere else, for anyone. */
 	private boolean file(int itemId, String targetKey)
 	{
-		String own = configManager.getRSProfileKey();
+		String own = settings.ownProfile();
 		if (own == null)
 		{
 			return false;
 		}
-		Set<String> profiles = new LinkedHashSet<>(profiles());
+		Set<String> profiles = new LinkedHashSet<>(settings.profiles());
 		profiles.add(own);
 		for (String profile : profiles)
 		{
 			for (String key : allKeys())
 			{
-				List<Integer> ids = new ArrayList<>(SalvageSorter.Lists.parse(configManager.getConfiguration(AfkSalvagingConfig.GROUP, profile, key)));
+				List<Integer> ids = new ArrayList<>(SalvageSorter.Lists.parse(settings.get(profile, key)));
 				boolean changed = ids.remove(Integer.valueOf(itemId));
 				if (profile.equals(own) && key.equals(targetKey))
 				{
@@ -148,7 +233,7 @@ final class MarkStore
 	 */
 	boolean migrate()
 	{
-		String own = configManager.getRSProfileKey();
+		String own = settings.ownProfile();
 		if (own == null)
 		{
 			return false;
@@ -158,12 +243,12 @@ final class MarkStore
 		for (SortRule rule : SortRule.values())
 		{
 			String key = keyFor(rule);
-			String old = configManager.getConfiguration(AfkSalvagingConfig.GROUP, key);
+			String old = settings.get(key);
 			if (old == null)
 			{
 				continue;
 			}
-			List<Integer> ids = new ArrayList<>(SalvageSorter.Lists.parse(configManager.getConfiguration(AfkSalvagingConfig.GROUP, own, key)));
+			List<Integer> ids = new ArrayList<>(SalvageSorter.Lists.parse(settings.get(own, key)));
 			for (int id : SalvageSorter.Lists.parse(old))
 			{
 				if (everyone.markOf(id) == null && !ids.contains(id))
@@ -172,7 +257,7 @@ final class MarkStore
 				}
 			}
 			save(own, key, ids);
-			configManager.unsetConfiguration(AfkSalvagingConfig.GROUP, key);
+			settings.unset(key);
 			moved = true;
 		}
 		return moved;
@@ -182,30 +267,11 @@ final class MarkStore
 	{
 		if (ids.isEmpty())
 		{
-			configManager.unsetConfiguration(AfkSalvagingConfig.GROUP, profile, key);
+			settings.unset(profile, key);
 		}
 		else
 		{
-			configManager.setConfiguration(AfkSalvagingConfig.GROUP, profile, key, SalvageSorter.Lists.join(ids));
+			settings.set(profile, key, SalvageSorter.Lists.join(ids));
 		}
-	}
-
-	/**
-	 * Every character RuneLite knows, by the key its settings are filed under. The per-character
-	 * settings live in RuneLite's own store, not the plugin's, so {@code getConfigurationKeys}
-	 * never sees them (an adversarial review caught the first version using it, 2026-10-03);
-	 * {@code getRSProfiles} is the list to ask.
-	 */
-	private List<String> profiles()
-	{
-		List<String> profiles = new ArrayList<>();
-		for (RuneScapeProfile profile : configManager.getRSProfiles())
-		{
-			if (profile.getKey() != null && !profiles.contains(profile.getKey()))
-			{
-				profiles.add(profile.getKey());
-			}
-		}
-		return profiles;
 	}
 }

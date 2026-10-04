@@ -595,6 +595,57 @@ public class AfkSessionTest
 	}
 
 	@Test
+	public void standingIdleAtAHookWhileAWreckIsUpLeavesItEmpty()
+	{
+		// Jenkins on one hook, the player standing at the other but not working it.
+		session.roster().setCrewmate(0, JENKINS);
+		session.roster().setPosition(0, CrewAssignment.HOOK_SLOOP_1);
+		session.settings().graceMillis = 3_000;
+		animation = AnimationID.SAILING_HUMAN_SALVAGE_HOOK_KANDARIN_1X3_INACTIVE01;
+		AfkSession.View view = ticks(15);
+		assertFalse("idle with a wreck up is not working the hook", view.playerAtHook);
+		assertEquals(1, view.emptyHooks);
+		assertEquals("nobody else can take it: the player is asked to click it", 1, count(Notice.HOOK_IDLE));
+		// With no wreck in reach, standing there is all there is to do: the hook counts as manned.
+		session.wrecks().clear();
+		view = ticks(2);
+		assertTrue(view.playerAtHook);
+		assertEquals(0, view.emptyHooks);
+	}
+
+	@Test
+	public void theOldSortingAnimationFinishingDoesNotCancelTheDoneSortingAlert()
+	{
+		twoCrewOnHooks();
+		ticks(2);
+		session.sortingDoneLine(now);
+		// One tick after the line the last sort is still playing out: that is not sorting again.
+		animation = SORTING;
+		ticks(1);
+		animation = -1;
+		ticks(9);
+		assertEquals(1, count(Notice.SORTING_DONE));
+	}
+
+	@Test
+	public void aWhirlpoolKegLetsALowCrewmateTakeAMithrilHook()
+	{
+		session.boat().clear();
+		session.boat().follow(BOAT_VIEW);
+		session.boat().add(BOAT_VIEW, 1L, ObjectID.SALVAGING_HOOK_LARGE_MITHRIL);
+		session.boat().add(BOAT_VIEW, 2L, ObjectID.SALVAGING_HOOK_LARGE_MITHRIL_B);
+		session.roster().setCrewmate(0, JENKINS);
+		session.roster().setPosition(0, CrewAssignment.HOOK_SLOOP_1);
+		session.roster().setCrewmate(1, ADA);
+		AfkSession.View view = ticks(3);
+		assertEquals("Ada (1) cannot work mithril (2)", 0, view.spareCrew);
+		assertTrue(session.boat().add(BOAT_VIEW, 3L, ObjectID.SAILING_KEG_WHIRLPOOL_SURPRISE));
+		assertTrue(session.boat().hasWhirlpoolKeg());
+		view = ticks(3);
+		assertEquals("the keg lifts her to 2", 1, view.spareCrew);
+	}
+
+	@Test
 	public void loggingOutLeavesNothingOfTheSessionOnScreen()
 	{
 		twoCrewOnHooks();
