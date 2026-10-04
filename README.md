@@ -29,7 +29,10 @@ the Shortest Path plugin.
 
 Inventory sorting: items get a box for deposit, alch or drop, and the Sorting tab lists what you
 have marked. Keep has a box too, off by default; switch on "Box kept items" in the Inventory sorting
-settings to see it.
+settings to see it. Without any marks, anything that high-alchs for 1,000 gp or more gets the alch
+box by itself; change that amount with "Alch from" in the same settings. Marking an item Alch
+yourself boxes it whatever its alch value, so the threshold only decides for items you have not
+marked.
 
 ## What it does
 
