@@ -845,13 +845,15 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "boxKeep",
 		name = "Box kept items",
-		description = "Draw the keep box at all. Off leaves kept items plain so only the others stand out.",
+		description = "Draw the keep box at all. Off, the default, leaves kept items plain so only the others "
+			+ "stand out.",
 		section = SORTING,
 		position = 5
 	)
 	default boolean boxKeep()
 	{
-		return true;
+		// Off by default (owner, 2026-10-04): what stays needs no box.
+		return false;
 	}
 
 	@ConfigItem(

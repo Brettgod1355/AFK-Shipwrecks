@@ -90,7 +90,8 @@ stopped, and the fact that your own hook does not restart itself.
   Read the section below before trusting them to the tile.
 
 - **Sorts your inventory for you to act on.** On your boat at a salvaging spot, inventory items
-  get a coloured box: sage keep (an outline only, so what stays is not tinted), cyan deposit
+  get a coloured box: sage keep (an outline only, and off unless you switch it on, since what stays
+  needs nothing doing), cyan deposit
   (into the cargo hold), green alch, red drop. With
   nothing marked, only two kinds get a box: the plain bronze to dragon cannonballs are Deposit (never noted ones, which
   the hold refuses; each is listed in the Sorting tab with an × that takes it out of the defaults,
@@ -178,7 +179,7 @@ and the chat lines use fixed colours, to keep the settings short.
 
 **Inventory sorting**: box inventory items; where (on my boat at a salvaging spot, whenever aboard,
 everywhere); the alch threshold; keep instead when the GE price beats the alch value by a margin
-(off by default); the shift-right-click AFK Shipwrecks menu, shown only on your own boat; whether kept items get a box at all;
+(off by default); the shift-right-click AFK Shipwrecks menu, shown only on your own boat; whether kept items get a box at all (off by default);
 highlighting the cargo hold itself in the Deposit colour (off by default); boxing the salvage
 inside the open hold so it is easy to find and click (on by default); and the four colours. Under Salvage spots, "Only docks I can use" turns the dock requirements check off.
 
