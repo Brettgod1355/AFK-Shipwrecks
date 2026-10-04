@@ -139,24 +139,55 @@ public class SalvageBoxOverlay extends Overlay
 						label = "Double spot";
 					}
 				}
-				drawBox(graphics, top, box, drawn, parked ? PARKED_OUTLINE : OUTLINE, label);
+				// A label about the boat (hooks in, parked) sits in the middle of the boat; "Double spot" for a
+				// box the boat is not in sits in the middle of the box (owner, 2026-10-04).
+				LocalPoint boat = inside > 0 ? plugin.ownBoatLocation() : null;
+				drawBox(graphics, top, box, drawn, parked ? PARKED_OUTLINE : OUTLINE, boat == null ? label : null);
+				if (boat != null && label != null)
+				{
+					drawText(graphics, boat, label, opaque(drawn));
+				}
 			}
 		}
 		else if (doubleSpots && config.parkedTextAfterHide() && !hooks.isEmpty())
 		{
 			// The boxes have hidden, but the boat is still parked in one: say so where its label was,
 			// with no box (owner, 2026-10-04). Full strength, as a faint parked colour is a box fill.
-			Color parkedColour = config.doubleSpotParkedColor();
-			Color text = new Color(parkedColour.getRed(), parkedColour.getGreen(), parkedColour.getBlue());
+			Color text = opaque(config.doubleSpotParkedColor());
+			LocalPoint boat = plugin.ownBoatLocation();
 			for (int i = 0; i < doubles.size(); i++)
 			{
 				if (hooksInside[i] == hooks.size())
 				{
-					drawLabel(graphics, top, doubles.get(i).getBox(), PARKED_TEXT, text);
+					if (boat != null)
+					{
+						drawText(graphics, boat, PARKED_TEXT, text);
+					}
+					else
+					{
+						drawLabel(graphics, top, doubles.get(i).getBox(), PARKED_TEXT, text);
+					}
+					break;
 				}
 			}
 		}
 		return null;
+	}
+
+	/** Words at a point in the scene, such as the middle of the boat. */
+	private void drawText(Graphics2D graphics, LocalPoint at, String text, Color colour)
+	{
+		Point where = Perspective.getCanvasTextLocation(client, graphics, at, text, 0);
+		if (where != null)
+		{
+			OverlayUtil.renderTextLocation(graphics, where, text, colour);
+		}
+	}
+
+	/** The colour with no transparency: a box fill may be faint, its words must not be. */
+	private static Color opaque(Color colour)
+	{
+		return new Color(colour.getRed(), colour.getGreen(), colour.getBlue());
 	}
 
 	/** Words where a double spot box's label goes, at its middle, with no box. */

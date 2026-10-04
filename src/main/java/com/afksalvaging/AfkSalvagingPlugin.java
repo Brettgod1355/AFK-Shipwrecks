@@ -2513,6 +2513,13 @@ public class AfkSalvagingPlugin extends Plugin
 		return top == null ? null : WorldPoint.fromLocal(client, top);
 	}
 
+	/** The middle of the player's own boat in the top-level scene, or null when not aboard it. Client thread. */
+	public LocalPoint ownBoatLocation()
+	{
+		WorldEntity boat = boatEntity();
+		return boat == null || boat.getOwnerType() != WorldEntity.OWNER_TYPE_SELF_PLAYER ? null : boat.getLocalLocation();
+	}
+
 	/** Where the boat itself is in the top-level world. */
 	private WorldPoint topLevelPoint(WorldEntity boat)
 	{

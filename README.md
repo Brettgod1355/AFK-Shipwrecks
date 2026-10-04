@@ -111,7 +111,8 @@ marked.
   boat sits in the green box and it changes colour and says "Parked". Each has its own switch and
   colour, and the parked colour is its own setting too. The green boxes go 20 seconds after the boat stops, at
   login too, and come back the moment it moves (a setting; 0 keeps them). While you stay parked,
-  the words "Parked in double spot" stay where the box was (a setting, on by default). Wrecks that are up and within
+  the words "Parked in double spot" stay in the middle of your boat (a setting, on by default). The
+  box's own words about your hooks sit there too. Wrecks that are up and within
   your level get a soft cyan outline round the hull, like the game's own hover outline, so the one to
   work stands out without another box (a setting, on by default).
   Read the section below before trusting them to the tile.

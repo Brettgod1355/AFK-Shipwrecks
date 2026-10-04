@@ -727,8 +727,8 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "parkedTextAfterHide",
 		name = "Say \"Parked\" after hiding",
-		description = "Once the double spot boxes have hidden, keep the words \"Parked in double spot\" where the box "
-			+ "was while every hook is in it. Only the text, no box.",
+		description = "Once the double spot boxes have hidden, keep the words \"Parked in double spot\" in the "
+			+ "middle of your boat while every hook is in it. Only the text, no box.",
 		section = SPOTS,
 		position = 11
 	)
