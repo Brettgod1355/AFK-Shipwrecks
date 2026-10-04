@@ -14,23 +14,6 @@ import static org.junit.Assert.assertTrue;
 public class MainInterfaceTest
 {
 	@Test
-	public void aModalHungOnTheFrameCountsInEveryLayout()
-	{
-		assertTrue(AfkSalvagingPlugin.isToplevelComponent(InterfaceID.Toplevel.MAINMODAL));
-		assertTrue(AfkSalvagingPlugin.isToplevelComponent(InterfaceID.ToplevelOsrsStretch.MAINMODAL));
-		assertTrue(AfkSalvagingPlugin.isToplevelComponent(InterfaceID.ToplevelPreEoc.MAINMODAL));
-		assertTrue("the floating world map's home", AfkSalvagingPlugin.isToplevelComponent(InterfaceID.ToplevelPreEoc.FLOATER));
-	}
-
-	@Test
-	public void dialoguesAndSidePanelsHangElsewhere()
-	{
-		assertFalse("dialogues open inside the chatbox", AfkSalvagingPlugin.isToplevelComponent(InterfaceID.CHATBOX << 16));
-		assertFalse(AfkSalvagingPlugin.isToplevelComponent(InterfaceID.SailingBoatCargohold.UNIVERSE));
-		assertFalse(AfkSalvagingPlugin.isToplevelComponent(InterfaceID.SkillGuide.WINDOW));
-	}
-
-	@Test
 	public void theViewportContainersAreKnownInEveryLayout()
 	{
 		assertTrue(AfkSalvagingPlugin.isMainViewportContainer(InterfaceID.Toplevel.MAINMODAL));
@@ -38,5 +21,6 @@ public class MainInterfaceTest
 		assertTrue(AfkSalvagingPlugin.isMainViewportContainer(InterfaceID.ToplevelPreEoc.MAINMODAL_BACKGROUNDS));
 		assertFalse("side panels", AfkSalvagingPlugin.isMainViewportContainer(InterfaceID.ToplevelOsrsStretch.SIDE3));
 		assertFalse("the chatbox", AfkSalvagingPlugin.isMainViewportContainer(InterfaceID.Toplevel.CHAT_CONTAINER));
+		assertFalse("a skill guide's own window", AfkSalvagingPlugin.isMainViewportContainer(InterfaceID.SkillGuide.WINDOW));
 	}
 }

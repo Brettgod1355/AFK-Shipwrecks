@@ -59,7 +59,6 @@ import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.OverheadTextChanged;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
-import net.runelite.api.events.WidgetClosed;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.events.WorldEntityDespawned;
 import net.runelite.api.events.WorldEntitySpawned;
@@ -223,10 +222,6 @@ public class AfkSalvagingPlugin extends Plugin
 	private static final int SORT_CACHE_TICKS = 500;
 	/** The one entry the marking choices sit under in an item's right-click menu. */
 	private static final String SORT_MENU = "AFK Salvaging";
-	/** The interface that frames the screen in each layout: fixed, resizable classic, resizable modern. */
-	static final int[] TOPLEVEL_GROUPS = {
-		InterfaceID.TOPLEVEL, InterfaceID.TOPLEVEL_OSRS_STRETCH, InterfaceID.TOPLEVEL_PRE_EOC
-	};
 	/** The frame's containers for interfaces drawn over the viewport, in each layout: modals, adverts, floating windows. */
 	static final int[] MAIN_VIEWPORT_CONTAINERS = {
 		InterfaceID.Toplevel.MAINMODAL, InterfaceID.Toplevel.MAINCRM, InterfaceID.Toplevel.FLOATER,
@@ -674,13 +669,6 @@ public class AfkSalvagingPlugin extends Plugin
 			// The map takes a position only once its own script has laid it out, a tick or two later.
 			mapFocusTicks = 2;
 		}
-		logOpenInterfaces("loading " + event.getGroupId());
-	}
-
-	@Subscribe
-	public void onWidgetClosed(WidgetClosed event)
-	{
-		logOpenInterfaces("closing " + event.getGroupId());
 	}
 
 	@Subscribe
@@ -2302,38 +2290,6 @@ public class AfkSalvagingPlugin extends Plugin
 		for (int container : MAIN_VIEWPORT_CONTAINERS)
 		{
 			if (componentId == container)
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/** Temporary (2026-10-04): what is open, where and how, to learn where the mid-screen interfaces hang. */
-	private void logOpenInterfaces(String why)
-	{
-		if (!log.isDebugEnabled())
-		{
-			return;
-		}
-		StringBuilder open = new StringBuilder();
-		for (WidgetNode node : client.getComponentTable())
-		{
-			int component = (int) node.getHash();
-			open.append(' ').append(WidgetUtil.componentToInterface(component)).append(':')
-				.append(WidgetUtil.componentToId(component)).append("->").append(node.getId())
-				.append('/').append(node.getModalMode());
-		}
-		log.debug("Interfaces open after {}:{} (main interface open: {})", why, open, mainInterfaceOpen());
-	}
-
-	/** Whether a component belongs to the interface framing the screen in any layout. */
-	static boolean isToplevelComponent(int componentId)
-	{
-		int group = WidgetUtil.componentToInterface(componentId);
-		for (int toplevel : TOPLEVEL_GROUPS)
-		{
-			if (group == toplevel)
 			{
 				return true;
 			}
