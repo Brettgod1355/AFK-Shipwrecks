@@ -173,7 +173,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		// The community and the code, one click from the title (owner, 2026-10-04).
 		JPanel links = new JPanel(new GridLayout(1, 2, 4, 0));
 		links.setOpaque(false);
-		links.add(link("discord_white.png", "discord_blurple.png", "AFK Shipwrecks on Discord: report a bug, suggest something or ask a question, no GitHub account needed", DISCORD_URL));
+		links.add(link("discord_white.png", "discord_blurple.png", "AFK Shipwrecks on Discord: ask a question, make a suggestion or report a bug", DISCORD_URL));
 		links.add(link("github_white.png", "github_green.png", "AFK Shipwrecks on GitHub: code, bug reports and requests", GITHUB_URL));
 		JPanel titleRow = new JPanel(new BorderLayout());
 		titleRow.setOpaque(false);
