@@ -78,6 +78,7 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.Notification;
 import net.runelite.client.config.NotificationSound;
 import net.runelite.client.config.RuneLiteConfig;
+import net.runelite.client.config.RuneScapeProfile;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -1032,18 +1033,23 @@ public class AfkSalvagingPlugin extends Plugin
 
 	/**
 	 * Works out whether this is the first run of a new version and, if so, what to say once the
-	 * player is logged in. Reads the settings before anything in this run writes to them, so a
-	 * fresh install (nothing of the plugin stored anywhere) is told from an update from 1.0,
-	 * which stored settings and remembered counts under the same group but no version.
+	 * player is logged in. A fresh install is told from an update from 1.0, which remembered no
+	 * version, by the one thing 1.0 wrote on its own: a remembered cargo count, kept per character
+	 * once the hold had been opened. The plugin-wide settings cannot tell them apart, because
+	 * RuneLite writes every default before the plugin starts (review, 2026-10-04).
 	 */
 	private void noteVersion()
 	{
 		String last = config.lastVersion();
-		// Per-character settings live in RuneLite's own store, which getConfigurationKeys does not scan.
-		boolean installedBefore = !configManager.getConfigurationKeys(AfkSalvagingConfig.GROUP + ".").isEmpty()
-			|| configManager.getRSProfiles().stream().anyMatch(profile -> profile.getKey() != null
-				&& !configManager.getRSProfileConfigurationKeys(AfkSalvagingConfig.GROUP, profile.getKey(), "").isEmpty());
-		updateMessage = WhatsNew.message(last, installedBefore);
+		List<List<String>> rememberedCounts = new ArrayList<>();
+		for (RuneScapeProfile profile : configManager.getRSProfiles())
+		{
+			if (profile.getKey() != null)
+			{
+				rememberedCounts.add(configManager.getRSProfileConfigurationKeys(AfkSalvagingConfig.GROUP, profile.getKey(), USED_KEY_PREFIX));
+			}
+		}
+		updateMessage = WhatsNew.message(last, WhatsNew.usedBefore(rememberedCounts));
 		if (!WhatsNew.VERSION.equals(last))
 		{
 			configManager.setConfiguration(AfkSalvagingConfig.GROUP, "lastVersion", WhatsNew.VERSION);

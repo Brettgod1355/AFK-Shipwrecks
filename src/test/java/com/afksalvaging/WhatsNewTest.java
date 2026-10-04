@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.junit.Test;
@@ -20,6 +22,15 @@ import static org.junit.Assert.assertTrue;
 
 public class WhatsNewTest
 {
+	@Test
+	public void onlyARememberedCargoCountShowsCargoHoldAlertWasUsed()
+	{
+		// RuneLite writes every default before start-up, so only the counts 1.0 saved itself say it was used.
+		assertFalse("no characters", WhatsNew.usedBefore(Collections.emptyList()));
+		assertFalse("characters with nothing remembered", WhatsNew.usedBefore(Arrays.asList(Collections.<String>emptyList(), Collections.<String>emptyList())));
+		assertTrue(WhatsNew.usedBefore(Arrays.asList(Collections.<String>emptyList(), Collections.singletonList("used.2"))));
+	}
+
 	@Test
 	public void theVersionInCodeMatchesTheBuild() throws IOException
 	{
