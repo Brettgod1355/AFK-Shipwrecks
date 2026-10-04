@@ -431,7 +431,7 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "bannerScale",
 		name = "Banner size",
-		description = "Size of the banner text and box. 100% is the normal RuneLite overlay size.",
+		description = "Size of the banner text and box. 100% is the normal RuneLite overlay size; 150% by default.",
 		section = BANNER,
 		position = 2
 	)
@@ -439,7 +439,8 @@ public interface AfkSalvagingConfig extends Config
 	@Units(Units.PERCENT)
 	default int bannerScale()
 	{
-		return 100;
+		// 150% by default (owner, 2026-10-04).
+		return 150;
 	}
 
 	@ConfigItem(
@@ -562,7 +563,7 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "counterScale",
 		name = "Text size",
-		description = "Size of the overlay lines. 100% is the normal RuneLite overlay size.",
+		description = "Size of the overlay lines. 100% is the normal RuneLite overlay size; 150% by default.",
 		section = OVERLAY,
 		position = 3
 	)
@@ -570,7 +571,8 @@ public interface AfkSalvagingConfig extends Config
 	@Units(Units.PERCENT)
 	default int overlayScale()
 	{
-		return 100;
+		// 150% by default (owner, 2026-10-04).
+		return 150;
 	}
 
 	@ConfigItem(
