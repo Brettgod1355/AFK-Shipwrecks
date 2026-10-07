@@ -25,6 +25,11 @@ final class Palette
 	static final Color COUNTER_FULL = new Color(230, 60, 60);
 	/** The outline round a wreck that is up and salvageable: the game's own hover cyan, a little softer. */
 	static final Color WRECK_OUTLINE = new Color(90, 220, 230);
+	/**
+	 * Sunk wrecks, hull and box alike: grey, so a site waiting for its next wreck reads as inactive at a
+	 * glance (owner, 2026-10-07: "shows an overlay in grey when a spot is inactive").
+	 */
+	static final Color WRECK_SUNK = new Color(150, 150, 150);
 
 	// Sidebar.
 	static final Color SIDEBAR_IN_LEVEL = new Color(70, 200, 110);

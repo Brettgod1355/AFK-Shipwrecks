@@ -18,14 +18,21 @@ import java.util.Collection;
 public final class WhatsNew
 {
 	/** The version being run. Must match {@code version} in build.gradle and runelite-plugin.properties. */
-	public static final String VERSION = "2.0";
+	public static final String VERSION = "2.1";
 
 	/**
 	 * One line on what this version brings, no links; a full stop is added when it is said. Leave
 	 * it empty for a release not worth a line (a fix, a wording change) and nothing is said.
 	 */
-	public static final String NOTE = "hook and crew reminders, wreck timers, loot sorting, and a sidebar of salvaging spots "
-		+ "with routes and docks";
+	public static final String NOTE = "sunk wrecks in grey, hull or area wreck marks, tidier settings and sidebar, and Find a "
+		+ "setting under Tips";
+
+	/**
+	 * What the rename to AFK Shipwrecks brought, said to a Cargo Hold Alert 1.0 player whatever version
+	 * they land on, since {@link #NOTE} only covers the latest step (2.0's note, kept for them in 2.1).
+	 */
+	public static final String RENAME_NOTE = "hook and crew reminders, wreck timers, loot sorting, and a sidebar of salvaging "
+		+ "spots with routes and docks";
 
 	private WhatsNew()
 	{
@@ -60,15 +67,19 @@ public final class WhatsNew
 	 */
 	public static String message(String lastVersion, boolean installedBefore)
 	{
-		if (VERSION.equals(lastVersion) || NOTE.isEmpty())
+		if (VERSION.equals(lastVersion))
 		{
 			return null;
 		}
 		if (lastVersion == null || lastVersion.isEmpty())
 		{
 			return installedBefore
-				? "Cargo Hold Alert is now AFK Shipwrecks " + VERSION + ": " + NOTE + "."
+				? "Cargo Hold Alert is now AFK Shipwrecks " + VERSION + ": " + RENAME_NOTE + "."
 				: null;
+		}
+		if (NOTE.isEmpty())
+		{
+			return null;
 		}
 		return "AFK Shipwrecks updated to " + VERSION + ": " + NOTE + ".";
 	}

@@ -34,64 +34,75 @@ public interface AfkSalvagingConfig extends Config
 		return Notification.ON;
 	}
 
-	@ConfigSection(
-		name = "Timer",
-		description = "The countdown to a full cargo hold",
-		position = 0
-	)
-	String TIMER = "timer";
-
-	@ConfigSection(
-		name = "Reminders",
-		description = "Nudges when a hook is standing empty or the crew have stopped",
-		position = 1
-	)
-	String REMINDERS = "reminders";
-
-	@ConfigSection(
-		name = "Cargo full",
-		description = "The alert when the hold is completely full",
-		position = 2
-	)
-	String CARGO_FULL = "cargoFull";
-
-	@ConfigSection(
-		name = "Early warning",
-		description = "A heads-up before the hold is completely full",
-		position = 3
-	)
-	String EARLY_WARNING = "earlyWarning";
-
-	@ConfigSection(
-		name = "Banner",
-		description = "The banner drawn over the game while an alert is active",
-		position = 4
-	)
-	String BANNER = "banner";
+	// Every section starts closed so the panel opens as a short list of headings (owner, 2026-10-07:
+	// "tidy up the options menu ... to de clutter"). Only the sections moved; every key is unchanged, so
+	// saved settings carry over.
 
 	@ConfigSection(
 		name = "Overlay",
-		description = "The lines shown while you are on your boat",
-		position = 5
+		description = "The countdown and the lines shown while you are on your boat",
+		position = 0,
+		closedByDefault = true
 	)
 	String OVERLAY = "overlay";
 
 	@ConfigSection(
-		name = "Salvage spots",
-		description = "The sidebar list of hotspots and the boxes on the water that show where to park",
-		position = 6
+		name = "Full hold",
+		description = "The alert when the hold is full, and the heads-up before it",
+		position = 1,
+		closedByDefault = true
+	)
+	String CARGO_FULL = "cargoFull";
+
+	@ConfigSection(
+		name = "Banner",
+		description = "The banner drawn over the game while an alert is active",
+		position = 2,
+		closedByDefault = true
+	)
+	String BANNER = "banner";
+
+	@ConfigSection(
+		name = "Reminders",
+		description = "Nudges when a hook is standing empty or the crew have stopped",
+		position = 3,
+		closedByDefault = true
+	)
+	String REMINDERS = "reminders";
+
+	@ConfigSection(
+		name = "Wrecks and parking",
+		description = "How wrecks are marked, and the boxes on the water that show where to park",
+		position = 4,
+		closedByDefault = true
 	)
 	String SPOTS = "spots";
 
-	// ---- Timer ----
+	@ConfigSection(
+		name = "Salvaging worlds",
+		description = "The worlds where every wreck site is worked, and the tip and alert off them",
+		position = 5,
+		closedByDefault = true
+	)
+	String WORLDS = "worlds";
+
+	@ConfigSection(
+		name = "Sidebar",
+		description = "The sidebar of salvaging spots and docks",
+		position = 6,
+		closedByDefault = true
+	)
+	String SIDEBAR = "sidebar";
+
+	// ---- Overlay: the timer (its own section until 2.1) ----
 
 	@ConfigItem(
 		keyName = "showTimer",
 		name = "Show timer",
 		description = "Show how long until the cargo hold is full at the current salvaging rate. Status lines such as "
 			+ "waiting for a wreck or the crew having stopped are shown either way.",
-		section = TIMER,
-		position = 0
+		section = OVERLAY,
+		position = 1
 	)
 	default boolean showTimer()
 	{
@@ -102,8 +113,8 @@ public interface AfkSalvagingConfig extends Config
 		keyName = "showClockTime",
 		name = "Show clock time",
 		description = "Also show the time of day the hold is expected to be full.",
-		section = TIMER,
-		position = 1
+		section = OVERLAY,
+		position = 2
 	)
 	default boolean showClockTime()
 	{
@@ -133,8 +144,8 @@ public interface AfkSalvagingConfig extends Config
 		keyName = "clockFormat",
 		name = "Clock format",
 		description = "Show the time the hold will be full as 12-hour (6:25 PM) or 24-hour (18:25).",
-		section = TIMER,
-		position = 2
+		section = OVERLAY,
+		position = 3
 	)
 	default ClockFormat clockFormat()
 	{
@@ -146,8 +157,8 @@ public interface AfkSalvagingConfig extends Config
 		name = "Count salvage you hooked",
 		description = "Treat salvage you hooked yourself and have not yet deposited as bound for the hold. "
 			+ "Salvage you withdrew to sort is never counted.",
-		section = TIMER,
-		position = 3
+		section = OVERLAY,
+		position = 4
 	)
 	default boolean countHookedSalvage()
 	{
@@ -159,8 +170,8 @@ public interface AfkSalvagingConfig extends Config
 		name = "Salvaging worlds",
 		description = "World numbers to treat as salvaging worlds, where wrecks come back quickly because every site "
 			+ "is being worked. Worlds the world list labels as salvaging are always included.",
-		section = TIMER,
-		position = 4
+		section = WORLDS,
+		position = 0
 	)
 	default String salvagingWorlds()
 	{
@@ -172,8 +183,8 @@ public interface AfkSalvagingConfig extends Config
 		name = "Salvaging world tip",
 		description = "When the crew have been waiting a while for a wreck on an ordinary world, mention that "
 			+ "salvaging worlds keep wrecks coming.",
-		section = TIMER,
-		position = 5
+		section = WORLDS,
+		position = 1
 	)
 	default boolean worldTip()
 	{
@@ -186,8 +197,8 @@ public interface AfkSalvagingConfig extends Config
 		description = "While you sit at a spot with no wreck up for a quarter of a minute on a world that is not a "
 			+ "salvaging world, flash a notice in the middle of the screen with the worlds to hop to. It goes when a "
 			+ "wreck is up or you hop. The tip above says it once in chat; this keeps saying it.",
-		section = TIMER,
-		position = 6
+		section = WORLDS,
+		position = 2
 	)
 	default boolean worldAlert()
 	{
@@ -345,7 +356,7 @@ public interface AfkSalvagingConfig extends Config
 		return 60;
 	}
 
-	// ---- Cargo full ----
+	// ---- Full hold ----
 
 	@ConfigItem(
 		keyName = "notification",
@@ -374,15 +385,15 @@ public interface AfkSalvagingConfig extends Config
 		return 0;
 	}
 
-	// ---- Early warning ----
+	// ---- Full hold: the early warning (its own section until 2.1) ----
 
 	@ConfigItem(
 		keyName = "warnSlotsRemaining",
 		name = "Warn with slots left",
 		description = "Alert once this many free slots remain, before the hold is completely full: 5 by default. 0 turns "
 			+ "the early warning off.",
-		section = EARLY_WARNING,
-		position = 0
+		section = CARGO_FULL,
+		position = 2
 	)
 	@Range(min = 0, max = 239)
 	default int warnSlotsRemaining()
@@ -396,8 +407,8 @@ public interface AfkSalvagingConfig extends Config
 		name = "Play sound",
 		description = "Play the alert sound for the early warning. Off keeps the early warning silent while the "
 			+ "tray popup, screen flash and banner still show; the full alert always uses the Cargo full settings.",
-		section = EARLY_WARNING,
-		position = 1
+		section = CARGO_FULL,
+		position = 3
 	)
 	default boolean earlyWarningSound()
 	{
@@ -507,7 +518,7 @@ public interface AfkSalvagingConfig extends Config
 			+ "so sailing from port to port stays clear. Always aboard: show them whenever you are on your boat. "
 			+ "Alerts and banners show either way.",
 		section = OVERLAY,
-		position = -2
+		position = 0
 	)
 	default OverlayWhen overlayWhen()
 	{
@@ -519,7 +530,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Show cargo counter",
 		description = "Show used and total cargo slots while you are on your boat.",
 		section = OVERLAY,
-		position = 0
+		position = 5
 	)
 	default boolean showCounter()
 	{
@@ -531,7 +542,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Counter shows",
 		description = "What the counter shows: used out of total (154/160), slots left (6 left), or percent full (96%).",
 		section = OVERLAY,
-		position = 11
+		position = 6
 	)
 	default CounterStyle counterStyle()
 	{
@@ -543,7 +554,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Show hooks line",
 		description = "Show who is on each salvaging hook.",
 		section = OVERLAY,
-		position = 1
+		position = 7
 	)
 	default boolean showHooks()
 	{
@@ -555,7 +566,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Show wrecks line",
 		description = "Show how many wrecks are in reach and how long the current one has left at most.",
 		section = OVERLAY,
-		position = 2
+		position = 8
 	)
 	default boolean showWrecks()
 	{
@@ -567,7 +578,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Text size",
 		description = "Size of the overlay lines. 100% is the normal RuneLite overlay size; 150% by default.",
 		section = OVERLAY,
-		position = 3
+		position = 9
 	)
 	@Range(min = 50, max = 300)
 	@Units(Units.PERCENT)
@@ -590,14 +601,14 @@ public interface AfkSalvagingConfig extends Config
 		return false;
 	}
 
-	// ---- Salvage spots ----
+	// ---- Sidebar, then Wrecks and parking (one "Salvage spots" section until 2.1) ----
 
 	@ConfigItem(
 		keyName = "spotSidebar",
 		name = "Show sidebar",
 		description = "Add a sidebar panel listing every salvaging hotspot, with buttons to show it on the world map "
 			+ "and to route there with the Shortest Path plugin.",
-		section = SPOTS,
+		section = SIDEBAR,
 		position = 0
 	)
 	default boolean spotSidebar()
@@ -606,25 +617,27 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "wreckReachBoxes",
-		name = "Wreck reach boxes",
-		description = "Box the water around each wreck in view where a hook can reach it. Sunk wrecks get a dimmer box, "
-			+ "since the next wreck rises on the same tile.",
+		keyName = "wreckMarking",
+		name = "Mark wrecks",
+		description = "How each wreck in view is marked. Hull outlines the wreck itself, the way the game outlines one "
+			+ "under the mouse. Area boxes the water round it where a hook can reach it. Wrecks that are up are drawn in "
+			+ "colour (the hull only when your Sailing level lets you salvage it); sunk wrecks are drawn in grey, since "
+			+ "the next wreck rises on the same tile.",
 		section = SPOTS,
-		position = 2
+		position = 0
 	)
-	default boolean wreckReachBoxes()
+	default WreckMarking wreckMarking()
 	{
-		return true;
+		return WreckMarking.BOTH;
 	}
 
 	@ConfigItem(
 		keyName = "hideReachWhenParked",
 		name = "Hide reach boxes once parked",
-		description = "Take the wreck reach boxes off the water while every hook on your boat is inside a double spot box. "
+		description = "Take the boxes round wrecks off the water while every hook on your boat is inside a double spot box. "
 			+ "They come back the moment you drift out.",
 		section = SPOTS,
-		position = 3
+		position = 2
 	)
 	default boolean hideReachWhenParked()
 	{
@@ -635,26 +648,14 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "wreckReachColor",
 		name = "Wreck reach colour",
-		description = "Outline colour of the wreck reach boxes. The fill is a fainter version of it.",
+		description = "Outline colour of the boxes round wrecks that are up (Mark wrecks: Area). The fill is a fainter "
+			+ "version of it. Sunk wrecks' boxes are grey.",
 		section = SPOTS,
-		position = 4
+		position = 1
 	)
 	default Color wreckReachColor()
 	{
 		return new Color(255, 215, 40, 190);
-	}
-
-	@ConfigItem(
-		keyName = "outlineWrecks",
-		name = "Outline wrecks that are up",
-		description = "Outline the hull of every wreck in view that is up and that your Sailing level lets you salvage, "
-			+ "the way the game outlines one under the mouse. Sunk wrecks and wrecks above your level get nothing.",
-		section = SPOTS,
-		position = 5
-	)
-	default boolean outlineWrecks()
-	{
-		return true;
 	}
 
 	@ConfigItem(
@@ -663,7 +664,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Box the water where one hook reaches two wreck sites at once, whether or not both wrecks are up "
 			+ "right now. Park so every hook sits in the box and it changes colour and says Parked.",
 		section = SPOTS,
-		position = 6
+		position = 3
 	)
 	default boolean doubleSpotBoxes()
 	{
@@ -677,7 +678,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Outline colour of the double spot boxes while you are not parked in them. The fill is a fainter "
 			+ "version of it.",
 		section = SPOTS,
-		position = 7
+		position = 4
 	)
 	default Color doubleSpotColor()
 	{
@@ -691,7 +692,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "The colour a double spot box changes to once every hook on your boat is inside it: both hooks on a "
 			+ "sloop, the one hook on a raft or skiff.",
 		section = SPOTS,
-		position = 8
+		position = 5
 	)
 	default Color doubleSpotParkedColor()
 	{
@@ -704,7 +705,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Write \"Double spot\" on each box where to park, with how many of your hooks are in it, and "
 			+ "\"Parked\" once they all are.",
 		section = SPOTS,
-		position = 9
+		position = 6
 	)
 	default boolean doubleSpotLabels()
 	{
@@ -719,7 +720,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "How long after the boat stops the double spot boxes disappear, at login too; they come back the "
 			+ "moment the boat moves. 0 keeps them on screen.",
 		section = SPOTS,
-		position = 10
+		position = 7
 	)
 	default int doubleSpotHideSeconds()
 	{
@@ -732,7 +733,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Once the double spot boxes have hidden, keep the words \"Parked in double spot\" in the "
 			+ "middle of your boat while every hook is in it. Only the text, no box.",
 		section = SPOTS,
-		position = 11
+		position = 8
 	)
 	default boolean parkedTextAfterHide()
 	{
@@ -746,8 +747,8 @@ public interface AfkSalvagingConfig extends Config
 		description = "Name the nearest dock you can use and the nearest dock where your crew bank the hold as you step off "
 			+ "(a dock with a bank deposit box, or the bank boat) at the top of the sidebar, each with buttons to show "
 			+ "it on the world map and to route there with the Shortest Path plugin.",
-		section = SPOTS,
-		position = 12
+		section = SIDEBAR,
+		position = 1
 	)
 	default boolean nearestDock()
 	{
@@ -759,8 +760,8 @@ public interface AfkSalvagingConfig extends Config
 		name = "Only docks I can use",
 		description = "Name only docks whose Sailing level (unboosted) and quest you meet, and say what a nearer one "
 			+ "needs when there is one. Off names the nearest whatever they need.",
-		section = SPOTS,
-		position = 14
+		section = SIDEBAR,
+		position = 2
 	)
 	default boolean dockRequirements()
 	{
@@ -773,8 +774,8 @@ public interface AfkSalvagingConfig extends Config
 		description = "When you board your boat from a dock, hand the spot marked Auto in the sidebar to the Shortest "
 			+ "Path plugin so the route is drawn without pressing anything. Only one spot can be marked. The route is "
 			+ "cleared when you reach the spot or leave your boat.",
-		section = SPOTS,
-		position = 13
+		section = SIDEBAR,
+		position = 3
 	)
 	default boolean autoRouteOnBoarding()
 	{
@@ -784,7 +785,8 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigSection(
 		name = "Inventory sorting",
 		description = "Boxes round inventory items saying what to keep, put in the hold, alch or drop",
-		position = 7
+		position = 7,
+		closedByDefault = true
 	)
 	String SORTING = "sorting";
 
@@ -952,6 +954,26 @@ public interface AfkSalvagingConfig extends Config
 	default boolean updateMessage()
 	{
 		return true;
+	}
+
+	// ---- 2.0's two wreck switches, replaced by "Mark wrecks" in 2.1; read once to carry a choice over ----
+
+	@ConfigItem(keyName = "wreckReachBoxes", name = "", description = "", hidden = true)
+	default boolean wreckReachBoxes()
+	{
+		return true;
+	}
+
+	@ConfigItem(keyName = "outlineWrecks", name = "", description = "", hidden = true)
+	default boolean outlineWrecks()
+	{
+		return true;
+	}
+
+	@ConfigItem(keyName = "wreckMarkingCarried", name = "", description = "", hidden = true)
+	default boolean wreckMarkingCarried()
+	{
+		return false;
 	}
 
 	// ---- Remembered sidebar choices; set from the sidebar, not shown in the settings ----

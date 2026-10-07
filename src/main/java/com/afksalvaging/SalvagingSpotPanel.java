@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.Set;
@@ -28,11 +29,14 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
@@ -45,9 +49,10 @@ import net.runelite.client.util.LinkBrowser;
 /**
  * The sidebar: every salvaging hotspot, filtered and sorted from two dropdowns, each with buttons
  * to show it on the world map, route there with the Shortest Path plugin, pin it as a favourite
- * and mark it for the automatic route when boarding. Above the list: the nearest dock with its
- * own Map and Route, and the session totals. Below it: a test alert, forgetting the learned rates,
- * and the tips.
+ * and mark it for the automatic route when boarding. Above the list, each under a heading that folds
+ * it away: the tools (a test alert, forgetting the learned rates, clearing the route), the nearest
+ * docks with their own Map and Route, and the session totals. The Sorting tab holds the inventory
+ * marks; the Tips tab, "Find a setting" and the tips.
  * <p>
  * Swing only. Anything that touches the game or the settings goes back through {@link Actions} so
  * the plugin can run it on the client thread.
@@ -89,7 +94,15 @@ public class SalvagingSpotPanel extends PluginPanel
 
 		/** The player agreed to add the suggested drops to their Drop list. */
 		void addSuggestedDrops();
+
+		/** A block of the Spots tab was opened or folded away; the key is one of the {@code FOLD_} names. */
+		void foldChanged(String fold, boolean open);
 	}
+
+	/** The foldable blocks of the Spots tab, by the key their state is remembered under. */
+	static final String FOLD_TOOLS = "tools";
+	static final String FOLD_DOCKS = "docks";
+	static final String FOLD_SESSION = "session";
 
 	/** The sidebar's fixed colours; the sorting list headings follow the settings, see {@link #setSortColours}. */
 	private final Color inLevel = Palette.SIDEBAR_IN_LEVEL;
@@ -154,6 +167,13 @@ public class SalvagingSpotPanel extends PluginPanel
 	private boolean dockShownSetting = true;
 	/** Set while the dropdowns are being put to a stored value, so that does not count as a choice. */
 	private boolean loading;
+	/** The Spots tab's foldable blocks (owner, 2026-10-07: "de clutter"), by their {@code FOLD_} key. */
+	private final Map<String, Fold> folds = new LinkedHashMap<>();
+	private final JPanel docksContent = new JPanel();
+	/** Every setting, for "Find a setting" in the Tips tab; given by the plugin. */
+	private List<SettingsSearch.Entry> settings = Collections.emptyList();
+	private final JTextField settingsQuery = new JTextField();
+	private final JPanel settingsFound = new JPanel();
 
 	public SalvagingSpotPanel(Actions actions)
 	{
@@ -183,8 +203,9 @@ public class SalvagingSpotPanel extends PluginPanel
 		titleRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, LINK_BUTTON_SIZE));
 		top.add(titleRow);
 		top.add(Box.createVerticalStrut(6));
-		// The tools sit at the top so they are not buried under the spot list (owner, 2026-10-02).
-		top.add(toolsBlock());
+		// The tools sit at the top so they are not buried under the spot list (owner, 2026-10-02), in a
+		// block that can be folded away (owner, 2026-10-07).
+		top.add(fold(FOLD_TOOLS, "Tools", toolsBlock(), false));
 		top.add(Box.createVerticalStrut(8));
 
 		for (String[] choice : FILTERS)
@@ -227,17 +248,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		top.add(levelNote);
 		top.add(Box.createVerticalStrut(4));
 
-		JButton clear = button("Clear route", "Take down the Shortest Path route.");
-		clear.addActionListener(e -> actions.clearRoute());
-		top.add(clear);
-		top.add(Box.createVerticalStrut(4));
-
-		JLabel note = new JLabel(html("Map pans the world map while it is open; otherwise open it and it "
-			+ "jumps there. Route draws the way there with the Shortest Path plugin.", TOP_TEXT_WIDTH));
-		small(note);
-		top.add(note);
-		top.add(Box.createVerticalStrut(4));
-
+		// What Map and Route do is in the Tips tab (moved there 2026-10-07 to shorten this tab).
 		small(status);
 		top.add(status);
 		top.add(Box.createVerticalStrut(6));
@@ -249,19 +260,25 @@ public class SalvagingSpotPanel extends PluginPanel
 		mooringRoute.addActionListener(e -> withDock(mooring, actions::routeToDock));
 		mooringButtons = buttons(mooringMap, mooringRoute);
 		dockBox(mooringBlock, mooringLabel, mooringButtons);
-		top.add(mooringBlock);
-		top.add(Box.createVerticalStrut(4));
+		docksContent.setLayout(new BoxLayout(docksContent, BoxLayout.Y_AXIS));
+		docksContent.setOpaque(false);
+		docksContent.add(mooringBlock);
+		docksContent.add(Box.createVerticalStrut(4));
 		JButton portMap = button("Map", "Show the nearest dock where your crew bank the hold on the world map.");
 		portMap.addActionListener(e -> withDock(port, actions::showDockOnMap));
 		JButton portRoute = button("Route", "Ask the Shortest Path plugin to draw a route to the nearest dock where your crew bank the hold.");
 		portRoute.addActionListener(e -> withDock(port, actions::routeToDock));
 		portButtons = buttons(portMap, portRoute);
 		dockBox(portBlock, portLabel, portButtons);
-		top.add(portBlock);
+		docksContent.add(portBlock);
+		top.add(fold(FOLD_DOCKS, "Docks", docksContent, true));
 		top.add(Box.createVerticalStrut(6));
 
 		small(statsLabel);
-		top.add(statsLabel);
+		top.add(fold(FOLD_SESSION, "Session", statsLabel, true));
+		// Until there is a dock to name or a session to sum up, their headings stay hidden.
+		folds.get(FOLD_DOCKS).setVisible(false);
+		folds.get(FOLD_SESSION).setVisible(false);
 
 		list.setLayout(new BoxLayout(list, BoxLayout.Y_AXIS));
 		list.setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -287,12 +304,57 @@ public class SalvagingSpotPanel extends PluginPanel
 		rebuild();
 	}
 
-	/** The tips, in their own tab. */
+	/** "Find a setting" and the tips, in their own tab. */
 	private JPanel tipsBlock()
 	{
 		JPanel block = new JPanel();
 		block.setLayout(new BoxLayout(block, BoxLayout.Y_AXIS));
 		block.setBackground(ColorScheme.DARK_GRAY_COLOR);
+
+		JLabel heading = new JLabel("Find a setting");
+		heading.setFont(FontManager.getRunescapeBoldFont());
+		heading.setForeground(Color.WHITE);
+		heading.setAlignmentX(LEFT_ALIGNMENT);
+		block.add(heading);
+		block.add(Box.createVerticalStrut(4));
+		settingsQuery.setFont(FontManager.getRunescapeSmallFont());
+		settingsQuery.setToolTipText("Type a word or two, such as banner, sound or colour.");
+		settingsQuery.setAlignmentX(LEFT_ALIGNMENT);
+		settingsQuery.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
+		settingsQuery.getDocument().addDocumentListener(new DocumentListener()
+		{
+			@Override
+			public void insertUpdate(DocumentEvent e)
+			{
+				showSettingsFound();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e)
+			{
+				showSettingsFound();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e)
+			{
+				showSettingsFound();
+			}
+		});
+		block.add(settingsQuery);
+		block.add(Box.createVerticalStrut(4));
+		settingsFound.setLayout(new BoxLayout(settingsFound, BoxLayout.Y_AXIS));
+		settingsFound.setOpaque(false);
+		settingsFound.setAlignmentX(LEFT_ALIGNMENT);
+		block.add(settingsFound);
+		block.add(Box.createVerticalStrut(10));
+
+		JLabel tipsHeading = new JLabel("Tips");
+		tipsHeading.setFont(FontManager.getRunescapeBoldFont());
+		tipsHeading.setForeground(Color.WHITE);
+		tipsHeading.setAlignmentX(LEFT_ALIGNMENT);
+		block.add(tipsHeading);
+		block.add(Box.createVerticalStrut(4));
 		JLabel body = new JLabel(SalvagingTips.html(TOP_TEXT_WIDTH));
 		small(body);
 		body.setAlignmentX(LEFT_ALIGNMENT);
@@ -300,7 +362,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		return block;
 	}
 
-	/** Test alert and Forget rates, at the top of the Spots tab. */
+	/** Test alert, Forget rates and Clear route, at the top of the Spots tab. */
 	private JPanel toolsBlock()
 	{
 		JButton test = button("Test alert", "Send the full-hold notification now, with the banner, so you can check "
@@ -309,9 +371,18 @@ public class SalvagingSpotPanel extends PluginPanel
 		JButton forget = button("Forget rates", "Throw away what the timer has learned about how fast your "
 			+ "crew salvage each wreck. It starts again from the published tables.");
 		forget.addActionListener(e -> actions.forgetLearnedRates());
-		JPanel tools = buttons(test, forget);
-		tools.setAlignmentX(LEFT_ALIGNMENT);
-		tools.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
+		JPanel pair = buttons(test, forget);
+		pair.setAlignmentX(LEFT_ALIGNMENT);
+		pair.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
+		JButton clear = button("Clear route", "Take down the Shortest Path route.");
+		clear.addActionListener(e -> actions.clearRoute());
+		clear.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
+		JPanel tools = new JPanel();
+		tools.setLayout(new BoxLayout(tools, BoxLayout.Y_AXIS));
+		tools.setOpaque(false);
+		tools.add(pair);
+		tools.add(Box.createVerticalStrut(4));
+		tools.add(clear);
 		return tools;
 	}
 
@@ -602,7 +673,40 @@ public class SalvagingSpotPanel extends PluginPanel
 	/** The session line, already worded; empty hides it. */
 	public void setStats(String text)
 	{
-		SwingUtilities.invokeLater(() -> statsLabel.setText(text == null || text.isEmpty() ? "" : html(text, TOP_TEXT_WIDTH)));
+		SwingUtilities.invokeLater(() ->
+		{
+			boolean any = text != null && !text.isEmpty();
+			statsLabel.setText(any ? html(text, TOP_TEXT_WIDTH) : "");
+			// No session yet: no Session heading over an empty block.
+			folds.get(FOLD_SESSION).setVisible(any);
+		});
+	}
+
+	/**
+	 * Opens or folds the Spots tab's blocks as the character logged in left them. A block with no
+	 * stored choice keeps its default.
+	 */
+	public void setFolds(Map<String, Boolean> open)
+	{
+		SwingUtilities.invokeLater(() ->
+		{
+			for (Map.Entry<String, Fold> fold : folds.entrySet())
+			{
+				Boolean stored = open.get(fold.getKey());
+				fold.getValue().setOpen(stored == null ? fold.getValue().openByDefault : stored);
+			}
+			revalidate();
+		});
+	}
+
+	/** Every setting the player can see, for "Find a setting". */
+	public void setSettings(List<SettingsSearch.Entry> entries)
+	{
+		SwingUtilities.invokeLater(() ->
+		{
+			settings = entries;
+			showSettingsFound();
+		});
 	}
 
 	// ---- Internals ----
@@ -664,6 +768,8 @@ public class SalvagingSpotPanel extends PluginPanel
 		mooringBlock.setVisible(shown && known);
 		// The banking box is left out when the dock you can use is itself one where the crew bank the hold.
 		portBlock.setVisible(shown && known && (port == null || port != mooring));
+		// No heading over nothing: the Docks block shows only with a dock to name.
+		folds.get(FOLD_DOCKS).setVisible(shown && known);
 		revalidate();
 	}
 
@@ -953,6 +1059,121 @@ public class SalvagingSpotPanel extends PluginPanel
 		double scale = Math.min((double) LINK_ICON_SIZE / image.getWidth(), (double) LINK_ICON_SIZE / image.getHeight());
 		return ImageUtil.resizeImage(image, Math.max(1, (int) Math.round(image.getWidth() * scale)),
 			Math.max(1, (int) Math.round(image.getHeight() * scale)));
+	}
+
+	/** The matches for what is typed in "Find a setting", each with where it sits and what it does. */
+	private void showSettingsFound()
+	{
+		settingsFound.removeAll();
+		String query = settingsQuery.getText();
+		List<SettingsSearch.Entry> found = SettingsSearch.find(settings, query);
+		if (query != null && !query.trim().isEmpty() && found.isEmpty())
+		{
+			JLabel none = new JLabel(html("No setting matches that.", TOP_TEXT_WIDTH));
+			small(none);
+			settingsFound.add(none);
+		}
+		for (SettingsSearch.Entry entry : found)
+		{
+			JPanel row = new JPanel();
+			row.setLayout(new BoxLayout(row, BoxLayout.Y_AXIS));
+			row.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+			row.setBorder(BorderFactory.createEmptyBorder(5, 7, 5, 7));
+			row.setAlignmentX(LEFT_ALIGNMENT);
+			JLabel name = new JLabel(html(entry.getName(), ROW_TEXT_WIDTH));
+			name.setFont(FontManager.getRunescapeSmallFont());
+			name.setForeground(Color.WHITE);
+			name.setAlignmentX(LEFT_ALIGNMENT);
+			row.add(name);
+			JLabel where = new JLabel(html(entry.where(), ROW_TEXT_WIDTH));
+			small(where);
+			where.setForeground(marked);
+			row.add(where);
+			if (!entry.getDescription().isEmpty())
+			{
+				JLabel what = new JLabel(html(entry.getDescription(), ROW_TEXT_WIDTH));
+				small(what);
+				row.add(what);
+			}
+			settingsFound.add(row);
+			settingsFound.add(Box.createVerticalStrut(4));
+		}
+		settingsFound.revalidate();
+		settingsFound.repaint();
+	}
+
+	/** A block of the Spots tab under a heading that opens and folds it. */
+	private Fold fold(String key, String title, JComponent content, boolean openByDefault)
+	{
+		Fold fold = new Fold(key, title, content, openByDefault);
+		folds.put(key, fold);
+		return fold;
+	}
+
+	/**
+	 * A heading with "+" or "-" that shows or folds away the block under it. Plain text marks, since
+	 * the RuneScape font has no arrows. The choice is remembered per character through {@link Actions}.
+	 */
+	private final class Fold extends JPanel
+	{
+		private final String key;
+		private final String title;
+		private final JComponent content;
+		private final boolean openByDefault;
+		private final JLabel heading = new JLabel();
+
+		Fold(String key, String title, JComponent content, boolean openByDefault)
+		{
+			this.key = key;
+			this.title = title;
+			this.content = content;
+			this.openByDefault = openByDefault;
+			setLayout(new BorderLayout(0, 4));
+			setOpaque(false);
+			setAlignmentX(LEFT_ALIGNMENT);
+			heading.setFont(FontManager.getRunescapeBoldFont());
+			heading.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+			heading.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+			heading.addMouseListener(new MouseAdapter()
+			{
+				@Override
+				public void mouseClicked(MouseEvent e)
+				{
+					setOpen(!content.isVisible());
+					actions.foldChanged(Fold.this.key, content.isVisible());
+				}
+
+				@Override
+				public void mouseEntered(MouseEvent e)
+				{
+					heading.setForeground(Color.WHITE);
+				}
+
+				@Override
+				public void mouseExited(MouseEvent e)
+				{
+					heading.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+				}
+			});
+			add(heading, BorderLayout.NORTH);
+			add(content, BorderLayout.CENTER);
+			setOpen(openByDefault);
+		}
+
+		void setOpen(boolean open)
+		{
+			content.setVisible(open);
+			heading.setText((open ? "- " : "+ ") + title);
+			heading.setToolTipText(open ? "Fold " + title + " away" : "Show " + title);
+			revalidate();
+		}
+
+		@Override
+		public Dimension getMaximumSize()
+		{
+			// Full width, no taller than its contents: BoxLayout would otherwise stretch it.
+			return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
+		}
 	}
 
 	private static JPanel buttons(JButton left, JButton right)

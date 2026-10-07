@@ -17,11 +17,11 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 
 /**
- * Outlines the hull of every wreck in view that is up and that the player's Sailing level lets
- * them salvage, the way the game outlines a wreck under the mouse (owner, 2026-10-03: "a nice
- * indicator without being too much mess of overlays on screen"). Sunk wrecks and wrecks above
- * the player's level get nothing; the yellow boxes already say where those are. A setting, on by
- * default; the colour is fixed.
+ * Outlines the hull of every wreck in view that the player's Sailing level lets them salvage, the
+ * way the game outlines a wreck under the mouse (owner, 2026-10-03: "a nice indicator without being
+ * too much mess of overlays on screen"): cyan while it is up, grey once it has sunk (owner,
+ * 2026-10-07). Wrecks above the player's level get nothing. Drawn when "Mark wrecks" includes the
+ * hull; the colours are fixed.
  */
 public class WreckOutlineOverlay extends Overlay
 {
@@ -48,21 +48,22 @@ public class WreckOutlineOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		if (!config.outlineWrecks() || !plugin.isOwnBoat())
+		if (!config.wreckMarking().hull() || !plugin.isOwnBoat())
 		{
 			return null;
 		}
 		int level = client.getBoostedSkillLevel(Skill.SAILING);
 		for (WreckTracker.Site site : plugin.getSession().wrecks().presentSites())
 		{
-			if (!site.isActive() || site.getType().getSailingLevel() > level)
+			if (site.getType().getSailingLevel() > level)
 			{
 				continue;
 			}
+			// A sunk site's object is the stump the next wreck rises from; it is outlined the same way.
 			GameObject wreck = plugin.wreckObject(site.getPoint());
 			if (wreck != null)
 			{
-				outlines.drawOutline(wreck, WIDTH, Palette.WRECK_OUTLINE, FEATHER);
+				outlines.drawOutline(wreck, WIDTH, site.isActive() ? Palette.WRECK_OUTLINE : Palette.WRECK_SUNK, FEATHER);
 			}
 		}
 		return null;

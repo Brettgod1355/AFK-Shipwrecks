@@ -15,8 +15,9 @@ public final class SalvagingTips
 	private static final List<String> TIPS = Collections.unmodifiableList(Arrays.asList(
 		"The boxes on the water are for your hooks, not the whole boat. The game measures salvage reach from the "
 			+ "hook, so a hook has to sit inside a box. Yellow: a hook there reaches that wreck. Green: a hook there "
-			+ "reaches two wrecks at once. Wrecks that are up and within your level also get a soft cyan outline round "
-			+ "the hull, like the game's own hover outline (a setting).",
+			+ "reaches two wrecks at once. Wrecks within your level also get an outline round the hull, like the "
+			+ "game's own hover outline: cyan while up, grey once sunk. \"Mark wrecks\" picks the hull, the area, both "
+			+ "or neither.",
 		"Park so every hook on your boat is inside a green box: both on a sloop, the one on a raft or skiff. "
 			+ "The box changes to the parked colour and says \"Parked\" when they all are; with only some in, the "
 			+ "label counts them. Once parked, the yellow boxes go, to clear the view (a setting, on by default), and "
@@ -31,8 +32,7 @@ public final class SalvagingTips
 			+ "it (or your hook rolls on it); lifetimes are averages, so past the clock it says \"any moment\" and soon "
 			+ "gives up on that wreck until it is seen worked again.",
 		"A double spot is a place, not a moment: the green box shows even while one or both of its wrecks are down, "
-			+ "because the next wreck rises on the same tile, so you can park and wait. Sunk wrecks' yellow boxes are "
-			+ "dimmer.",
+			+ "because the next wreck rises on the same tile, so you can park and wait. Sunk wrecks' boxes turn grey.",
 		"Map pans the world map while it is open. With it closed, press Map, then open the map and it jumps there.",
 		"Route asks the Shortest Path plugin to draw the way. The line above the list says if it is missing or "
 			+ "switched off. A route to a spot, sent by Route or by Auto, is cleared for you once you pull up to one "
@@ -49,7 +49,11 @@ public final class SalvagingTips
 			+ "nearer one needs. Afloat, those are sailing distances as well; ashore, a straight line, since you "
 			+ "walk to a dock. The dropdowns are remembered between sessions.",
 		"Test alert fires the full-hold notification and banner so you can check your set-up without filling a "
-			+ "hold. Forget rates throws away what the timer learned about your crew's speed on each wreck.",
+			+ "hold. Forget rates throws away what the timer learned about your crew's speed on each wreck. Clear "
+			+ "route takes down the Shortest Path line. They sit under Tools at the top of the Spots tab; click a "
+			+ "heading there (Tools, Docks, Session) to fold it away, and each character remembers which are open.",
+		"Find a setting, at the top of this tab, searches every setting by name and description and says which "
+			+ "section of the AFK Shipwrecks settings it sits in. The sections start folded, so open that one.",
 		"The timer and counter need one real look at the hold: open the cargo hold once and they follow from there. "
 			+ "Opening it again at any time resyncs the tally.",
 		"Your crew salvage at your Sailing level, boosted or not. If a boost lapses below the wreck's level they "

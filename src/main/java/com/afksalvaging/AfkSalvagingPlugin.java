@@ -146,6 +146,8 @@ public class AfkSalvagingPlugin extends Plugin
 	private static final String FILTER_KEY = "spotFilter";
 	private static final String NEAREST_FIRST_KEY = "spotNearestFirst";
 	private static final String AUTO_ROUTE_KEY = "autoRouteSpot";
+	/** Per character: whether each foldable block of the Spots tab is open, under this prefix and its key. */
+	private static final String FOLD_KEY_PREFIX = "spotFold.";
 	/** Ticks between updates of the sidebar's distances and session line. */
 	private static final int SIDEBAR_REFRESH_TICKS = 4;
 	/** Ticks after login before boarding counts as boarding: logging in aboard is not. */
@@ -334,6 +336,7 @@ public class AfkSalvagingPlugin extends Plugin
 	{
 		clearState();
 		noteVersion();
+		carryWreckMarking();
 		try
 		{
 			seaMap = SeaMap.load();
@@ -495,6 +498,7 @@ public class AfkSalvagingPlugin extends Plugin
 			// Another character: their own favourites, dropdowns and Auto spot.
 			spotsPanel.setFavourites(loadFavourites());
 			spotsPanel.setChoices(spotFilterChoice(), nearestFirstChoice());
+			spotsPanel.setFolds(foldChoices());
 			spotsPanel.setAutoRoute(autoRouteSpot());
 		}
 	}
@@ -1078,6 +1082,23 @@ public class AfkSalvagingPlugin extends Plugin
 		configManager.setConfiguration(AfkSalvagingConfig.GROUP, "lastVersion", WhatsNew.VERSION);
 	}
 
+	/**
+	 * 2.1 put 2.0's "Wreck reach boxes" and "Outline wrecks that are up" switches into one "Mark wrecks"
+	 * dropdown. The first start on 2.1 reads the two old switches, sets the dropdown to match and notes
+	 * that it has, so a player who turned either off keeps their choice. A fresh install reads both
+	 * defaults (on), which is the dropdown's own default.
+	 */
+	private void carryWreckMarking()
+	{
+		if (config.wreckMarkingCarried())
+		{
+			return;
+		}
+		WreckMarking carried = WreckMarking.of(config.outlineWrecks(), config.wreckReachBoxes());
+		configManager.setConfiguration(AfkSalvagingConfig.GROUP, "wreckMarking", carried);
+		configManager.setConfiguration(AfkSalvagingConfig.GROUP, "wreckMarkingCarried", true);
+	}
+
 	// ---- Inventory sorting: boxes round items, marks, the sidebar lists ----
 
 	/** Whether the inventory boxes are drawn right now, as decided on the last game tick. */
@@ -1549,6 +1570,16 @@ public class AfkSalvagingPlugin extends Plugin
 			}
 
 			@Override
+			public void foldChanged(String fold, boolean open)
+			{
+				// Quietly unsaved when logged out: folding a block is not worth a "log in first" line.
+				if (configManager.getRSProfileKey() != null)
+				{
+					configManager.setRSProfileConfiguration(AfkSalvagingConfig.GROUP, FOLD_KEY_PREFIX + fold, Boolean.toString(open));
+				}
+			}
+
+			@Override
 			public void forgetLearnedRates()
 			{
 				clientThread.invokeLater(() ->
@@ -1560,6 +1591,8 @@ public class AfkSalvagingPlugin extends Plugin
 			}
 		});
 		spotsPanel.setChoices(spotFilterChoice(), nearestFirstChoice());
+		spotsPanel.setFolds(foldChoices());
+		spotsPanel.setSettings(SettingsSearch.entries(configManager.getConfigDescriptor(config)));
 		pushSortLists();
 		spotsPanel.setFavourites(loadFavourites());
 		spotsPanel.setAutoRoute(autoRouteSpot());
@@ -1806,6 +1839,21 @@ public class AfkSalvagingPlugin extends Plugin
 	private boolean nearestFirstChoice()
 	{
 		return Boolean.parseBoolean(profileChoice(NEAREST_FIRST_KEY));
+	}
+
+	/** Which of the Spots tab's blocks the character logged in left open or folded; missing ones keep their default. */
+	private Map<String, Boolean> foldChoices()
+	{
+		Map<String, Boolean> open = new HashMap<>();
+		for (String fold : new String[]{SalvagingSpotPanel.FOLD_TOOLS, SalvagingSpotPanel.FOLD_DOCKS, SalvagingSpotPanel.FOLD_SESSION})
+		{
+			String stored = profileChoice(FOLD_KEY_PREFIX + fold);
+			if (stored != null && !stored.isEmpty())
+			{
+				open.put(fold, Boolean.parseBoolean(stored));
+			}
+		}
+		return open;
 	}
 
 	/** The player has just stepped from a dock onto their own boat: send the marked spot, if any. */
