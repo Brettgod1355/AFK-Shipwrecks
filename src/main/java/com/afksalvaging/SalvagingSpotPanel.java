@@ -347,7 +347,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		small(words);
 		block.add(words);
 		block.add(Box.createVerticalStrut(10));
-		block.add(bigLink("github_white.png", "github_green.png", "Open a GitHub issue",
+		block.add(bigLink("github_white.png", "github_green.png", "Tell me on GitHub",
 			"Opens a new issue for AFK Shipwrecks on GitHub in your browser", GITHUB_NEW_ISSUE_URL));
 		block.add(Box.createVerticalStrut(8));
 		block.add(bigLink("discord_white.png", "discord_blurple.png", "Tell me on Discord",
