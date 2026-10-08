@@ -134,6 +134,8 @@ public class AfkSalvagingPlugin extends Plugin
 
 	/** RuneScape-profile config key prefix for the remembered count of each boat slot. */
 	private static final String USED_KEY_PREFIX = "used.";
+	/** Per character and boat slot: the item types in that boat's hold, so stacks are known after a restart. */
+	private static final String HOLD_ITEMS_KEY_PREFIX = "holdItems.";
 	/** RuneScape-profile config key prefix for the learned rate correction of each wreck. */
 	private static final String RATE_KEY_PREFIX = "rate.";
 	/** How often the learned rate is written out while salvaging. */
@@ -276,6 +278,8 @@ public class AfkSalvagingPlugin extends Plugin
 
 	/** The item ids in the current boat's hold when it was last read, to tell a new stack from an added-to one. */
 	private final Set<Integer> holdItemIds = new HashSet<>();
+	/** The inventory's items at the last change, id to quantity, to see which types a deposit took. */
+	private Map<Integer, Integer> lastInventory = new HashMap<>();
 
 	/** Damage hitsplats on the player since the last game tick, for the danger alert. */
 	private int playerHitsSinceTick;
@@ -664,6 +668,9 @@ public class AfkSalvagingPlugin extends Plugin
 				holdItemIds.add(item.getId());
 			}
 		}
+		saveHoldItems();
+		// The hold is known now: what the inventory would add to it may have changed.
+		session.holdSpaceRecounted(holdSpace(client.getItemContainer(InventoryID.INV)));
 		if (slot != monitoredSlot)
 		{
 			session.monitor().reset();
@@ -715,6 +722,8 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			session.holdBanked();
 			saveUsed();
+			holdItemIds.clear();
+			saveHoldItems();
 			return;
 		}
 		// Every deposit option on the hold: "Deposit", "Deposit-all", "Quick-deposit", "Deposit-held"
@@ -2276,6 +2285,7 @@ public class AfkSalvagingPlugin extends Plugin
 		int occupied = 0;
 		int holdSpace = 0;
 		int salvage = 0;
+		Map<Integer, Integer> counts = new HashMap<>();
 		Set<ShipwreckType> types = EnumSet.noneOf(ShipwreckType.class);
 		if (items != null)
 		{
@@ -2286,6 +2296,7 @@ public class AfkSalvagingPlugin extends Plugin
 					continue;
 				}
 				occupied++;
+				counts.merge(item.getId(), item.getQuantity(), Integer::sum);
 				if (takesHoldSpace(item.getId()))
 				{
 					holdSpace++;
@@ -2299,6 +2310,68 @@ public class AfkSalvagingPlugin extends Plugin
 			}
 		}
 		session.inventoryChanged(occupied, holdSpace, salvage, types, client.getTickCount());
+		// A deposit on the hold: any stackable type that left the inventory now has a stack there, so the
+		// next deposit of it adds nothing (owner, 2026-10-08).
+		if (session.holdDepositPending())
+		{
+			boolean learned = false;
+			for (int id : HoldItems.gone(lastInventory, counts))
+			{
+				if (!HoldWhitelist.TAKES_NO_SPACE.contains(id) && client.getItemDefinition(id).isStackable())
+				{
+					learned |= holdItemIds.add(id);
+				}
+			}
+			if (learned)
+			{
+				saveHoldItems();
+			}
+		}
+		lastInventory = counts;
+	}
+
+	/** How many of the inventory's slots would use a hold slot if deposited. */
+	private int holdSpace(ItemContainer inventory)
+	{
+		int space = 0;
+		Item[] items = inventory == null ? null : inventory.getItems();
+		if (items != null)
+		{
+			for (Item item : items)
+			{
+				if (item != null && item.getId() > -1 && item.getQuantity() > 0 && takesHoldSpace(item.getId()))
+				{
+					space++;
+				}
+			}
+		}
+		return space;
+	}
+
+	private void saveHoldItems()
+	{
+		if (monitoredSlot == 0 || configManager.getRSProfileKey() == null)
+		{
+			return;
+		}
+		String key = HOLD_ITEMS_KEY_PREFIX + monitoredSlot;
+		if (holdItemIds.isEmpty())
+		{
+			configManager.unsetRSProfileConfiguration(AfkSalvagingConfig.GROUP, key);
+		}
+		else
+		{
+			configManager.setRSProfileConfiguration(AfkSalvagingConfig.GROUP, key, HoldItems.encode(holdItemIds));
+		}
+	}
+
+	private void loadHoldItems(int slot)
+	{
+		if (configManager.getRSProfileKey() == null)
+		{
+			return;
+		}
+		HoldItems.decode(configManager.getRSProfileConfiguration(AfkSalvagingConfig.GROUP, HOLD_ITEMS_KEY_PREFIX + slot), holdItemIds);
 	}
 
 	/**
@@ -2379,7 +2452,8 @@ public class AfkSalvagingPlugin extends Plugin
 	private void reloadHold()
 	{
 		int slot = currentBoatSlot();
-		if (slot != monitoredSlot)
+		boolean newSlot = slot != monitoredSlot;
+		if (newSlot)
 		{
 			session.monitor().reset();
 			holdItemIds.clear();
@@ -2388,6 +2462,12 @@ public class AfkSalvagingPlugin extends Plugin
 		if (slot == 0)
 		{
 			return;
+		}
+		if (newSlot)
+		{
+			// What this boat's hold held when last seen, until it is opened again.
+			loadHoldItems(slot);
+			session.holdSpaceRecounted(holdSpace(client.getItemContainer(InventoryID.INV)));
 		}
 		// The client keeps the hold's container after the interface closes, but the server only
 		// updates it while the interface is open, so it is only the truth while that is showing.

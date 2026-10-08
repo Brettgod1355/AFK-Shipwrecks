@@ -1221,4 +1221,23 @@ public class AfkSessionTest
 		ticks(1);
 		assertEquals(203, session.monitor().getUsed());
 	}
+
+	@Test
+	public void learningWhatTheHoldHoldsChangesWhatADepositAdds()
+	{
+		ticks(2);
+		// Two cannonball stacks in the inventory, not yet known to be in the hold: two slots' worth.
+		session.inventoryChanged(2, 2, 0, Collections.emptySet(), tick);
+		// The hold is read and turns out to hold both types already.
+		session.holdSpaceRecounted(0);
+		session.holdActionClicked(false);
+		assertTrue(session.holdDepositPending());
+		session.inventoryChanged(0, 0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals("joining existing stacks uses no slot", 200, session.monitor().getUsed());
+		// No slot changed hands, so the click is followed for its usual window and then let go.
+		ticks(AfkSession.HOLD_ACTION_TICKS);
+		assertFalse(session.holdDepositPending());
+		assertEquals(200, session.monitor().getUsed());
+	}
 }

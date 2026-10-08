@@ -576,6 +576,24 @@ public final class AfkSession
 		monitor.adjust(1);
 	}
 
+	/** Whether a deposit click on the hold is being followed through the inventory right now. */
+	public boolean holdDepositPending()
+	{
+		return pendingHoldTicks > 0 && !pendingWithdraw;
+	}
+
+	/**
+	 * The inventory's hold-space count, worked out again because what the hold holds became known: a
+	 * cannonball the hold turns out to have no longer counts as a slot to deposit.
+	 */
+	public void holdSpaceRecounted(int holdSpace)
+	{
+		if (pendingHoldTicks <= 0)
+		{
+			occupiedInventorySlots = holdSpace;
+		}
+	}
+
 	/**
 	 * A crewmate at a dock (or the bank boat) was asked to bank the hold's cargo (owner, 2026-10-08; the
 	 * Sailing plugin's #180). The hold is taken as emptied, as an estimate until it is next opened.
