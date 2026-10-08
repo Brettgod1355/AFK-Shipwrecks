@@ -86,10 +86,11 @@ marked.
 - **A countdown infobox.** Optionally, the time to a full hold as one of RuneLite's small
   infoboxes, AFK written above the time and the detail on hover, so it stays in view with the
   overlay hidden.
-- **A sidebar with three tabs.** Spots (the tools, the nearest docks and the session line, each under a
+- **A sidebar with four tabs.** Spots (the tools, the nearest docks and the session line, each under a
   heading you can fold away, then the list), Sorting (each inventory sorting list with what you added, and
-  the default cannonballs under Deposit) and Tips, which starts with Find a setting: type a word and it
-  lists the matching settings and which section each one is in.
+  the default cannonballs under Deposit), Tips, which starts with Find a setting: type a word and it
+  lists the matching settings and which section each one is in, and Feedback, with big buttons to open
+  an issue on GitHub or tell me on Discord. They only open your browser; the plugin itself sends nothing.
 - **Knows where the wrecks are.** The Spots tab lists all 29 salvaging hotspots, filtered by
   wreck, down to the ones your level allows, or to your favourites, sorted by wreck or nearest to
   you first, with the Sailing level each needs, where it sits from the nearest port and how far it
