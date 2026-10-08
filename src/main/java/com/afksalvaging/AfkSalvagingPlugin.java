@@ -7,6 +7,7 @@ package com.afksalvaging;
 
 import com.google.inject.Provides;
 import java.awt.Color;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import java.util.function.Consumer;
 import java.awt.Component;
@@ -1553,6 +1554,26 @@ public class AfkSalvagingPlugin extends Plugin
 				picker.setLocationRelativeTo(near);
 				picker.setOnClose(chosen);
 				picker.setVisible(true);
+			}
+
+			@Override
+			public void reset(List<SettingsRows.Row> rows)
+			{
+				// As RuneLite's own Reset does: forget the saved value, then write the default back. Only
+				// the settings on the page; the hidden ones (what the hold accepts, the last version run,
+				// what was already carried over) are learned, not chosen, so they are kept.
+				for (SettingsRows.Row row : rows)
+				{
+					configManager.unsetConfiguration(AfkSalvagingConfig.GROUP, row.key);
+				}
+				configManager.setDefaultConfiguration(config, false);
+			}
+
+			@Override
+			public boolean confirm(Component near, String question)
+			{
+				return JOptionPane.showOptionDialog(near, question, "Are you sure?", JOptionPane.YES_NO_OPTION,
+					JOptionPane.WARNING_MESSAGE, null, new String[]{"Yes", "No"}, "No") == JOptionPane.YES_OPTION;
 			}
 
 			@Override

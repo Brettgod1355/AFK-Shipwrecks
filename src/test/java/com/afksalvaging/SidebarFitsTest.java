@@ -108,6 +108,17 @@ public class SidebarFitsTest
 				}
 
 				@Override
+				public void reset(List<SettingsRows.Row> rows)
+				{
+				}
+
+				@Override
+				public boolean confirm(Component near, String question)
+				{
+					return false;
+				}
+
+				@Override
 				public void back()
 				{
 				}

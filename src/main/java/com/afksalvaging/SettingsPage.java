@@ -15,6 +15,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,8 +28,10 @@ import javax.swing.JCheckBox;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JComboBox;
 import javax.swing.JList;
+import javax.swing.JMenuItem;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
@@ -47,6 +50,10 @@ import net.runelite.client.util.Text;
  * <p>
  * Notifications are an on/off here; their sound, popup and the rest stay in RuneLite's panel, where
  * the cog beside each notification setting opens them.
+ * <p>
+ * Resetting mirrors RuneLite's too (owner, 2026-10-08: "let's add a reset option"): right-click a
+ * setting for Reset, or Reset every setting at the bottom after a yes. Unlike RuneLite's, that one
+ * leaves the hidden values alone.
  */
 final class SettingsPage extends JPanel
 {
@@ -59,6 +66,12 @@ final class SettingsPage extends JPanel
 
 		/** Opens RuneLite's colour picker by {@code near}, reporting the colour chosen. */
 		void pickColour(Component near, SettingsRows.Row row, Color current, Consumer<Color> chosen);
+
+		/** Puts these settings back to their defaults, as RuneLite's Reset does. */
+		void reset(List<SettingsRows.Row> rows);
+
+		/** Asks a yes or no question by {@code near}; true for yes. */
+		boolean confirm(Component near, String question);
 
 		/** The Back button: show the Spots, Sorting, Tips and Feedback tabs again. */
 		void back();
@@ -75,12 +88,14 @@ final class SettingsPage extends JPanel
 	private final Map<String, Consumer<Object>> showers = new HashMap<>();
 	private final Map<String, SettingsRows.Row> byKey = new HashMap<>();
 	private final List<Section> sections = new ArrayList<>();
+	private final List<SettingsRows.Row> rows;
 	/** Set while values are being shown, so showing one does not write it back. */
 	private boolean showing;
 
 	SettingsPage(List<SettingsRows.Row> rows, Store store)
 	{
 		this.store = store;
+		this.rows = rows;
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 
@@ -147,6 +162,20 @@ final class SettingsPage extends JPanel
 			sectionsPanel.add(Box.createVerticalStrut(4));
 		}
 		add(sectionsPanel);
+		add(Box.createVerticalStrut(8));
+		JButton resetAll = new JButton("Reset every setting");
+		resetAll.setFont(FontManager.getRunescapeSmallFont());
+		resetAll.setAlignmentX(LEFT_ALIGNMENT);
+		resetAll.setToolTipText("Puts every setting on this page back to its default, after a yes. "
+			+ "Your sorting lists and what the plugin learned about the hold are kept.");
+		resetAll.addActionListener(e ->
+		{
+			if (store.confirm(resetAll, "Put every AFK Shipwrecks setting back to its default?"))
+			{
+				reset(this.rows);
+			}
+		});
+		add(resetAll);
 		for (SettingsRows.Row row : rows)
 		{
 			byKey.put(row.key, row);
@@ -162,6 +191,16 @@ final class SettingsPage extends JPanel
 		if (row != null)
 		{
 			show(key, store.get(row));
+		}
+	}
+
+	/** Puts these settings back to their defaults and shows them. */
+	private void reset(List<SettingsRows.Row> which)
+	{
+		store.reset(which);
+		for (SettingsRows.Row row : which)
+		{
+			refresh(row.key);
 		}
 	}
 
@@ -317,13 +356,21 @@ final class SettingsPage extends JPanel
 		panel.setOpaque(false);
 		panel.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 0));
 		panel.setAlignmentX(LEFT_ALIGNMENT);
-		String tooltip = row.description.isEmpty() ? null : SalvagingSpotPanel.html(row.description, 200);
+		String tooltip = SalvagingSpotPanel.html((row.description.isEmpty() ? "" : row.description + " ")
+			+ "Right-click to reset it.", 200);
 		panel.setToolTipText(tooltip);
+		// Right-click a setting for Reset, as in RuneLite's panel.
+		JPopupMenu menu = new JPopupMenu();
+		JMenuItem resetItem = new JMenuItem("Reset");
+		resetItem.addActionListener(e -> reset(Collections.singletonList(row)));
+		menu.add(resetItem);
+		panel.setComponentPopupMenu(menu);
 
 		JLabel name = new JLabel();
 		name.setFont(FontManager.getRunescapeSmallFont());
 		name.setForeground(Color.WHITE);
 		name.setToolTipText(tooltip);
+		name.setInheritsPopupMenu(true);
 		String label = row.name + (row.units.isEmpty() ? "" : " (" + row.units.trim() + ")");
 
 		switch (row.kind)

@@ -188,7 +188,9 @@ The same settings are one click away in the sidebar: the cog beside the title op
 there, in the same sections, with a search box that keeps only the settings whose name or
 description has every word you type. A change on either side shows on the other at once.
 Notifications are only on or off there; their sound and the custom options stay in RuneLite's
-own settings.
+own settings. Right-click a setting there for Reset, or use Reset every setting at the bottom, which asks
+first. It puts back only the settings you can see, so your sorting lists and what the plugin
+learned about the hold are kept.
 
 **Default notification**, at the top: how every notification in the plugin is sent unless its own
 setting is off or set to custom with the cog. Left plain it is RuneLite's own notification
