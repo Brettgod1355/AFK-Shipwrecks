@@ -68,108 +68,17 @@ public class SidebarFitsTest
 			}
 		});
 		assertEquals("the four tabs", 4, tabsSeen[0]);
-
-		// The settings page behind the cog, every section opened.
-		List<SettingsRows.Row> rows = SettingsRowsTest.rows();
-		SwingUtilities.invokeAndWait(() ->
-		{
-			SalvagingSpotPanel panel = holder[0];
-			panel.setSettingsPage(new SettingsPage(rows, new SettingsPage.Store()
-			{
-				@Override
-				public Object get(SettingsRows.Row row)
-				{
-					switch (row.kind)
-					{
-						case TOGGLE:
-							return true;
-						case NUMBER:
-							return row.min;
-						case TEXT:
-							return "596, 597";
-						case CHOICE:
-							return row.options[0];
-						case COLOUR:
-							return java.awt.Color.RED;
-						default:
-							return net.runelite.client.config.Notification.ON;
-					}
-				}
-
-				@Override
-				public void set(SettingsRows.Row row, Object value)
-				{
-				}
-
-				@Override
-				public void pickColour(Component near, SettingsRows.Row row, java.awt.Color current,
-					java.util.function.Consumer<java.awt.Color> chosen)
-				{
-				}
-
-				@Override
-				public void reset(List<SettingsRows.Row> rows)
-				{
-				}
-
-				@Override
-				public boolean confirm(Component near, String question)
-				{
-					return false;
-				}
-
-				@Override
-				public void back()
-				{
-				}
-			}));
-		});
-		SwingUtilities.invokeAndWait(() -> { });
-		SwingUtilities.invokeAndWait(() ->
-		{
-			SalvagingSpotPanel panel = holder[0];
-			panel.showSettings();
-			for (JLabel heading : all(panel.settingsPage(), JLabel.class))
-			{
-				if (heading.getText() != null && heading.getText().startsWith("+ "))
-				{
-					for (java.awt.event.MouseListener listener : heading.getMouseListeners())
-					{
-						listener.mouseClicked(new java.awt.event.MouseEvent(heading, java.awt.event.MouseEvent.MOUSE_CLICKED,
-							0, 0, 1, 1, 1, false));
-					}
-				}
-			}
-			check(panel, "Settings", problems);
-			int rowsShown = 0;
-			for (javax.swing.JCheckBox box : all(panel.settingsPage(), javax.swing.JCheckBox.class))
-			{
-				rowsShown += shown(box) ? 1 : 0;
-			}
-			assertTrue("the settings page's toggles are all open", rowsShown > 30);
-		});
-		assertTrue("cut off at the sidebar's width:\n" + String.join("\n", problems), problems.isEmpty());
 		assertTrue("cut off at the sidebar's width:\n" + String.join("\n", problems), problems.isEmpty());
 	}
 
 	private static void check(SalvagingSpotPanel panel, String tab, List<String> problems)
 	{
 		int width = PluginPanel.PANEL_WIDTH;
-		// Forget every size worked out before (sections were opened since), as the client does on validate.
-		invalidateAll(panel);
 		panel.setSize(width, 3000);
-		layout(panel);
 		layout(panel);
 		for (JComponent c : all(panel, JComponent.class))
 		{
 			if (!shown(c) || c.getWidth() == 0)
-			{
-				continue;
-			}
-			// A spinner's arrows are drawn at half its height and a dropdown's parts at its size, by
-			// design: those are the control's own insides, not text that can be cut off.
-			if (SwingUtilities.getAncestorOfClass(javax.swing.JSpinner.class, c) != null
-				|| SwingUtilities.getAncestorOfClass(javax.swing.JComboBox.class, c) != null)
 			{
 				continue;
 			}
@@ -198,18 +107,6 @@ public class SidebarFitsTest
 			}
 		}
 		return true;
-	}
-
-	private static void invalidateAll(Container c)
-	{
-		c.invalidate();
-		for (Component child : c.getComponents())
-		{
-			if (child instanceof Container)
-			{
-				invalidateAll((Container) child);
-			}
-		}
 	}
 
 	private static void layout(Container c)

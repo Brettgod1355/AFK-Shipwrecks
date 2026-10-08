@@ -7,12 +7,6 @@ package com.afksalvaging;
 
 import com.google.inject.Provides;
 import java.awt.Color;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import java.util.function.Consumer;
-import java.awt.Component;
-import net.runelite.client.ui.components.colorpicker.RuneliteColorPicker;
-import net.runelite.client.ui.components.colorpicker.ColorPickerManager;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -280,9 +274,6 @@ public class AfkSalvagingPlugin extends Plugin
 	private DangerOverlay dangerOverlay;
 
 	@Inject
-	private ColorPickerManager colorPickerManager;
-
-	@Inject
 	private HoldCountOverlay holdCountOverlay;
 
 	/** The item ids in the current boat's hold when it was last read, to tell a new stack from an added-to one. */
@@ -448,16 +439,6 @@ public class AfkSalvagingPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		// A setting changed in RuneLite's panel (or on our own page): show it on the sidebar's settings page.
-		SalvagingSpotPanel panel = spotsPanel;
-		if (panel != null && AfkSalvagingConfig.GROUP.equals(event.getGroup()))
-		{
-			SettingsPage page = panel.settingsPage();
-			if (page != null && page.shows(event.getKey()))
-			{
-				SwingUtilities.invokeLater(() -> page.refresh(event.getKey()));
-			}
-		}
 		// RuneLite posts this on whichever thread saved the setting, the Swing thread for the config
 		// panel; the sort lists and caches it rebuilds are read on the client thread, so it runs there
 		// (review, 2026-10-04).
@@ -1526,64 +1507,6 @@ public class AfkSalvagingPlugin extends Plugin
 
 	// ---- Salvage spots: sidebar, double spot boxes ----
 
-	/**
-	 * The sidebar's own settings page (owner, 2026-10-08): RuneLite's description of the settings, read
-	 * and written through the same ConfigManager calls RuneLite's panel makes.
-	 */
-	private SettingsPage settingsPage(SalvagingSpotPanel panel)
-	{
-		return new SettingsPage(SettingsRows.rows(configManager.getConfigDescriptor(config)), new SettingsPage.Store()
-		{
-			@Override
-			public Object get(SettingsRows.Row row)
-			{
-				return configManager.getConfiguration(AfkSalvagingConfig.GROUP, row.key, row.item.getType());
-			}
-
-			@Override
-			public void set(SettingsRows.Row row, Object value)
-			{
-				configManager.setConfiguration(AfkSalvagingConfig.GROUP, row.key, value);
-			}
-
-			@Override
-			public void pickColour(Component near, SettingsRows.Row row, Color current, Consumer<Color> chosen)
-			{
-				RuneliteColorPicker picker = colorPickerManager.create(SwingUtilities.getWindowAncestor(near), current,
-					row.name, !row.alpha);
-				picker.setLocationRelativeTo(near);
-				picker.setOnClose(chosen);
-				picker.setVisible(true);
-			}
-
-			@Override
-			public void reset(List<SettingsRows.Row> rows)
-			{
-				// As RuneLite's own Reset does: forget the saved value, then write the default back. Only
-				// the settings on the page; the hidden ones (what the hold accepts, the last version run,
-				// what was already carried over) are learned, not chosen, so they are kept.
-				for (SettingsRows.Row row : rows)
-				{
-					configManager.unsetConfiguration(AfkSalvagingConfig.GROUP, row.key);
-				}
-				configManager.setDefaultConfiguration(config, false);
-			}
-
-			@Override
-			public boolean confirm(Component near, String question)
-			{
-				return JOptionPane.showOptionDialog(near, question, "Are you sure?", JOptionPane.YES_NO_OPTION,
-					JOptionPane.WARNING_MESSAGE, null, new String[]{"Yes", "No"}, "No") == JOptionPane.YES_OPTION;
-			}
-
-			@Override
-			public void back()
-			{
-				panel.showTabs();
-			}
-		});
-	}
-
 	/** The plugin's chat line colour as the game's tag wants it: six hex digits, no transparency. */
 	private String tipColour()
 	{
@@ -1743,7 +1666,7 @@ public class AfkSalvagingPlugin extends Plugin
 		});
 		spotsPanel.setChoices(spotFilterChoice(), nearestFirstChoice());
 		spotsPanel.setFolds(foldChoices());
-		spotsPanel.setSettingsPage(settingsPage(spotsPanel));
+		spotsPanel.setSettings(SettingsSearch.entries(configManager.getConfigDescriptor(config)));
 		pushSortLists();
 		spotsPanel.setFavourites(loadFavourites());
 		spotsPanel.setAutoRoute(autoRouteSpot());

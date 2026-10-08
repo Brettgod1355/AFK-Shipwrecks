@@ -25,7 +25,7 @@ public final class WhatsNew
 	 * it empty for a release not worth a line (a fix, a wording change) and nothing is said.
 	 */
 	public static final String NOTE = "timers on every wreck, sunk wrecks in grey, hull or area wreck marks, tidier settings "
-		+ "and sidebar, and every setting with a search behind the sidebar's cog";
+		+ "and sidebar, and Find a setting under Tips";
 
 	/**
 	 * What the rename to AFK Shipwrecks brought, said to a Cargo Hold Alert 1.0 player whatever version

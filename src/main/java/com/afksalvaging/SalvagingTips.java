@@ -78,8 +78,8 @@ public final class SalvagingTips
 				+ "nearest dock you can use and the nearest where your crew bank the hold.",
 			"Click Tools, Docks or Session to fold it away. Forget rates throws away what the timer learned about "
 				+ "your crew's speed; Clear route takes the line down.",
-			"The cog beside the title opens every setting right here, with a search. Ideas or bugs? The Feedback "
-				+ "tab has GitHub and Discord."),
+			"Find a setting, above, searches every setting and says which section it is in. Ideas or bugs? The "
+				+ "Feedback tab has GitHub and Discord."),
 		new Group("Inventory sorting",
 			"On your boat at a spot, items get a box: cyan deposit (bronze to dragon cannonballs by default), green "
 				+ "alch (from the \"Alch from\" value), red drop (only what you mark), sage keep (if \"Box kept "

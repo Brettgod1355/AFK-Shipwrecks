@@ -6,12 +6,6 @@
 package com.afksalvaging;
 
 import java.awt.BorderLayout;
-import java.awt.geom.Rectangle2D;
-import java.awt.geom.Ellipse2D;
-import java.awt.RenderingHints;
-import java.awt.Graphics2D;
-import java.awt.CardLayout;
-import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -60,8 +54,7 @@ import net.runelite.client.util.LinkBrowser;
  * and mark it for the automatic route when boarding. Above the list, each under a heading that folds
  * it away: the tools (a test alert, forgetting the learned rates, clearing the route), the nearest
  * docks with their own Map and Route, and the session totals. The Sorting tab holds the inventory
- * marks; the Tips tab, the tips; the Feedback tab, GitHub and Discord. The cog beside the title swaps
- * all of it for the plugin's own settings page ({@link SettingsPage}).
+ * marks; the Tips tab, "Find a setting" and the tips.
  * <p>
  * Swing only. Anything that touches the game or the settings goes back through {@link Actions} so
  * the plugin can run it on the client thread.
@@ -191,11 +184,10 @@ public class SalvagingSpotPanel extends PluginPanel
 	/** The Spots tab's foldable blocks (owner, 2026-10-07: "de clutter"), by their {@code FOLD_} key. */
 	private final Map<String, Fold> folds = new LinkedHashMap<>();
 	private final JPanel docksContent = new JPanel();
-	/** The tabs, and the settings page the cog swaps them for (owner, 2026-10-08). */
-	private final JPanel cards = new JPanel(new CardLayout());
-	private SettingsPage settingsPage;
-	private static final String CARD_TABS = "tabs";
-	private static final String CARD_SETTINGS = "settings";
+	/** Every setting, for "Find a setting" in the Tips tab; given by the plugin. */
+	private List<SettingsSearch.Entry> settings = Collections.emptyList();
+	private final JTextField settingsQuery = new JTextField();
+	private final JPanel settingsFound = new JPanel();
 
 	public SalvagingSpotPanel(Actions actions)
 	{
@@ -213,9 +205,8 @@ public class SalvagingSpotPanel extends PluginPanel
 		title.setFont(FontManager.getRunescapeBoldFont());
 		title.setForeground(Color.WHITE);
 		// The community and the code, one click from the title (owner, 2026-10-04).
-		JPanel links = new JPanel(new GridLayout(1, 3, 4, 0));
+		JPanel links = new JPanel(new GridLayout(1, 2, 4, 0));
 		links.setOpaque(false);
-		links.add(cogButton());
 		links.add(link("discord_white.png", "discord_blurple.png", "AFK Shipwrecks on Discord: ask a question, make a suggestion or report a bug", DISCORD_URL));
 		links.add(link("github_white.png", "github_green.png", "AFK Shipwrecks on GitHub: code, bug reports and requests", GITHUB_URL));
 		JPanel titleRow = new JPanel(new BorderLayout());
@@ -332,13 +323,8 @@ public class SalvagingSpotPanel extends PluginPanel
 			tabs.addTab(all[i]);
 		}
 		tabs.select(spots);
-		JPanel tabsCard = new JPanel(new BorderLayout());
-		tabsCard.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		tabsCard.add(tabs, BorderLayout.NORTH);
-		tabsCard.add(display, BorderLayout.CENTER);
-		cards.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		cards.add(tabsCard, CARD_TABS);
-		add(cards, BorderLayout.CENTER);
+		add(tabs, BorderLayout.NORTH);
+		add(display, BorderLayout.CENTER);
 
 		rebuild();
 	}
@@ -419,12 +405,50 @@ public class SalvagingSpotPanel extends PluginPanel
 		return button;
 	}
 
-	/** The tips, in their own tab. */
+	/** "Find a setting" and the tips, in their own tab. */
 	private JPanel tipsBlock()
 	{
 		JPanel block = new JPanel();
 		block.setLayout(new BoxLayout(block, BoxLayout.Y_AXIS));
 		block.setBackground(ColorScheme.DARK_GRAY_COLOR);
+
+		JLabel heading = new JLabel("Find a setting");
+		heading.setFont(FontManager.getRunescapeBoldFont());
+		heading.setForeground(Color.WHITE);
+		heading.setAlignmentX(LEFT_ALIGNMENT);
+		block.add(heading);
+		block.add(Box.createVerticalStrut(4));
+		settingsQuery.setFont(FontManager.getRunescapeSmallFont());
+		settingsQuery.setToolTipText("Type a word or two, such as banner, sound or colour.");
+		settingsQuery.setAlignmentX(LEFT_ALIGNMENT);
+		settingsQuery.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
+		settingsQuery.getDocument().addDocumentListener(new DocumentListener()
+		{
+			@Override
+			public void insertUpdate(DocumentEvent e)
+			{
+				showSettingsFound();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e)
+			{
+				showSettingsFound();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e)
+			{
+				showSettingsFound();
+			}
+		});
+		block.add(settingsQuery);
+		block.add(Box.createVerticalStrut(4));
+		settingsFound.setLayout(new BoxLayout(settingsFound, BoxLayout.Y_AXIS));
+		settingsFound.setOpaque(false);
+		settingsFound.setAlignmentX(LEFT_ALIGNMENT);
+		block.add(settingsFound);
+		block.add(Box.createVerticalStrut(10));
 
 		JLabel tipsHeading = new JLabel("Tips");
 		tipsHeading.setFont(FontManager.getRunescapeBoldFont());
@@ -776,43 +800,14 @@ public class SalvagingSpotPanel extends PluginPanel
 		});
 	}
 
-	/** The plugin's settings page, behind the cog; the plugin builds it once it knows the settings. */
-	public void setSettingsPage(SettingsPage page)
+	/** Every setting the player can see, for "Find a setting". */
+	public void setSettings(List<SettingsSearch.Entry> entries)
 	{
 		SwingUtilities.invokeLater(() ->
 		{
-			if (settingsPage != null)
-			{
-				cards.remove(settingsPage);
-			}
-			settingsPage = page;
-			cards.add(page, CARD_SETTINGS);
-			cards.revalidate();
+			settings = entries;
+			showSettingsFound();
 		});
-	}
-
-	/** Swaps the tabs for the settings page, opening it on its folded sections. */
-	void showSettings()
-	{
-		if (settingsPage == null)
-		{
-			return;
-		}
-		settingsPage.clearSearch();
-		settingsPage.showAll();
-		((CardLayout) cards.getLayout()).show(cards, CARD_SETTINGS);
-	}
-
-	/** Back from the settings page to the tabs. */
-	void showTabs()
-	{
-		((CardLayout) cards.getLayout()).show(cards, CARD_TABS);
-	}
-
-	/** The settings page, for the plugin to show changes made in RuneLite's own panel. */
-	SettingsPage settingsPage()
-	{
-		return settingsPage;
 	}
 
 	// ---- Internals ----
@@ -1152,71 +1147,6 @@ public class SalvagingSpotPanel extends PluginPanel
 		return label;
 	}
 
-	/**
-	 * The cog beside the Discord and GitHub buttons that opens the settings page (owner, 2026-10-08):
-	 * the same black square, a white cog drawn here rather than taken from anyone's icon set, orange on
-	 * hover like RuneLite's own.
-	 */
-	private JLabel cogButton()
-	{
-		ImageIcon resting = new ImageIcon(cog(Color.WHITE));
-		ImageIcon hovered = new ImageIcon(cog(ColorScheme.BRAND_ORANGE));
-		JLabel label = new JLabel(resting);
-		label.setOpaque(true);
-		label.setBackground(Color.BLACK);
-		label.setHorizontalAlignment(JLabel.CENTER);
-		Dimension size = new Dimension(LINK_BUTTON_SIZE, LINK_BUTTON_SIZE);
-		label.setPreferredSize(size);
-		label.setMinimumSize(size);
-		label.setMaximumSize(size);
-		label.setToolTipText("AFK Shipwrecks settings, with a search");
-		label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		label.addMouseListener(new MouseAdapter()
-		{
-			@Override
-			public void mouseClicked(MouseEvent e)
-			{
-				showSettings();
-			}
-
-			@Override
-			public void mouseEntered(MouseEvent e)
-			{
-				label.setIcon(hovered);
-			}
-
-			@Override
-			public void mouseExited(MouseEvent e)
-			{
-				label.setIcon(resting);
-			}
-		});
-		return label;
-	}
-
-	/** A cog the size of the link logos: eight teeth round a ring. */
-	static BufferedImage cog(Color colour)
-	{
-		int size = LINK_ICON_SIZE;
-		BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-		Graphics2D g = image.createGraphics();
-		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		g.setColor(colour);
-		double centre = size / 2.0;
-		for (int i = 0; i < 8; i++)
-		{
-			Graphics2D tooth = (Graphics2D) g.create();
-			tooth.rotate(Math.PI / 4 * i, centre, centre);
-			tooth.fill(new Rectangle2D.Double(centre - 1.75, 0.5, 3.5, 4));
-			tooth.dispose();
-		}
-		g.fill(new Ellipse2D.Double(2.5, 2.5, size - 5, size - 5));
-		g.setComposite(AlphaComposite.Clear);
-		g.fill(new Ellipse2D.Double(centre - 2.75, centre - 2.75, 5.5, 5.5));
-		g.dispose();
-		return image;
-	}
-
 	/** The other version of a logo at exactly the size of the first, so hovering never shifts it by a pixel. */
 	static BufferedImage logoLike(String file, BufferedImage like)
 	{
@@ -1236,6 +1166,47 @@ public class SalvagingSpotPanel extends PluginPanel
 		double scale = Math.min((double) size / image.getWidth(), (double) size / image.getHeight());
 		return ImageUtil.resizeImage(image, Math.max(1, (int) Math.round(image.getWidth() * scale)),
 			Math.max(1, (int) Math.round(image.getHeight() * scale)));
+	}
+
+	/** The matches for what is typed in "Find a setting", each with where it sits and what it does. */
+	private void showSettingsFound()
+	{
+		settingsFound.removeAll();
+		String query = settingsQuery.getText();
+		List<SettingsSearch.Entry> found = SettingsSearch.find(settings, query);
+		if (query != null && !query.trim().isEmpty() && found.isEmpty())
+		{
+			JLabel none = new JLabel(html("No setting matches that.", TOP_TEXT_WIDTH));
+			small(none);
+			settingsFound.add(none);
+		}
+		for (SettingsSearch.Entry entry : found)
+		{
+			JPanel row = new JPanel();
+			row.setLayout(new BoxLayout(row, BoxLayout.Y_AXIS));
+			row.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+			row.setBorder(BorderFactory.createEmptyBorder(5, 7, 5, 7));
+			row.setAlignmentX(LEFT_ALIGNMENT);
+			JLabel name = new JLabel(html(entry.getName(), ROW_TEXT_WIDTH));
+			name.setFont(FontManager.getRunescapeSmallFont());
+			name.setForeground(Color.WHITE);
+			name.setAlignmentX(LEFT_ALIGNMENT);
+			row.add(name);
+			JLabel where = new JLabel(html(entry.where(), ROW_TEXT_WIDTH));
+			small(where);
+			where.setForeground(marked);
+			row.add(where);
+			if (!entry.getDescription().isEmpty())
+			{
+				JLabel what = new JLabel(html(entry.getDescription(), ROW_TEXT_WIDTH));
+				small(what);
+				row.add(what);
+			}
+			settingsFound.add(row);
+			settingsFound.add(Box.createVerticalStrut(4));
+		}
+		settingsFound.revalidate();
+		settingsFound.repaint();
 	}
 
 	/**
