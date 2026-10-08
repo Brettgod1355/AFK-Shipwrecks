@@ -24,11 +24,12 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class SettingsSearchTest
+public class SettingsRowsTest
 {
-	/** The plugin's settings described the way RuneLite's ConfigManager describes them. */
+	/** The plugin's settings described the way RuneLite's ConfigManager describes them (tests may reflect). */
 	static ConfigDescriptor describe() throws Exception
 	{
 		List<ConfigSectionDescriptor> sections = new ArrayList<>();
@@ -53,62 +54,89 @@ public class SettingsSearchTest
 		return new ConfigDescriptor(AfkSalvagingConfig.class.getAnnotation(ConfigGroup.class), sections, items);
 	}
 
-	private static List<SettingsSearch.Entry> entries() throws Exception
+	static List<SettingsRows.Row> rows() throws Exception
 	{
-		return SettingsSearch.entries(describe());
+		return SettingsRows.rows(describe());
 	}
 
 	@Test
-	public void hiddenSettingsAreNeverFound() throws Exception
+	public void everyVisibleSettingIsOnThePageAndNoHiddenOneIs() throws Exception
 	{
-		for (SettingsSearch.Entry entry : entries())
+		Set<String> onPage = new HashSet<>();
+		for (SettingsRows.Row row : rows())
 		{
-			assertFalse(entry.getName().isEmpty());
+			onPage.add(row.key);
 		}
-		assertTrue(SettingsSearch.find(entries(), "wreckMarkingCarried").isEmpty());
-		assertTrue(SettingsSearch.find(entries(), "lastVersion").isEmpty());
+		for (ConfigItemDescriptor item : describe().getItems())
+		{
+			ConfigItem annotation = item.getItem();
+			boolean visible = !annotation.hidden() && !annotation.name().isEmpty();
+			assertEquals(annotation.keyName() + (visible ? " is missing from the page (a new kind of setting?)" : " is hidden"),
+				visible, onPage.contains(annotation.keyName()));
+		}
 	}
 
 	@Test
-	public void aWordFindsTheSettingAndSaysWhereItIs() throws Exception
+	public void everyDropdownHasItsChoices() throws Exception
 	{
-		List<SettingsSearch.Entry> found = SettingsSearch.find(entries(), "banner size");
-		assertEquals("Banner size", found.get(0).getName());
-		assertEquals("AFK Shipwrecks settings > Banner", found.get(0).where());
-
-		found = SettingsSearch.find(entries(), "MARK WRECKS");
-		assertEquals("Mark wrecks", found.get(0).getName());
-		assertEquals("Wrecks and parking", found.get(0).getSection());
+		for (SettingsRows.Row row : rows())
+		{
+			if (row.kind == SettingsRows.Kind.CHOICE)
+			{
+				assertNotNull(row.key, row.options);
+				assertTrue(row.key, row.options.length > 1);
+			}
+		}
+		assertEquals(SettingsRows.Kind.CHOICE, SettingsRows.kindOf(WreckMarking.class));
+		assertEquals(SettingsRows.Kind.TOGGLE, SettingsRows.kindOf(boolean.class));
 	}
 
 	@Test
-	public void nameMatchesComeBeforeDescriptionMatches() throws Exception
+	public void numbersKeepTheirRangeAndUnits() throws Exception
 	{
-		List<SettingsSearch.Entry> found = SettingsSearch.find(entries(), "grace");
-		assertEquals("Grace period", found.get(0).getName());
+		for (SettingsRows.Row row : rows())
+		{
+			if (row.key.equals("reminderGraceSeconds"))
+			{
+				assertEquals(SettingsRows.Kind.NUMBER, row.kind);
+				assertFalse(row.units.isEmpty());
+				assertTrue(row.max < Integer.MAX_VALUE);
+				return;
+			}
+		}
+		throw new AssertionError("reminderGraceSeconds not found");
 	}
 
 	@Test
-	public void everyWordMustMatchAndEmptyFindsNothing() throws Exception
+	public void theLooseSettingsComeFirstUnderGeneral() throws Exception
 	{
-		assertTrue(SettingsSearch.find(entries(), "banner zzzz").isEmpty());
-		assertTrue(SettingsSearch.find(entries(), "   ").isEmpty());
-		assertTrue(SettingsSearch.find(entries(), null).isEmpty());
+		List<SettingsRows.Row> all = rows();
+		assertEquals(SettingsRows.GENERAL, all.get(0).section);
+		int general = 0;
+		for (SettingsRows.Row row : all)
+		{
+			general += row.section.equals(SettingsRows.GENERAL) ? 1 : 0;
+		}
+		assertEquals("Default notification and Say when updated", 2, general);
 	}
 
 	@Test
-	public void resultsAreCapped() throws Exception
+	public void searchMatchesEveryWordInNameSectionOrDescription() throws Exception
 	{
-		// "e" is in nearly every setting.
-		assertEquals(SettingsSearch.MAX_RESULTS, SettingsSearch.find(entries(), "e").size());
-	}
-
-	@Test
-	public void looseSettingsKeepThePanelsOrder() throws Exception
-	{
-		List<SettingsSearch.Entry> all = entries();
-		assertEquals("Default notification", all.get(0).getName());
-		assertEquals("Say when updated", all.get(all.size() - 1).getName());
+		List<String> found = new ArrayList<>();
+		for (SettingsRows.Row row : rows())
+		{
+			if (SettingsRows.matches(row, SettingsRows.words("BANNER size")))
+			{
+				found.add(row.name);
+			}
+		}
+		assertTrue(found.contains("Banner size"));
+		assertTrue(SettingsRows.words("   ").isEmpty());
+		for (SettingsRows.Row row : rows())
+		{
+			assertFalse(SettingsRows.matches(row, SettingsRows.words("banner zzzz")));
+		}
 	}
 
 	@Test
@@ -128,19 +156,5 @@ public class SettingsSearchTest
 			assertTrue(section.name() + " starts open", section.getSection().closedByDefault());
 			assertTrue(section.name() + " is empty", used.contains(section.getKey()));
 		}
-	}
-
-	@Test
-	public void onlyTwoSettingsSitOutsideTheSections() throws Exception
-	{
-		List<String> loose = new ArrayList<>();
-		for (SettingsSearch.Entry entry : entries())
-		{
-			if (entry.getSection().isEmpty())
-			{
-				loose.add(entry.getName());
-			}
-		}
-		assertEquals(2, loose.size());
 	}
 }
