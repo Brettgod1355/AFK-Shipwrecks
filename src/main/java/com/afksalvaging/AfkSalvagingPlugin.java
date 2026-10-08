@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -272,6 +273,9 @@ public class AfkSalvagingPlugin extends Plugin
 
 	@Inject
 	private HoldCountOverlay holdCountOverlay;
+
+	/** The item ids in the current boat's hold when it was last read, to tell a new stack from an added-to one. */
+	private final Set<Integer> holdItemIds = new HashSet<>();
 
 	/** Damage hitsplats on the player since the last game tick, for the danger alert. */
 	private int playerHitsSinceTick;
@@ -646,10 +650,19 @@ public class AfkSalvagingPlugin extends Plugin
 			return;
 		}
 		int current = currentBoatSlot();
-		if (current != 0 && slot != current)
+		if (slot != current)
 		{
-			// One of the player's other boats, for example viewed from the dock.
+			// One of the player's other boats, for example viewed from the dock, or no boat boarded yet
+			// to file it under (research, 2026-10-08: the Sailing plugin's #228).
 			return;
+		}
+		holdItemIds.clear();
+		for (Item item : event.getItemContainer().getItems())
+		{
+			if (item != null && item.getId() > -1 && item.getQuantity() > 0)
+			{
+				holdItemIds.add(item.getId());
+			}
 		}
 		if (slot != monitoredSlot)
 		{
@@ -695,7 +708,18 @@ public class AfkSalvagingPlugin extends Plugin
 			session.extractorUsed(client.getTickCount());
 			return;
 		}
-		boolean holdAction = option.startsWith("deposit") || option.startsWith("withdraw");
+		// Crewmates bank the hold at a dock with a deposit box, and at the bank boat (owner, 2026-10-08; the
+		// Sailing plugin's #180). The option's exact wording is unconfirmed, so any "bank" option about
+		// cargo counts.
+		if (option.startsWith("bank") && (option.contains("cargo") || target.contains("cargo")))
+		{
+			session.holdBanked();
+			saveUsed();
+			return;
+		}
+		// Every deposit option on the hold: "Deposit", "Deposit-all", "Quick-deposit", "Deposit-held"
+		// (research, 2026-10-08: the live names vary and the Sailing plugin missed some, its #177).
+		boolean holdAction = option.contains("deposit") || option.startsWith("withdraw");
 		if (holdAction && (target.contains("cargo hold") || isCargoInterfaceOpen()))
 		{
 			// Quick deposits on the hold itself never open the interface, so the container is not
@@ -2250,6 +2274,7 @@ public class AfkSalvagingPlugin extends Plugin
 	{
 		Item[] items = inventory == null ? null : inventory.getItems();
 		int occupied = 0;
+		int holdSpace = 0;
 		int salvage = 0;
 		Set<ShipwreckType> types = EnumSet.noneOf(ShipwreckType.class);
 		if (items != null)
@@ -2261,6 +2286,10 @@ public class AfkSalvagingPlugin extends Plugin
 					continue;
 				}
 				occupied++;
+				if (takesHoldSpace(item.getId()))
+				{
+					holdSpace++;
+				}
 				ShipwreckType type = ShipwreckType.fromSalvageItemId(item.getId());
 				if (type != null)
 				{
@@ -2269,7 +2298,20 @@ public class AfkSalvagingPlugin extends Plugin
 				}
 			}
 		}
-		session.inventoryChanged(occupied, salvage, types, client.getTickCount());
+		session.inventoryChanged(occupied, holdSpace, salvage, types, client.getTickCount());
+	}
+
+	/**
+	 * Whether depositing this inventory slot would use a hold slot: the Sailing kit takes none, and a
+	 * stackable item the hold already holds joins its stack (research, 2026-10-08).
+	 */
+	private boolean takesHoldSpace(int itemId)
+	{
+		if (HoldWhitelist.TAKES_NO_SPACE.contains(itemId))
+		{
+			return false;
+		}
+		return !(holdItemIds.contains(itemId) && client.getItemDefinition(itemId).isStackable());
 	}
 
 	private void loadCrewSlot(int slot)
@@ -2340,6 +2382,7 @@ public class AfkSalvagingPlugin extends Plugin
 		if (slot != monitoredSlot)
 		{
 			session.monitor().reset();
+			holdItemIds.clear();
 			monitoredSlot = slot;
 		}
 		if (slot == 0)

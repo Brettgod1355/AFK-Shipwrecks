@@ -259,7 +259,14 @@ public final class AfkSession
 	private boolean inventoryKnown;
 	private int inventorySalvage;
 	private int freeInventorySlots = INVENTORY_SLOTS;
+	/**
+	 * Inventory slots whose items would take hold space if deposited: tools take none, and a stack the
+	 * hold already has adds to it (research, 2026-10-08: the Sailing plugin counted both, its #226).
+	 */
 	private int occupiedInventorySlots;
+	/** The tick the session last ran, and when a hold click last turned into a counted inventory change. */
+	private int currentTick;
+	private int holdActionResolvedTick = Integer.MIN_VALUE;
 	private Set<ShipwreckType> inventorySalvageTypes = Collections.emptySet();
 	private int hookedInInventory;
 	private int pendingHoldTicks;
@@ -465,12 +472,23 @@ public final class AfkSession
 	 */
 	public void inventoryChanged(int occupied, int salvage, Set<ShipwreckType> salvageTypes, int tick)
 	{
+		inventoryChanged(occupied, occupied, salvage, salvageTypes, tick);
+	}
+
+	/**
+	 * The inventory changed.
+	 *
+	 * @param occupied   slots with anything in them
+	 * @param holdSpace  of those, the slots that would take hold space if deposited (see {@link #occupiedInventorySlots})
+	 */
+	public void inventoryChanged(int occupied, int holdSpace, int salvage, Set<ShipwreckType> salvageTypes, int tick)
+	{
 		if (inventoryKnown)
 		{
 			if (pendingHoldTicks > 0)
 			{
 				// Only a change in the direction the click implies can be that click's doing.
-				boolean matches = pendingWithdraw ? occupied > inventoryBefore : occupied < inventoryBefore;
+				boolean matches = pendingWithdraw ? holdSpace > inventoryBefore : holdSpace < inventoryBefore;
 				if (matches)
 				{
 					inventoryChanged = true;
@@ -493,7 +511,7 @@ public final class AfkSession
 			}
 		}
 		inventoryKnown = true;
-		occupiedInventorySlots = occupied;
+		occupiedInventorySlots = holdSpace;
 		inventorySalvage = salvage;
 		freeInventorySlots = Math.max(0, INVENTORY_SLOTS - occupied);
 		inventorySalvageTypes = salvageTypes == null ? Collections.emptySet() : salvageTypes;
@@ -544,10 +562,29 @@ public final class AfkSession
 		inventoryChanged = false;
 	}
 
-	/** The game said the player deposited one piece of carried cargo without opening the hold. */
+	/**
+	 * The game said the player deposited one piece of carried cargo without opening the hold. A hold
+	 * click being followed through the inventory already counts it, so then nothing is added: the
+	 * line and the inventory change are the same deposit (research, 2026-10-08).
+	 */
 	public void depositLine()
 	{
+		if (pendingHoldTicks > 0 || currentTick - holdActionResolvedTick <= 1)
+		{
+			return;
+		}
 		monitor.adjust(1);
+	}
+
+	/**
+	 * A crewmate at a dock (or the bank boat) was asked to bank the hold's cargo (owner, 2026-10-08; the
+	 * Sailing plugin's #180). The hold is taken as emptied, as an estimate until it is next opened.
+	 */
+	public void holdBanked()
+	{
+		pendingHoldTicks = 0;
+		inventoryChanged = false;
+		monitor.setEstimatedUsed(0);
 	}
 
 	/** A wreck object is in view. */
@@ -665,6 +702,7 @@ public final class AfkSession
 	 */
 	public List<Notice> tick(TickInputs in)
 	{
+		currentTick = in.tick;
 		List<Notice> notices = new ArrayList<>();
 		tick = in.tick;
 		now = in.now;
@@ -1213,6 +1251,7 @@ public final class AfkSession
 			int delta = inventoryBefore - occupiedInventorySlots;
 			pendingHoldTicks = 0;
 			inventoryChanged = false;
+			holdActionResolvedTick = currentTick;
 			if (delta > 0)
 			{
 				hookedInInventory = Math.max(0, hookedInInventory - delta);

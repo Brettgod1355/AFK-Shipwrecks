@@ -1174,4 +1174,51 @@ public class AfkSessionTest
 		assertNull(session.view().danger);
 		assertEquals(0, count(Notice.DANGER));
 	}
+
+	@Test
+	public void bankingTheHoldAtADockEmptiesTheCount()
+	{
+		twoCrewOnHooks();
+		ticks(2);
+		assertEquals(200, session.monitor().getUsed());
+		session.holdBanked();
+		assertEquals(0, session.monitor().getUsed());
+		assertTrue("an estimate until the hold is opened", session.monitor().isEstimate());
+		session.holdCount(3, tick);
+		assertEquals(3, session.monitor().getUsed());
+	}
+
+	@Test
+	public void theDepositLineIsNotCountedOnTopOfTheInventoryChange()
+	{
+		ticks(2);
+		session.inventoryChanged(5, 5, 0, Collections.emptySet(), tick);
+		session.holdActionClicked(false);
+		// The game's line arrives while the click is still being followed: the inventory change counts it.
+		session.depositLine();
+		ticks(1);
+		session.inventoryChanged(4, 4, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(201, session.monitor().getUsed());
+		// Right after it resolved, the same deposit's line is not counted again either.
+		session.depositLine();
+		assertEquals(201, session.monitor().getUsed());
+		// A line with no hold click behind it is a deposit of its own.
+		ticks(5);
+		session.depositLine();
+		assertEquals(202, session.monitor().getUsed());
+	}
+
+	@Test
+	public void depositingSomethingThatTakesNoHoldSpaceLeavesTheCount()
+	{
+		ticks(2);
+		// Five items, of which two take no hold space (a tool, or a stack the hold already has).
+		session.inventoryChanged(5, 3, 0, Collections.emptySet(), tick);
+		session.holdActionClicked(false);
+		// Deposit-all: everything leaves the inventory, but only three new slots are used in the hold.
+		session.inventoryChanged(0, 0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(203, session.monitor().getUsed());
+	}
 }
