@@ -193,7 +193,7 @@ settings; make it custom once and every category follows.
 **Overlay**: when to show it (near wrecks, or always aboard); show timer (turning it off hides the
 countdown lines; the status lines, such as waiting for a wreck, stay); show clock time and its format
 (12-hour or 24-hour); count salvage you hooked; the cargo counter and what it shows (used of total,
-slots left or percent full); the hooks line; the wrecks line; text size (150% by default); and the
+slots left or percent full); the count written on the cargo hold itself (on); the hooks line; the wrecks line; text size (150% by default); and the
 countdown infobox (off by default). Whatever the settings, the overlay and the flashing notices step
 aside while a game interface fills the middle of the screen (the cargo hold, a skill guide, the quest
 journal, a diary, the collection log, the settings, the world map) and come back when it closes.
@@ -211,12 +211,20 @@ wreck in reach has been down ten seconds, and done sorting at the station, five 
 game says so and only if you have not clicked anything since), whether the swap also flashes mid-screen (on by default), the
 grace period before the first reminder (10 s by default; using the hold buys a little more,
 settling in to sort shortens it), how often to repeat, and how long before the idle logout to
-warn (60 s; 0 never).
+warn (60 s; 0 never). Then:
+- Crew stopped, wreck in reach (on): the crew have stopped bringing salvage in while a wreck they can
+  work is right there. The game shows nothing for this; nudge the boat or assign them again.
+- A wreck rose (off): a wreck came up in reach after you waited for one.
+- Boost warning: before the boost wears off below the wreck's level, after the crew stop, or both
+  (both by default).
+- Danger (on, always with a sound): while you are parked at a spot on your own boat, the boat taking
+  damage, you being hit, or poison. A red DANGER notice flashes in the middle of the screen too (a
+  setting, on).
 
 **Wrecks and parking**: Mark wrecks (hull, area, hull and area, or off; hull and area by default).
 The hull is outlined in cyan while the wreck is up and grey once it has sunk; the area is the box of
 water a hook can reach it from, yellow while it is up and grey once sunk. Then the box colour; hiding
-those boxes while you are parked (on by default); double spot boxes (on or off), their colour (green)
+those boxes while you are parked (on by default); filling the boxes (on; off draws outlines only); double spot boxes (on or off), their colour (green)
 and the colour they change to once you are parked (a faint cyan); whether to label the double spot
 boxes; how long after the boat stops they go (20 s; 0 never); and whether "Parked in double spot"
 stays once they have gone (on by default).

@@ -65,6 +65,8 @@ public final class SalvagingTips
 			"The overlay shows while a wreck site is in view (\"Show overlay\" can make it always aboard) and steps "
 				+ "aside while a game interface fills the screen. \"Countdown infobox\" keeps the time in view.",
 			"A minute before the idle logout you get a notification. It cannot press a key for you.",
+			"Parked at a spot, you are told if the crew stop while a wreck is in reach, before a boost wears off, "
+				+ "and, with a flashing red DANGER and a sound, if the boat is damaged or you are hit or poisoned.",
 			"Test alert, under Tools on the Spots tab, fires the full-hold notification and banner so you can check "
 				+ "your set-up."),
 		new Group("Sidebar",
