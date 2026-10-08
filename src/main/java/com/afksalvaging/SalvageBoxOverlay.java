@@ -228,8 +228,9 @@ public class SalvageBoxOverlay extends Overlay
 		{
 			return;
 		}
-		Color fill = new Color(colour.getRed(), colour.getGreen(), colour.getBlue(),
-			stroke == PARKED_OUTLINE ? colour.getAlpha() / 2 : colour.getAlpha() / 5);
+		// "Fill the boxes" off draws outlines only (owner, 2026-10-08; the Sailing plugin's most asked-for option).
+		int fillAlpha = !config.boxFill() ? 0 : stroke == PARKED_OUTLINE ? colour.getAlpha() / 2 : colour.getAlpha() / 5;
+		Color fill = new Color(colour.getRed(), colour.getGreen(), colour.getBlue(), fillAlpha);
 		OverlayUtil.renderPolygon(graphics, area, colour, fill, stroke);
 		if (label != null)
 		{

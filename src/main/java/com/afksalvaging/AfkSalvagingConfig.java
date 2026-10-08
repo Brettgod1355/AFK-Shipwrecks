@@ -364,6 +364,72 @@ public interface AfkSalvagingConfig extends Config
 		return 60;
 	}
 
+	@ConfigItem(
+		keyName = "crewStalledNotification",
+		name = "Crew stopped, wreck in reach",
+		description = "Notify when the crew stop bringing salvage in although a wreck they can work is in reach. The game "
+			+ "shows nothing for it; nudging the boat or assigning them again usually starts them.",
+		section = REMINDERS,
+		position = 11
+	)
+	default Notification crewStalledNotification()
+	{
+		return Notification.ON;
+	}
+
+	@ConfigItem(
+		keyName = "wreckRoseNotification",
+		name = "A wreck rose",
+		description = "Notify when a wreck rises in reach after you have waited for one. Your crew start on it by "
+			+ "themselves; your own hook does not.",
+		section = REMINDERS,
+		position = 12
+	)
+	default Notification wreckRoseNotification()
+	{
+		return Notification.OFF;
+	}
+
+	@ConfigItem(
+		keyName = "boostWarnWhen",
+		name = "Boost warning",
+		description = "When to warn about a Sailing boost wearing off below the level of the wreck in reach: just before it "
+			+ "drops (the crew still salvaging), after the crew have stopped, or both. Sent the way \"Crew stopped: level "
+			+ "too low\" is set.",
+		section = REMINDERS,
+		position = 13
+	)
+	default BoostWarning boostWarnWhen()
+	{
+		return BoostWarning.BOTH;
+	}
+
+	@ConfigItem(
+		keyName = "dangerNotification",
+		name = "Danger",
+		description = "While you are parked at a salvaging spot on your own boat: notify, with a sound, when the boat takes "
+			+ "damage, you are hit, or you are poisoned. At most once every 30 seconds.",
+		section = REMINDERS,
+		position = 14
+	)
+	default Notification dangerNotification()
+	{
+		return Notification.ON;
+	}
+
+	@ConfigItem(
+		keyName = "dangerAlert",
+		name = "Flash danger on screen",
+		description = "Also flash a red DANGER notice in the middle of the screen while it lasts: ten seconds after the "
+			+ "last hit, or until a poison is cured.",
+		section = REMINDERS,
+		position = 15
+	)
+	default boolean dangerAlert()
+	{
+		return true;
+	}
+
 	// ---- Full hold ----
 
 	@ConfigItem(
@@ -562,7 +628,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Show hooks line",
 		description = "Show who is on each salvaging hook.",
 		section = OVERLAY,
-		position = 7
+		position = 8
 	)
 	default boolean showHooks()
 	{
@@ -574,7 +640,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Show wrecks line",
 		description = "Show how many wrecks are in reach and how long the current one has left at most.",
 		section = OVERLAY,
-		position = 8
+		position = 9
 	)
 	default boolean showWrecks()
 	{
@@ -586,7 +652,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Text size",
 		description = "Size of the overlay lines. 100% is the normal RuneLite overlay size; 150% by default.",
 		section = OVERLAY,
-		position = 9
+		position = 10
 	)
 	@Range(min = 50, max = 300)
 	@Units(Units.PERCENT)
@@ -597,12 +663,25 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "countOnHold",
+		name = "Count on the hold",
+		description = "Write the cargo count on the cargo hold itself, as \"Counter shows\" sets it (for example 39/160), "
+			+ "coloured green to red as it fills.",
+		section = OVERLAY,
+		position = 7
+	)
+	default boolean countOnHold()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "showInfoBox",
 		name = "Countdown infobox",
 		description = "A small box among RuneLite's infoboxes with the time to a full hold, so it stays in view with "
 			+ "the overlay hidden or scrolled away. Hover it for the detail.",
 		section = OVERLAY,
-		position = 10
+		position = 11
 	)
 	default boolean showInfoBox()
 	{
@@ -666,6 +745,19 @@ public interface AfkSalvagingConfig extends Config
 	default boolean showSceneEdge()
 	{
 		return false;
+	}
+
+	@ConfigItem(
+		keyName = "boxFill",
+		name = "Fill the boxes",
+		description = "Shade the inside of the reach and double spot boxes. Off draws the outlines only, so nothing on the "
+			+ "water is tinted.",
+		section = SPOTS,
+		position = 9
+	)
+	default boolean boxFill()
+	{
+		return true;
 	}
 
 	@ConfigItem(

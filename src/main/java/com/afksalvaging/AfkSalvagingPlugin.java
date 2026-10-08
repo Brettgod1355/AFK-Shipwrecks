@@ -53,6 +53,7 @@ import net.runelite.api.events.GameObjectDespawned;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.MenuOptionClicked;
@@ -267,6 +268,15 @@ public class AfkSalvagingPlugin extends Plugin
 	private WreckTimerOverlay wreckTimerOverlay;
 
 	@Inject
+	private DangerOverlay dangerOverlay;
+
+	@Inject
+	private HoldCountOverlay holdCountOverlay;
+
+	/** Damage hitsplats on the player since the last game tick, for the danger alert. */
+	private int playerHitsSinceTick;
+
+	@Inject
 	private SceneEdgeOverlay sceneEdgeOverlay;
 
 	/** The spot last sent to the map or routed to; the sidebar highlights it. */
@@ -360,6 +370,8 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.add(swapOverlay);
 		overlayManager.add(wreckOutlineOverlay);
 		overlayManager.add(wreckTimerOverlay);
+		overlayManager.add(dangerOverlay);
+		overlayManager.add(holdCountOverlay);
 		overlayManager.add(sceneEdgeOverlay);
 		overlayManager.add(sortOverlay);
 		markStore = new MarkStore(configManager);
@@ -391,6 +403,8 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.remove(swapOverlay);
 		overlayManager.remove(wreckOutlineOverlay);
 		overlayManager.remove(wreckTimerOverlay);
+		overlayManager.remove(dangerOverlay);
+		overlayManager.remove(holdCountOverlay);
 		overlayManager.remove(sceneEdgeOverlay);
 		overlayManager.remove(sortOverlay);
 		removeInfoBox();
@@ -709,6 +723,16 @@ public class AfkSalvagingPlugin extends Plugin
 	}
 
 	@Subscribe
+	public void onHitsplatApplied(HitsplatApplied event)
+	{
+		// Only the player's own damage counts towards the danger alert; others' hits are none of ours.
+		if (event.getActor() == client.getLocalPlayer() && event.getHitsplat().getAmount() > 0)
+		{
+			playerHitsSinceTick++;
+		}
+	}
+
+	@Subscribe
 	public void onOverheadTextChanged(OverheadTextChanged event)
 	{
 		Actor actor = event.getActor();
@@ -833,6 +857,8 @@ public class AfkSalvagingPlugin extends Plugin
 		settings.repeatReminderMillis = config.reminderRepeatSeconds() * 1000L;
 		settings.salvagingWorld = salvagingWorld;
 		settings.idleWarnMillis = config.idleLogoutWarnSeconds() * 1000L;
+		settings.boostWarnBefore = config.boostWarnWhen().before();
+		settings.boostWarnAfter = config.boostWarnWhen().after();
 
 		AfkSession.TickInputs in = new AfkSession.TickInputs();
 		in.tick = tick;
@@ -842,6 +868,11 @@ public class AfkSalvagingPlugin extends Plugin
 		in.boatCrewCapacity = crewCapacity(boatEntity);
 		in.animation = player == null ? -1 : player.getAnimation();
 		in.boostedSailingLevel = client.getBoostedSkillLevel(Skill.SAILING);
+		in.realSailingLevel = client.getRealSkillLevel(Skill.SAILING);
+		in.boatHp = in.ownBoat ? client.getVarbitValue(VarbitID.SAILING_SIDEPANEL_BOAT_HP) : -1;
+		in.poisoned = client.getVarpValue(VarPlayerID.POISON) > 0;
+		in.playerHits = playerHitsSinceTick;
+		playerHitsSinceTick = 0;
 		in.hooks = hookInputs(boatEntity);
 		in.boatPoint = boatEntity == null ? null : topLevelPoint(boatEntity);
 		in.otherBoats = otherBoatPoints(boatEntity);
@@ -2066,6 +2097,23 @@ public class AfkSalvagingPlugin extends Plugin
 				// Off by default: for players who sort with their eyes elsewhere (owner, 2026-10-03).
 				notifier.notify(resolved(config.sortingDoneNotification()), "You have sorted all your salvage.");
 				break;
+			case CREW_STALLED:
+				notifier.notify(resolved(config.crewStalledNotification()), "Your crew have stopped salvaging although a wreck is "
+					+ "in reach. Nudge the boat or assign them again.");
+				break;
+			case WRECK_ROSE:
+				notifier.notify(resolved(config.wreckRoseNotification()), "A wreck has risen in reach.");
+				break;
+			case BOOST_RUNNING_OUT:
+				int at = session.view().boostLevelNeeded;
+				notifier.notify(resolved(config.boostDroppedNotification()), "Your Sailing boost is about to wear off: below level "
+					+ at + " your crew stop salvaging this wreck. Top it up.");
+				break;
+			case DANGER:
+				String what = session.view().danger;
+				notifier.notify(withSoundOn(resolved(config.dangerNotification())), "Danger at your salvaging spot: "
+					+ (what == null ? "check your boat" : what.toLowerCase()) + ".");
+				break;
 			case WAITING_FOR_WRECK:
 				WreckTracker.NextRise next = session.view().nextWreck;
 				notifier.notify(resolved(config.waitingNotification()), "Waiting for a wreck: every wreck in reach is down."
@@ -2471,6 +2519,24 @@ public class AfkSalvagingPlugin extends Plugin
 	 * would otherwise be replaced by RuneLite's global settings on the way out, so those are copied in
 	 * first, exactly as the Notifier does, before the sound is switched off.
 	 */
+	/**
+	 * The danger alert always makes a sound (owner, 2026-10-08: "a flashing red overlay alert with sound"):
+	 * the notification as set, but with the system sound where it would otherwise be silent.
+	 */
+	private Notification withSoundOn(Notification base)
+	{
+		if (!base.isEnabled())
+		{
+			return base;
+		}
+		Notification resolved = base;
+		if (!base.isOverride() || !base.isInitialized())
+		{
+			resolved = withoutSound(base).withSound(runeLiteConfig.notificationSound());
+		}
+		return resolved.getSound() == NotificationSound.OFF ? resolved.withSound(NotificationSound.NATIVE) : resolved;
+	}
+
 	private Notification withoutSound(Notification base)
 	{
 		Notification resolved = base;

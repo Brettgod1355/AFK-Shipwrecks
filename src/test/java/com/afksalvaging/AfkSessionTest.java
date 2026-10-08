@@ -73,6 +73,11 @@ public class AfkSessionTest
 	private boolean sailing = true;
 	private boolean ownBoat = true;
 	private int level = 99;
+	/** The unboosted level; follows {@link #level} unless a test sets it. */
+	private int realLevel = -1;
+	private int boatHp = -1;
+	private boolean poisoned;
+	private int playerHits;
 	private boolean interfaceOpen;
 	private WorldPoint playerPoint = PLAYER;
 	private WorldPoint boatPoint = BOAT;
@@ -113,6 +118,11 @@ public class AfkSessionTest
 		in.boatCrewCapacity = 5;
 		in.animation = animation;
 		in.boostedSailingLevel = level;
+		in.realSailingLevel = realLevel < 0 ? level : realLevel;
+		in.boatHp = boatHp;
+		in.poisoned = poisoned;
+		in.playerHits = playerHits;
+		playerHits = 0;
 		in.hooks = Arrays.asList(
 			new AfkSession.HookInput(HOOK_A, SalvagingHookTier.DRAGON, false),
 			new AfkSession.HookInput(HOOK_B, SalvagingHookTier.DRAGON, true));
@@ -1019,5 +1029,149 @@ public class AfkSessionTest
 		// 1000 client ticks of 20 ms, the keyboard idle 200 of them and the mouse 500: the keyboard counts.
 		assertEquals(16_000, AfkSession.idleLogoutMillis(1000, 500, 200));
 		assertEquals(0, AfkSession.idleLogoutMillis(100, 200, 300));
+	}
+
+	@Test
+	public void theCrewStoppingWithAWreckInReachIsSaidOnce()
+	{
+		twoCrewOnHooks();
+		ticks(330);
+		assertEquals(State.STALLED, session.view().estimate.getState());
+		assertEquals(1, count(Notice.CREW_STALLED));
+		ticks(50);
+		assertEquals("once per stall", 1, count(Notice.CREW_STALLED));
+		// Salvage arrives again, then they stop again later: said again.
+		session.crewLine("Jolly Jim", tick);
+		ticks(3);
+		assertEquals(State.COUNTING_DOWN, session.view().estimate.getState());
+		ticks(400);
+		assertEquals(2, count(Notice.CREW_STALLED));
+	}
+
+	@Test
+	public void aWreckRisingAfterARealWaitIsSaid()
+	{
+		twoCrewOnHooks();
+		ticks(10);
+		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, now);
+		ticks(5);
+		// A few seconds is no wait: nothing said when it rises.
+		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK, now);
+		ticks(3);
+		assertEquals(0, count(Notice.WRECK_ROSE));
+		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, now);
+		ticks(30);
+		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK, now);
+		ticks(3);
+		assertEquals(1, count(Notice.WRECK_ROSE));
+	}
+
+	@Test
+	public void aBoostAtTheWrecksLevelIsWarnedBeforeItWearsOff()
+	{
+		twoCrewOnHooks();
+		realLevel = 85;
+		level = 89;
+		ticks(5);
+		assertEquals("two levels of boost to spare", 0, count(Notice.BOOST_RUNNING_OUT));
+		level = 87;
+		ticks(2);
+		assertEquals(1, count(Notice.BOOST_RUNNING_OUT));
+		assertEquals(87, session.view().boostLevelNeeded);
+		ticks(20);
+		assertEquals("once until topped up", 1, count(Notice.BOOST_RUNNING_OUT));
+		// It wears off: the after-warning follows, as in 2.0.
+		level = 86;
+		ticks(2);
+		assertEquals(1, count(Notice.BOOST_DROPPED));
+	}
+
+	@Test
+	public void theBoostWarningsFollowTheBeforeAndAfterChoice()
+	{
+		twoCrewOnHooks();
+		session.settings().boostWarnBefore = false;
+		session.settings().boostWarnAfter = true;
+		realLevel = 85;
+		level = 87;
+		ticks(5);
+		assertEquals(0, count(Notice.BOOST_RUNNING_OUT));
+		level = 86;
+		ticks(2);
+		assertEquals(1, count(Notice.BOOST_DROPPED));
+
+		session.settings().boostWarnBefore = true;
+		session.settings().boostWarnAfter = false;
+		level = 87;
+		ticks(5);
+		assertEquals(1, count(Notice.BOOST_RUNNING_OUT));
+		level = 86;
+		ticks(2);
+		assertEquals("after is off", 1, count(Notice.BOOST_DROPPED));
+	}
+
+	@Test
+	public void noBoostWarningWhenTheRealLevelIsEnough()
+	{
+		twoCrewOnHooks();
+		realLevel = 87;
+		level = 87;
+		ticks(10);
+		assertEquals(0, count(Notice.BOOST_RUNNING_OUT));
+	}
+
+	@Test
+	public void theBoatTakingDamageAtASpotIsDanger()
+	{
+		twoCrewOnHooks();
+		boatHp = 100;
+		ticks(3);
+		assertNull(session.view().danger);
+		boatHp = 90;
+		tick();
+		assertEquals("Your boat is taking damage", session.view().danger);
+		assertEquals(1, count(Notice.DANGER));
+		boatHp = 80;
+		ticks(5);
+		assertEquals("at most one notification every 30 seconds", 1, count(Notice.DANGER));
+		ticks(20);
+		assertNull("ten seconds after the last hit it goes", session.view().danger);
+		boatHp = 70;
+		ticks(60);
+		boatHp = 60;
+		tick();
+		assertEquals(2, count(Notice.DANGER));
+	}
+
+	@Test
+	public void poisonStaysUpUntilCuredAndHitsCount()
+	{
+		twoCrewOnHooks();
+		ticks(3);
+		poisoned = true;
+		tick();
+		assertEquals("You have been poisoned", session.view().danger);
+		ticks(40);
+		assertEquals("You are poisoned", session.view().danger);
+		poisoned = false;
+		tick();
+		assertNull(session.view().danger);
+		playerHits = 1;
+		tick();
+		assertEquals("You are being hit", session.view().danger);
+	}
+
+	@Test
+	public void noDangerAwayFromASpotOrOnSomeoneElsesBoat()
+	{
+		twoCrewOnHooks();
+		ownBoat = false;
+		boatHp = 100;
+		ticks(2);
+		boatHp = 50;
+		poisoned = true;
+		ticks(2);
+		assertNull(session.view().danger);
+		assertEquals(0, count(Notice.DANGER));
 	}
 }
