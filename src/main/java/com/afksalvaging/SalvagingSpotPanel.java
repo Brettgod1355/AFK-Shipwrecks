@@ -35,6 +35,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import net.runelite.api.coords.WorldPoint;
@@ -301,11 +303,21 @@ public class SalvagingSpotPanel extends PluginPanel
 		display.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		MaterialTabGroup tabs = new MaterialTabGroup(display);
 		tabs.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
-		MaterialTab spots = new MaterialTab("Spots", tabs, spotsTab);
-		tabs.addTab(spots);
-		tabs.addTab(new MaterialTab("Sorting", tabs, sortBlock()));
-		tabs.addTab(new MaterialTab("Tips", tabs, tipsBlock()));
-		tabs.addTab(new MaterialTab("Feedback", tabs, feedbackBlock()));
+		// Four tabs side by side with the spare width shared between them: the group's own flow layout
+		// spaces three widely and wraps a fourth onto a hidden second line (found rendering the panel,
+		// 2026-10-08).
+		tabs.setLayout(new BoxLayout(tabs, BoxLayout.X_AXIS));
+		MaterialTab spots = new CompactTab("Spots", tabs, spotsTab);
+		MaterialTab[] all = {spots, new CompactTab("Sorting", tabs, sortBlock()), new CompactTab("Tips", tabs, tipsBlock()),
+			new CompactTab("Feedback", tabs, feedbackBlock())};
+		for (int i = 0; i < all.length; i++)
+		{
+			if (i > 0)
+			{
+				tabs.add(Box.createHorizontalGlue());
+			}
+			tabs.addTab(all[i]);
+		}
 		tabs.select(spots);
 		add(tabs, BorderLayout.NORTH);
 		add(display, BorderLayout.CENTER);
@@ -335,7 +347,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		small(words);
 		block.add(words);
 		block.add(Box.createVerticalStrut(10));
-		block.add(bigLink("github_white.png", "github_green.png", "Open an issue on GitHub",
+		block.add(bigLink("github_white.png", "github_green.png", "Open a GitHub issue",
 			"Opens a new issue for AFK Shipwrecks on GitHub in your browser", GITHUB_NEW_ISSUE_URL));
 		block.add(Box.createVerticalStrut(8));
 		block.add(bigLink("discord_white.png", "discord_blurple.png", "Tell me on Discord",
@@ -1191,6 +1203,40 @@ public class SalvagingSpotPanel extends PluginPanel
 		}
 		settingsFound.revalidate();
 		settingsFound.repaint();
+	}
+
+	/**
+	 * A tab with half the usual side padding (5 px rather than RuneLite's 10), so four names fit the
+	 * panel's width. RuneLite swaps a tab's border when it is selected or not; this keeps that look
+	 * (the orange line under the selected tab) with the narrower padding.
+	 */
+	static final class CompactTab extends MaterialTab
+	{
+		static final int SIDE = 5;
+
+		CompactTab(String text, MaterialTabGroup group, JComponent content)
+		{
+			super(text, group, content);
+		}
+
+		@Override
+		public void setBorder(Border border)
+		{
+			if (border instanceof CompoundBorder)
+			{
+				// Selected: the group's orange line under the name.
+				super.setBorder(new CompoundBorder(((CompoundBorder) border).getOutsideBorder(),
+					BorderFactory.createEmptyBorder(5, SIDE, 4, SIDE)));
+			}
+			else if (border != null)
+			{
+				super.setBorder(BorderFactory.createEmptyBorder(5, SIDE, 5, SIDE));
+			}
+			else
+			{
+				super.setBorder(null);
+			}
+		}
 	}
 
 	/** A block of the Spots tab under a heading that opens and folds it. */
