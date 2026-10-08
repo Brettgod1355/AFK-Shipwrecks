@@ -33,7 +33,7 @@ public class LinkIconTest
 	}
 
 	@Test
-	public void feedbackButtonsUseLargerLogosAndGoToANewIssue()
+	public void feedbackButtonsUseLargerLogosAndGoToTheIssuesList()
 	{
 		for (String file : new String[]{"github_white.png", "github_green.png", "discord_white.png", "discord_blurple.png"})
 		{
@@ -41,6 +41,6 @@ public class LinkIconTest
 			assertEquals(file, SalvagingSpotPanel.FEEDBACK_ICON_SIZE, Math.max(logo.getWidth(), logo.getHeight()), 1);
 		}
 		assertTrue(SalvagingSpotPanel.FEEDBACK_ICON_SIZE > SalvagingSpotPanel.LINK_ICON_SIZE);
-		assertEquals("https://github.com/Brettgod1355/AFK-Shipwrecks/issues/new", SalvagingSpotPanel.GITHUB_NEW_ISSUE_URL);
+		assertEquals("https://github.com/Brettgod1355/AFK-Shipwrecks/issues", SalvagingSpotPanel.GITHUB_ISSUES_URL);
 	}
 }

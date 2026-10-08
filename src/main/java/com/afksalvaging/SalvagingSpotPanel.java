@@ -117,8 +117,12 @@ public class SalvagingSpotPanel extends PluginPanel
 	private static final int TOP_TEXT_WIDTH = 190;
 	static final String DISCORD_URL = "https://discord.gg/c85DK83jWx";
 	static final String GITHUB_URL = "https://github.com/Brettgod1355/AFK-Shipwrecks";
-	/** Where the Feedback tab's GitHub button goes: a new issue, typed on GitHub, not in the panel (owner, 2026-10-08). */
-	static final String GITHUB_NEW_ISSUE_URL = GITHUB_URL + "/issues/new";
+	/**
+	 * Where the Feedback tab's GitHub button goes: the issues list, which anyone can read without a
+	 * GitHub account; "New issue" there asks them to sign in (owner, 2026-10-08: "Point it to the issues
+	 * list instead"). The new-issue form itself sends a signed-out visitor straight to GitHub's login.
+	 */
+	static final String GITHUB_ISSUES_URL = GITHUB_URL + "/issues";
 	/** The Feedback tab's words (owner's draft, 2026-10-08, lightly reworded). */
 	static final String FEEDBACK_TEXT = "Help make AFK Shipwrecks better. Got an idea, or found something that is not "
 		+ "working right? Open an issue on GitHub, or tell me about it on Discord.";
@@ -348,7 +352,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		block.add(words);
 		block.add(Box.createVerticalStrut(10));
 		block.add(bigLink("github_white.png", "github_green.png", "Tell me on GitHub",
-			"Opens a new issue for AFK Shipwrecks on GitHub in your browser", GITHUB_NEW_ISSUE_URL));
+			"Opens the AFK Shipwrecks issues on GitHub in your browser", GITHUB_ISSUES_URL));
 		block.add(Box.createVerticalStrut(8));
 		block.add(bigLink("discord_white.png", "discord_blurple.png", "Tell me on Discord",
 			"Opens the AFK Shipwrecks Discord in your browser", DISCORD_URL));
