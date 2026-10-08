@@ -17,6 +17,7 @@ public class SalvagingTipsTest
 	{
 		String all = String.join(" ", SalvagingTips.all());
 		assertTrue(all.contains("hook, so a hook has to sit inside a box"));
+		assertTrue(SalvagingTips.html(195).contains("<b>Parking</b>"));
 		assertTrue(all.contains("Reach is taken as " + AfkSession.HOOK_RANGE + " tiles"));
 		assertTrue(all.contains("Shortest Path"));
 	}
