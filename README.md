@@ -218,7 +218,9 @@ water a hook can reach it from, yellow while it is up and grey once sunk. Then t
 those boxes while you are parked (on by default); double spot boxes (on or off), their colour (green)
 and the colour they change to once you are parked (a faint cyan); whether to label the double spot
 boxes; how long after the boat stops they go (20 s; 0 never); and whether "Parked in double spot"
-stays once they have gone (on by default). Timers on wrecks (on by default): every wreck in view gets
+stays once they have gone (on by default).
+
+**Wreck tracking**: Timers on wrecks (on by default): every wreck in view gets
 "Sinks in ≤ 1:20" in cyan while it is up, and a sunk one gets "Sunk - next ≤ 0:45" in grey for when the
 next wreck can rise ("maybe next" when another sunk site in view could take it instead). A wreck nobody
 has been seen working says "no clock yet" rather than guessing. Show what the plugin sees (off by

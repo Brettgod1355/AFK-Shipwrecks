@@ -79,9 +79,17 @@ public interface AfkSalvagingConfig extends Config
 	String SPOTS = "spots";
 
 	@ConfigSection(
+		name = "Wreck tracking",
+		description = "Timers on the wrecks, and what the plugin can see",
+		position = 5,
+		closedByDefault = true
+	)
+	String TRACKING = "tracking";
+
+	@ConfigSection(
 		name = "Salvaging worlds",
 		description = "The worlds where every wreck site is worked, and the tip and alert off them",
-		position = 5,
+		position = 6,
 		closedByDefault = true
 	)
 	String WORLDS = "worlds";
@@ -89,7 +97,7 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigSection(
 		name = "Sidebar",
 		description = "The sidebar of salvaging spots and docks",
-		position = 6,
+		position = 7,
 		closedByDefault = true
 	)
 	String SIDEBAR = "sidebar";
@@ -638,8 +646,8 @@ public interface AfkSalvagingConfig extends Config
 			+ "and on a sunk one when the next wreck can rise, \"Sunk - next ≤ 0:45\" (in grey; \"maybe next\" when "
 			+ "another sunk site could take it). A wreck's clock starts only once a boat is seen beside it or your hook "
 			+ "rolls on it; until then it says \"no clock yet\".",
-		section = SPOTS,
-		position = 1
+		section = TRACKING,
+		position = 0
 	)
 	default boolean wreckTimers()
 	{
@@ -652,8 +660,8 @@ public interface AfkSalvagingConfig extends Config
 		description = "Draw a faint dashed square on the water round the area the game has loaded. The plugin only knows "
 			+ "about wrecks inside it, so if a set of wrecks is outside, sail a little toward it until the square moves "
 			+ "past it. The game redraws this area as you sail, so the square jumps now and then.",
-		section = SPOTS,
-		position = 10
+		section = TRACKING,
+		position = 1
 	)
 	default boolean showSceneEdge()
 	{
@@ -666,7 +674,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Take the boxes round wrecks off the water while every hook on your boat is inside a double spot box. "
 			+ "They come back the moment you drift out.",
 		section = SPOTS,
-		position = 3
+		position = 2
 	)
 	default boolean hideReachWhenParked()
 	{
@@ -680,7 +688,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Outline colour of the boxes round wrecks that are up (Mark wrecks: Area). The fill is a fainter "
 			+ "version of it. Sunk wrecks' boxes are grey.",
 		section = SPOTS,
-		position = 2
+		position = 1
 	)
 	default Color wreckReachColor()
 	{
@@ -693,7 +701,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Box the water where one hook reaches two wreck sites at once, whether or not both wrecks are up "
 			+ "right now. Park so every hook sits in the box and it changes colour and says Parked.",
 		section = SPOTS,
-		position = 4
+		position = 3
 	)
 	default boolean doubleSpotBoxes()
 	{
@@ -707,7 +715,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Outline colour of the double spot boxes while you are not parked in them. The fill is a fainter "
 			+ "version of it.",
 		section = SPOTS,
-		position = 5
+		position = 4
 	)
 	default Color doubleSpotColor()
 	{
@@ -721,7 +729,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "The colour a double spot box changes to once every hook on your boat is inside it: both hooks on a "
 			+ "sloop, the one hook on a raft or skiff.",
 		section = SPOTS,
-		position = 6
+		position = 5
 	)
 	default Color doubleSpotParkedColor()
 	{
@@ -734,7 +742,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Write \"Double spot\" on each box where to park, with how many of your hooks are in it, and "
 			+ "\"Parked\" once they all are.",
 		section = SPOTS,
-		position = 7
+		position = 6
 	)
 	default boolean doubleSpotLabels()
 	{
@@ -749,7 +757,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "How long after the boat stops the double spot boxes disappear, at login too; they come back the "
 			+ "moment the boat moves. 0 keeps them on screen.",
 		section = SPOTS,
-		position = 8
+		position = 7
 	)
 	default int doubleSpotHideSeconds()
 	{
@@ -762,7 +770,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Once the double spot boxes have hidden, keep the words \"Parked in double spot\" in the "
 			+ "middle of your boat while every hook is in it. Only the text, no box.",
 		section = SPOTS,
-		position = 9
+		position = 8
 	)
 	default boolean parkedTextAfterHide()
 	{
@@ -814,7 +822,7 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigSection(
 		name = "Inventory sorting",
 		description = "Boxes round inventory items saying what to keep, put in the hold, alch or drop",
-		position = 7,
+		position = 8,
 		closedByDefault = true
 	)
 	String SORTING = "sorting";
