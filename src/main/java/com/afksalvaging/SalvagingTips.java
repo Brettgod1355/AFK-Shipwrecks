@@ -31,6 +31,11 @@ public final class SalvagingTips
 			+ "since one rises here the moment another sinks. A wreck's clock starts when a boat is first seen beside "
 			+ "it (or your hook rolls on it); lifetimes are averages, so past the clock it says \"any moment\" and soon "
 			+ "gives up on that wreck until it is seen worked again.",
+		"Each wreck in view carries a timer: cyan \"Sinks in ≤\" while it is up, grey on a sunk one for when the "
+			+ "next wreck can rise (\"maybe next\" when another sunk site could take it). A clock starts only once a "
+			+ "boat is seen beside the wreck or your hook rolls on it. The plugin only knows the wrecks in the area the "
+			+ "game has loaded, a square of about 104 tiles that moves as you sail; switch on \"Show what the plugin "
+			+ "sees\" to draw it, and sail toward a set of wrecks outside it to bring them in.",
 		"A double spot is a place, not a moment: the green box shows even while one or both of its wrecks are down, "
 			+ "because the next wreck rises on the same tile, so you can park and wait. Sunk wrecks' boxes turn grey.",
 		"Map pans the world map while it is open. With it closed, press Map, then open the map and it jumps there.",

@@ -30,6 +30,10 @@ final class Palette
 	 * glance (owner, 2026-10-07: "shows an overlay in grey when a spot is inactive").
 	 */
 	static final Color WRECK_SUNK = new Color(150, 150, 150);
+	/** A sunk wreck's timer: grey like its outline, lighter so the words read on dark water. */
+	static final Color WRECK_SUNK_TEXT = new Color(190, 190, 190);
+	/** The faint square round what the game has loaded (owner, 2026-10-08: "a subtle color"). */
+	static final Color SCENE_EDGE = new Color(255, 255, 255, 90);
 
 	// Sidebar.
 	static final Color SIDEBAR_IN_LEVEL = new Color(70, 200, 110);
