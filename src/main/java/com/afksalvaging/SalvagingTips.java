@@ -5,98 +5,124 @@
  */
 package com.afksalvaging;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/** The things worth knowing that the sidebar shows under "Tips": how the plugin works and how to use it. */
+/**
+ * The things worth knowing that the sidebar shows under "Tips": how the plugin works and how to use
+ * it, in short groups under a heading each (tightened 2026-10-08: the 18 loose tips overlapped and ran
+ * to about thirteen screens of scrolling).
+ */
 public final class SalvagingTips
 {
-	private static final List<String> TIPS = Collections.unmodifiableList(Arrays.asList(
-		"The boxes on the water are for your hooks, not the whole boat. The game measures salvage reach from the "
-			+ "hook, so a hook has to sit inside a box. Yellow: a hook there reaches that wreck. Green: a hook there "
-			+ "reaches two wrecks at once. Wrecks within your level also get an outline round the hull, like the "
-			+ "game's own hover outline: cyan while up, grey once sunk. \"Mark wrecks\" picks the hull, the area, both "
-			+ "or neither.",
-		"Park so every hook on your boat is inside a green box: both on a sloop, the one on a raft or skiff. "
-			+ "The box changes to the parked colour and says \"Parked\" when they all are; with only some in, the "
-			+ "label counts them. Once parked, the yellow boxes go, to clear the view (a setting, on by default), and "
-			+ "the green ones go 20 seconds after the boat stops, at login too, coming back the moment it moves (a "
-			+ "setting; 0 keeps them). While you stay parked, \"Parked in double spot\" stays in the middle of your boat (a "
-			+ "setting, on by default).",
-		"Reach is taken as " + AfkSession.HOOK_RANGE + " tiles, from other plugins' observations rather than the "
-			+ "game's code, so a box edge may be a tile off. If a hook sits in a box and only one wreck is worked, "
-			+ "report it and the number gets fixed.",
-		"While you wait for a wreck, \"Next wreck here in ≤\" is the earliest another wreck in the area can sink, "
-			+ "since one rises here the moment another sinks. A wreck's clock starts when a boat is first seen beside "
-			+ "it (or your hook rolls on it); lifetimes are averages, so past the clock it says \"any moment\" and soon "
-			+ "gives up on that wreck until it is seen worked again.",
-		"A double spot is a place, not a moment: the green box shows even while one or both of its wrecks are down, "
-			+ "because the next wreck rises on the same tile, so you can park and wait. Sunk wrecks' boxes turn grey.",
-		"Map pans the world map while it is open. With it closed, press Map, then open the map and it jumps there.",
-		"Route asks the Shortest Path plugin to draw the way. The line above the list says if it is missing or "
-			+ "switched off. A route to a spot, sent by Route or by Auto, is cleared for you once you pull up to one "
-			+ "of its wrecks or step off your boat. Shortest Path does not tell plugins when you set a target of your "
-			+ "own, so if you replace the plugin's route yourself, that one is cleared then instead.",
-		"The star pins a spot to the top of every list and to the Favourites filter. Auto marks one spot to be "
-			+ "routed to by itself whenever you board your boat from a dock. Favourites, the Auto spot and the "
-			+ "dropdowns are kept per character, under the account's own id, so a name change keeps them.",
-		"The distances are sailing distances: the way round the land by sea, worked out over a map of the water "
-			+ "taken from the game's own map data, give or take a few tiles. They show once you are on the water or "
-			+ "standing at a dock, and Sort: nearest first uses them too. The dock boxes at the top follow you "
-			+ "about: the nearest dock you can use, and the nearest dock where your crew bank the hold as you step "
-			+ "off (one with a bank deposit box, or the bank boat, which you bank at from your deck), with what a "
-			+ "nearer one needs. Afloat, those are sailing distances as well; ashore, a straight line, since you "
-			+ "walk to a dock. The dropdowns are remembered between sessions.",
-		"Test alert fires the full-hold notification and banner so you can check your set-up without filling a "
-			+ "hold. Forget rates throws away what the timer learned about your crew's speed on each wreck. Clear "
-			+ "route takes down the Shortest Path line. They sit under Tools at the top of the Spots tab; click a "
-			+ "heading there (Tools, Docks, Session) to fold it away, and each character remembers which are open.",
-		"Find a setting, at the top of this tab, searches every setting by name and description and says which "
-			+ "section of the AFK Shipwrecks settings it sits in. The sections start folded, so open that one.",
-		"The timer and counter need one real look at the hold: open the cargo hold once and they follow from there. "
-			+ "Opening it again at any time resyncs the tally.",
-		"Your crew salvage at your Sailing level, boosted or not. If a boost lapses below the wreck's level they "
-			+ "stop, and the plugin says so.",
-		"Your own hook does not restart when the wreck sinks; your crew do. The plugin reminds you to click it. If a "
-			+ "deckhandier crewmate sits idle while a weaker one works a hook, it says who to swap, once, with its own "
-			+ "notification under Reminders, and a flashing SWAP CREW notice sits mid-screen (with a Swap line on the "
-			+ "overlay) until you do.",
-		"A minute before the game logs you out for idling, while you are on your own boat, the plugin sends a "
-			+ "notification (Reminders settings: how long before, or never). It cannot press a key for you.",
-		"\"Countdown infobox\" in the Overlay settings puts the time to a full hold in a small box among RuneLite's "
-			+ "infoboxes, with the detail on hover, for when the overlay is hidden.",
-		"Inventory sorting boxes each item on your boat at a salvaging spot (with the hold open, only the deposits, "
-			+ "in the panel beside it): sage keep (if \"Box kept items\" is on), cyan deposit (ship "
-			+ "bronze to dragon cannonballs by default, each listed in the Sorting tab with an × that takes it out), green "
-			+ "alch (at or "
-			+ "above the \"Alch from\" value), red drop (only what you mark; \"Add suggested drops\" in the Sorting "
-			+ "tab marks 74 common ones for you, after asking). "
-			+ "Anything else gets no box until you mark it. Shift-right-click an item to mark it, or type its name in the "
-			+ "Sorting tab. Nothing is dropped or alched for you. Inside the open hold, the salvage stacks get an amber "
-			+ "box so they are easy to find and click (a setting, on by default).",
-		"The overlay only appears while a wreck site is in view. \"Show overlay\" in the Overlay settings can make it "
-			+ "show whenever you are aboard. It steps aside while any game interface fills the middle of the screen, the "
-			+ "cargo hold and the world map included, and comes back when that closes."
+	/** One group of tips under its heading. */
+	static final class Group
+	{
+		final String heading;
+		final List<String> tips;
+
+		Group(String heading, String... tips)
+		{
+			this.heading = heading;
+			this.tips = Collections.unmodifiableList(Arrays.asList(tips));
+		}
+	}
+
+	private static final List<Group> GROUPS = Collections.unmodifiableList(Arrays.asList(
+		new Group("Parking",
+			"The boxes on the water are for your hooks, not the boat: the game measures reach from the hook, so a "
+				+ "hook has to sit inside a box. Yellow: a hook there reaches that wreck. Green: it reaches two at once.",
+			"Park so every hook is in a green box (both on a sloop, the one on a raft or skiff). It turns the parked "
+				+ "colour and says \"Parked\"; with only some hooks in, it counts them.",
+			"A double spot is a place, not a moment: the green box stays while its wrecks are down, since the next "
+				+ "one rises on the same tile. Park and wait.",
+			"Once you are parked the yellow boxes go, the green ones go 20 seconds after the boat stops, and "
+				+ "\"Parked in double spot\" stays on your boat. Each of these is a setting.",
+			"Reach is taken as " + AfkSession.HOOK_RANGE + " tiles, from other plugins' observations rather than the "
+				+ "game's code, so an edge may be a tile off. If a hook sits in a box and only one wreck is worked, "
+				+ "tell me."),
+		new Group("Wrecks and timers",
+			"Each wreck in view carries a timer: cyan \"Sinks in ≤\" while it is up, grey on a sunk one for when the "
+				+ "next can rise (\"maybe next\" when another sunk site could take it).",
+			"A wreck's clock starts only once a boat is seen beside it or your hook rolls on it. Lifetimes are "
+				+ "averages, so past the clock it says \"any moment\".",
+			"While you wait, \"Next wreck here in ≤\" is the earliest another wreck in the area can sink: one rises "
+				+ "here the moment another sinks.",
+			"Wrecks within your level get an outline round the hull, cyan while up and grey once sunk. \"Mark "
+				+ "wrecks\" picks the hull, the area, both or neither.",
+			"The plugin only knows the wrecks in the area the game has loaded, a square of about 104 tiles that "
+				+ "moves as you sail. \"Show what the plugin sees\" draws it; sail toward wrecks outside it."),
+		new Group("Crew and hook",
+			"Your crew salvage at your Sailing level, boosted or not. If a boost lapses below the wreck's level they "
+				+ "stop, and the plugin says so.",
+			"Your own hook does not restart when the wreck sinks; your crew's do. The plugin reminds you to click it.",
+			"If a deckhandier crewmate sits idle while a weaker one works a hook, it says who to swap, with a "
+				+ "flashing SWAP CREW until you do."),
+		new Group("Timer and alerts",
+			"The timer and counter need one real look at the hold: open it once. Opening it again resyncs the tally.",
+			"The overlay shows while a wreck site is in view (\"Show overlay\" can make it always aboard) and steps "
+				+ "aside while a game interface fills the screen. \"Countdown infobox\" keeps the time in view.",
+			"A minute before the idle logout you get a notification. It cannot press a key for you.",
+			"Parked at a spot, you are told if the crew stop while a wreck is in reach, before a boost wears off, "
+				+ "and, with a flashing red DANGER and a sound, if the boat is damaged or you are hit or poisoned.",
+			"Test alert, under Tools on the Spots tab, fires the full-hold notification and banner so you can check "
+				+ "your set-up."),
+		new Group("Sidebar",
+			"Map pans the world map while it is open; with it closed, press Map, then open the map. Route asks the "
+				+ "Shortest Path plugin to draw the way and clears itself when you arrive or step off your boat.",
+			"The star pins a spot to the top and to Favourites. Auto routes to one spot whenever you board from a "
+				+ "dock. These and the dropdowns are kept per character.",
+			"Distances are sailing distances round the land, give or take a few tiles. The dock boxes name the "
+				+ "nearest dock you can use and the nearest where your crew bank the hold.",
+			"Click Tools, Docks or Session to fold it away. Forget rates throws away what the timer learned about "
+				+ "your crew's speed; Clear route takes the line down.",
+			"Find a setting, above, searches every setting and says which section it is in. Ideas or bugs? The "
+				+ "Feedback tab has GitHub and Discord."),
+		new Group("Inventory sorting",
+			"On your boat at a spot, items get a box: cyan deposit (bronze to dragon cannonballs by default), green "
+				+ "alch (from the \"Alch from\" value), red drop (only what you mark), sage keep (if \"Box kept "
+				+ "items\" is on). Anything else gets none.",
+			"Shift-right-click an item to mark it, or type its name in the Sorting tab. \"Add suggested drops\" marks "
+				+ "74 common junk items, after asking. Nothing is ever dropped or alched for you.",
+			"With the hold open only the deposit boxes show, and the salvage in the hold gets an amber box.")
 	));
 
 	private SalvagingTips()
 	{
 	}
 
+	/** Every tip, in order, without the headings. */
 	public static List<String> all()
 	{
-		return TIPS;
+		List<String> all = new ArrayList<>();
+		for (Group group : GROUPS)
+		{
+			all.addAll(group.tips);
+		}
+		return Collections.unmodifiableList(all);
 	}
 
-	/** The tips as one HTML block for a Swing label, wrapped to the given width in pixels. */
+	static List<Group> groups()
+	{
+		return GROUPS;
+	}
+
+	/** The tips as one HTML block for a Swing label, wrapped to the given width in pixels, a heading per group. */
 	public static String html(int width)
 	{
-		StringBuilder html = new StringBuilder("<html><body style='width:" + width + "pt'><ul style='margin-left:12px;padding-left:0'>");
-		for (String tip : TIPS)
+		StringBuilder html = new StringBuilder("<html><body style='width:" + width + "pt'>");
+		for (Group group : GROUPS)
 		{
-			html.append("<li style='margin-bottom:4px'>").append(tip).append("</li>");
+			html.append("<p style='margin-top:6px;color:#ffffff'><b>").append(group.heading).append("</b></p>")
+				.append("<ul style='margin-left:12px;padding-left:0;margin-top:2px'>");
+			for (String tip : group.tips)
+			{
+				html.append("<li style='margin-bottom:3px'>").append(tip).append("</li>");
+			}
+			html.append("</ul>");
 		}
-		return html.append("</ul></body></html>").toString();
+		return html.append("</body></html>").toString();
 	}
 }

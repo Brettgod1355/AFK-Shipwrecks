@@ -79,9 +79,17 @@ public interface AfkSalvagingConfig extends Config
 	String SPOTS = "spots";
 
 	@ConfigSection(
+		name = "Wreck tracking",
+		description = "Timers on the wrecks, and what the plugin can see",
+		position = 5,
+		closedByDefault = true
+	)
+	String TRACKING = "tracking";
+
+	@ConfigSection(
 		name = "Salvaging worlds",
 		description = "The worlds where every wreck site is worked, and the tip and alert off them",
-		position = 5,
+		position = 6,
 		closedByDefault = true
 	)
 	String WORLDS = "worlds";
@@ -89,7 +97,7 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigSection(
 		name = "Sidebar",
 		description = "The sidebar of salvaging spots and docks",
-		position = 6,
+		position = 7,
 		closedByDefault = true
 	)
 	String SIDEBAR = "sidebar";
@@ -268,7 +276,7 @@ public interface AfkSalvagingConfig extends Config
 			+ "(\"Jenkins, take control of the starboard side salvaging hook!\", \"Jenkins, take a rest!\"). "
 			+ "Lines said anywhere else stay.",
 		section = REMINDERS,
-		position = 11
+		position = 16
 	)
 	default boolean hideCrewOrders()
 	{
@@ -281,7 +289,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "While a hook is empty and a crewmate could take it, flash a green box on the next click: the Sailing "
 			+ "tab, the empty hook's Assign button, then the free crewmate with the most deckhandiness for that hook.",
 		section = REMINDERS,
-		position = 12
+		position = 17
 	)
 	default boolean hookGuide()
 	{
@@ -368,6 +376,72 @@ public interface AfkSalvagingConfig extends Config
 	default int idleLogoutWarnSeconds()
 	{
 		return 60;
+	}
+
+	@ConfigItem(
+		keyName = "crewStalledNotification",
+		name = "Crew stopped, wreck in reach",
+		description = "Notify when the crew stop bringing salvage in although a wreck they can work is in reach. The game "
+			+ "shows nothing for it; nudging the boat or assigning them again usually starts them.",
+		section = REMINDERS,
+		position = 11
+	)
+	default Notification crewStalledNotification()
+	{
+		return Notification.ON;
+	}
+
+	@ConfigItem(
+		keyName = "wreckRoseNotification",
+		name = "A wreck rose",
+		description = "Notify when a wreck rises in reach after you have waited for one. Your crew start on it by "
+			+ "themselves; your own hook does not.",
+		section = REMINDERS,
+		position = 12
+	)
+	default Notification wreckRoseNotification()
+	{
+		return Notification.OFF;
+	}
+
+	@ConfigItem(
+		keyName = "boostWarnWhen",
+		name = "Boost warning",
+		description = "When to warn about a Sailing boost wearing off below the level of the wreck in reach: just before it "
+			+ "drops (the crew still salvaging), after the crew have stopped, or both. Sent the way \"Crew stopped: level "
+			+ "too low\" is set.",
+		section = REMINDERS,
+		position = 13
+	)
+	default BoostWarning boostWarnWhen()
+	{
+		return BoostWarning.BOTH;
+	}
+
+	@ConfigItem(
+		keyName = "dangerNotification",
+		name = "Danger",
+		description = "While you are parked at a salvaging spot on your own boat: notify, with a sound, when the boat takes "
+			+ "damage, you are hit, or you are poisoned. At most once every 30 seconds.",
+		section = REMINDERS,
+		position = 14
+	)
+	default Notification dangerNotification()
+	{
+		return Notification.ON;
+	}
+
+	@ConfigItem(
+		keyName = "dangerAlert",
+		name = "Flash danger on screen",
+		description = "Also flash a red DANGER notice in the middle of the screen while it lasts: ten seconds after the "
+			+ "last hit, or until a poison is cured.",
+		section = REMINDERS,
+		position = 15
+	)
+	default boolean dangerAlert()
+	{
+		return true;
 	}
 
 	// ---- Full hold ----
@@ -568,7 +642,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Show hooks line",
 		description = "Show who is on each salvaging hook.",
 		section = OVERLAY,
-		position = 7
+		position = 8
 	)
 	default boolean showHooks()
 	{
@@ -580,7 +654,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Show wrecks line",
 		description = "Show how many wrecks are in reach and how long the current one has left at most.",
 		section = OVERLAY,
-		position = 8
+		position = 9
 	)
 	default boolean showWrecks()
 	{
@@ -592,7 +666,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Text size",
 		description = "Size of the overlay lines. 100% is the normal RuneLite overlay size; 150% by default.",
 		section = OVERLAY,
-		position = 9
+		position = 10
 	)
 	@Range(min = 50, max = 300)
 	@Units(Units.PERCENT)
@@ -603,12 +677,25 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "countOnHold",
+		name = "Count on the hold",
+		description = "Write the cargo count on the cargo hold itself, as \"Counter shows\" sets it (for example 39/160), "
+			+ "coloured green to red as it fills.",
+		section = OVERLAY,
+		position = 7
+	)
+	default boolean countOnHold()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "showInfoBox",
 		name = "Countdown infobox",
 		description = "A small box among RuneLite's infoboxes with the time to a full hold, so it stays in view with "
 			+ "the overlay hidden or scrolled away. Hover it for the detail.",
 		section = OVERLAY,
-		position = 10
+		position = 11
 	)
 	default boolean showInfoBox()
 	{
@@ -643,6 +730,48 @@ public interface AfkSalvagingConfig extends Config
 	default WreckMarking wreckMarking()
 	{
 		return WreckMarking.BOTH;
+	}
+
+	@ConfigItem(
+		keyName = "wreckTimers",
+		name = "Timers on wrecks",
+		description = "Write on each wreck in view how long it has left: \"Sinks in ≤ 1:20\" while it is up (in cyan), "
+			+ "and on a sunk one when the next wreck can rise, \"Sunk - next ≤ 0:45\" (in grey; \"maybe next\" when "
+			+ "another sunk site could take it). A wreck's clock starts only once a boat is seen beside it or your hook "
+			+ "rolls on it; until then it says \"no clock yet\".",
+		section = TRACKING,
+		position = 0
+	)
+	default boolean wreckTimers()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "showSceneEdge",
+		name = "Show what the plugin sees",
+		description = "Draw a faint dashed square on the water round the area the game has loaded. The plugin only knows "
+			+ "about wrecks inside it, so if a set of wrecks is outside, sail a little toward it until the square moves "
+			+ "past it. The game redraws this area as you sail, so the square jumps now and then.",
+		section = TRACKING,
+		position = 1
+	)
+	default boolean showSceneEdge()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "boxFill",
+		name = "Fill the boxes",
+		description = "Shade the inside of the reach and double spot boxes. Off draws the outlines only, so nothing on the "
+			+ "water is tinted.",
+		section = SPOTS,
+		position = 9
+	)
+	default boolean boxFill()
+	{
+		return true;
 	}
 
 	@ConfigItem(
@@ -799,7 +928,7 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigSection(
 		name = "Inventory sorting",
 		description = "Boxes round inventory items saying what to keep, put in the hold, alch or drop",
-		position = 7,
+		position = 8,
 		closedByDefault = true
 	)
 	String SORTING = "sorting";

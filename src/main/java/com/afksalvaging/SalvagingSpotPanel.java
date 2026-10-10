@@ -35,6 +35,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import net.runelite.api.coords.WorldPoint;
@@ -115,6 +117,18 @@ public class SalvagingSpotPanel extends PluginPanel
 	private static final int TOP_TEXT_WIDTH = 190;
 	static final String DISCORD_URL = "https://discord.gg/c85DK83jWx";
 	static final String GITHUB_URL = "https://github.com/Brettgod1355/AFK-Shipwrecks";
+	/**
+	 * Where the Feedback tab's GitHub button goes: the issues list, which anyone can read without a
+	 * GitHub account; "New issue" there asks them to sign in (owner, 2026-10-08: "Point it to the issues
+	 * list instead"). The new-issue form itself sends a signed-out visitor straight to GitHub's login.
+	 */
+	static final String GITHUB_ISSUES_URL = GITHUB_URL + "/issues";
+	/** The Feedback tab's words (owner's draft, 2026-10-08, lightly reworded). */
+	static final String FEEDBACK_TEXT = "Help make AFK Shipwrecks better. Got an idea, or found something that is not "
+		+ "working right? Open an issue on GitHub, or tell me about it on Discord.";
+	/** The logos on the Feedback tab's two big buttons, larger than the title's. */
+	static final int FEEDBACK_ICON_SIZE = 28;
+	private static final int FEEDBACK_BUTTON_HEIGHT = 48;
 	/** The logos' size beside the title, and the square black buttons they sit in, in pixels. */
 	static final int LINK_ICON_SIZE = 16;
 	private static final int LINK_BUTTON_SIZE = 24;
@@ -293,15 +307,102 @@ public class SalvagingSpotPanel extends PluginPanel
 		display.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		MaterialTabGroup tabs = new MaterialTabGroup(display);
 		tabs.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
-		MaterialTab spots = new MaterialTab("Spots", tabs, spotsTab);
-		tabs.addTab(spots);
-		tabs.addTab(new MaterialTab("Sorting", tabs, sortBlock()));
-		tabs.addTab(new MaterialTab("Tips", tabs, tipsBlock()));
+		// Four tabs side by side with the spare width shared between them: the group's own flow layout
+		// spaces three widely and wraps a fourth onto a hidden second line (found rendering the panel,
+		// 2026-10-08).
+		tabs.setLayout(new BoxLayout(tabs, BoxLayout.X_AXIS));
+		MaterialTab spots = new CompactTab("Spots", tabs, spotsTab);
+		MaterialTab[] all = {spots, new CompactTab("Sorting", tabs, sortBlock()), new CompactTab("Tips", tabs, tipsBlock()),
+			new CompactTab("Feedback", tabs, feedbackBlock())};
+		for (int i = 0; i < all.length; i++)
+		{
+			if (i > 0)
+			{
+				tabs.add(Box.createHorizontalGlue());
+			}
+			tabs.addTab(all[i]);
+		}
 		tabs.select(spots);
 		add(tabs, BorderLayout.NORTH);
 		add(display, BorderLayout.CENTER);
 
 		rebuild();
+	}
+
+	/**
+	 * The Feedback tab: a line asking for ideas and bug reports, and two big buttons that open a new
+	 * GitHub issue or the Discord invite in the browser. Nothing is sent from the plugin itself, so the
+	 * plugin needs no third-party data warning (owner, 2026-10-08: "I don't want an IP warning on this
+	 * plugin").
+	 */
+	private JPanel feedbackBlock()
+	{
+		JPanel block = new JPanel();
+		block.setLayout(new BoxLayout(block, BoxLayout.Y_AXIS));
+		block.setBackground(ColorScheme.DARK_GRAY_COLOR);
+
+		JLabel heading = new JLabel("Feedback");
+		heading.setFont(FontManager.getRunescapeBoldFont());
+		heading.setForeground(Color.WHITE);
+		heading.setAlignmentX(LEFT_ALIGNMENT);
+		block.add(heading);
+		block.add(Box.createVerticalStrut(4));
+		JLabel words = new JLabel(html(FEEDBACK_TEXT, TOP_TEXT_WIDTH));
+		small(words);
+		block.add(words);
+		block.add(Box.createVerticalStrut(10));
+		block.add(bigLink("github_white.png", "github_green.png", "Tell me on GitHub",
+			"Opens the AFK Shipwrecks issues on GitHub in your browser", GITHUB_ISSUES_URL));
+		block.add(Box.createVerticalStrut(8));
+		block.add(bigLink("discord_white.png", "discord_blurple.png", "Tell me on Discord",
+			"Opens the AFK Shipwrecks Discord in your browser", DISCORD_URL));
+		return block;
+	}
+
+	/**
+	 * A full-width black button with a brand logo and a few words, the larger kin of the title's link
+	 * buttons: the logo turns to its brand colour while the mouse is over it.
+	 */
+	private static JPanel bigLink(String restingFile, String hoverFile, String text, String tooltip, String url)
+	{
+		BufferedImage restingLogo = logo(restingFile, FEEDBACK_ICON_SIZE);
+		ImageIcon resting = new ImageIcon(restingLogo);
+		ImageIcon hovered = new ImageIcon(logoLike(hoverFile, restingLogo));
+		JLabel label = new JLabel(text, resting, JLabel.LEFT);
+		label.setIconTextGap(10);
+		label.setFont(FontManager.getRunescapeBoldFont());
+		label.setForeground(Color.WHITE);
+
+		JPanel button = new JPanel(new BorderLayout());
+		button.setBackground(Color.BLACK);
+		button.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+		button.add(label, BorderLayout.CENTER);
+		button.setAlignmentX(LEFT_ALIGNMENT);
+		button.setPreferredSize(new Dimension(0, FEEDBACK_BUTTON_HEIGHT));
+		button.setMaximumSize(new Dimension(Integer.MAX_VALUE, FEEDBACK_BUTTON_HEIGHT));
+		button.setToolTipText(tooltip);
+		button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		button.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				LinkBrowser.browse(url);
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e)
+			{
+				label.setIcon(hovered);
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e)
+			{
+				label.setIcon(resting);
+			}
+		});
+		return button;
 	}
 
 	/** "Find a setting" and the tips, in their own tab. */
@@ -1055,8 +1156,14 @@ public class SalvagingSpotPanel extends PluginPanel
 	/** A brand logo scaled to fit {@link #LINK_ICON_SIZE} square, keeping its proportions (the brands forbid distorting them). */
 	static BufferedImage logo(String file)
 	{
+		return logo(file, LINK_ICON_SIZE);
+	}
+
+	/** A brand logo scaled to fit {@code size} square, keeping its proportions. */
+	static BufferedImage logo(String file, int size)
+	{
 		BufferedImage image = ImageUtil.loadImageResource(SalvagingSpotPanel.class, file);
-		double scale = Math.min((double) LINK_ICON_SIZE / image.getWidth(), (double) LINK_ICON_SIZE / image.getHeight());
+		double scale = Math.min((double) size / image.getWidth(), (double) size / image.getHeight());
 		return ImageUtil.resizeImage(image, Math.max(1, (int) Math.round(image.getWidth() * scale)),
 			Math.max(1, (int) Math.round(image.getHeight() * scale)));
 	}
@@ -1100,6 +1207,40 @@ public class SalvagingSpotPanel extends PluginPanel
 		}
 		settingsFound.revalidate();
 		settingsFound.repaint();
+	}
+
+	/**
+	 * A tab with half the usual side padding (5 px rather than RuneLite's 10), so four names fit the
+	 * panel's width. RuneLite swaps a tab's border when it is selected or not; this keeps that look
+	 * (the orange line under the selected tab) with the narrower padding.
+	 */
+	static final class CompactTab extends MaterialTab
+	{
+		static final int SIDE = 5;
+
+		CompactTab(String text, MaterialTabGroup group, JComponent content)
+		{
+			super(text, group, content);
+		}
+
+		@Override
+		public void setBorder(Border border)
+		{
+			if (border instanceof CompoundBorder)
+			{
+				// Selected: the group's orange line under the name.
+				super.setBorder(new CompoundBorder(((CompoundBorder) border).getOutsideBorder(),
+					BorderFactory.createEmptyBorder(5, SIDE, 4, SIDE)));
+			}
+			else if (border != null)
+			{
+				super.setBorder(BorderFactory.createEmptyBorder(5, SIDE, 5, SIDE));
+			}
+			else
+			{
+				super.setBorder(null);
+			}
+		}
 	}
 
 	/** A block of the Spots tab under a heading that opens and folds it. */
