@@ -93,7 +93,6 @@ public final class AfkSession
 	/** Player choices the session needs. */
 	public static final class Settings
 	{
-		public boolean countHookedSalvage = true;
 		public int warnSlotsRemaining;
 		public long repeatFullMillis;
 		public long graceMillis = 15_000;
@@ -232,7 +231,6 @@ public final class AfkSession
 	private int freeInventorySlots = INVENTORY_SLOTS;
 	private int occupiedInventorySlots;
 	private Set<ShipwreckType> inventorySalvageTypes = Collections.emptySet();
-	private int hookedInInventory;
 	private int pendingHoldTicks;
 	private boolean pendingWithdraw;
 	private int inventoryBefore;
@@ -295,6 +293,24 @@ public final class AfkSession
 		return roster;
 	}
 
+	/** The idle crewmate with the most deckhandiness who can work a hook needing this much, or null. */
+	public Crewmate bestIdleFor(int needed, int tick)
+	{
+		int floor = boat.hasWhirlpoolKeg() ? 2 : 0;
+		Crewmate best = null;
+		int bestDeckhandiness = 0;
+		for (Crewmate crewmate : roster.idle(tick))
+		{
+			int deckhandiness = Math.max(floor, crewmate.effectiveDeckhandiness());
+			if (deckhandiness >= needed && (best == null || deckhandiness > bestDeckhandiness))
+			{
+				best = crewmate;
+				bestDeckhandiness = deckhandiness;
+			}
+		}
+		return best;
+	}
+
 	public BoatFacilities boat()
 	{
 		return boat;
@@ -318,11 +334,6 @@ public final class AfkSession
 	public PlayerActivity activity()
 	{
 		return activity.current();
-	}
-
-	public int getHookedInInventory()
-	{
-		return hookedInInventory;
 	}
 
 	/** Milliseconds before the game's idle logout, from the client's idle counters, or -1 when it is not counting. */
@@ -429,18 +440,9 @@ public final class AfkSession
 			}
 			int gained = salvage - inventorySalvage;
 			boolean withdrawing = pendingHoldTicks > 0 && pendingWithdraw;
-			if (gained > 0 && withdrawing)
-			{
-				hookedInInventory = 0;
-			}
-			else if (gained > 0 && aboard && activity.current() == PlayerActivity.SALVAGING)
+			if (gained > 0 && !withdrawing && aboard && activity.current() == PlayerActivity.SALVAGING)
 			{
 				events.playerGain(gained, tick);
-				hookedInInventory += gained;
-			}
-			if (salvage < hookedInInventory)
-			{
-				hookedInInventory = salvage;
 			}
 		}
 		inventoryKnown = true;
@@ -458,10 +460,6 @@ public final class AfkSession
 		inventoryBefore = occupiedInventorySlots;
 		inventoryChanged = false;
 		hookWatch.noteHoldUse();
-		if (withdraw)
-		{
-			hookedInInventory = 0;
-		}
 	}
 
 	/** The game said there is no more salvage to sort; the notice follows after a grace, unless sorting starts again. */
@@ -559,7 +557,6 @@ public final class AfkSession
 		freeInventorySlots = INVENTORY_SLOTS;
 		occupiedInventorySlots = 0;
 		inventorySalvageTypes = Collections.emptySet();
-		hookedInInventory = 0;
 		pendingHoldTicks = 0;
 		pendingWithdraw = false;
 		inventoryChanged = false;
@@ -627,7 +624,6 @@ public final class AfkSession
 		if (current == PlayerActivity.SORTING && lastActivity != PlayerActivity.SORTING)
 		{
 			hookWatch.noteSortingStarted();
-			hookedInInventory = 0;
 			sortingFinishTick = tick + SORT_TICKS * inventorySalvage;
 		}
 		else if (current != PlayerActivity.SORTING)
@@ -787,9 +783,7 @@ public final class AfkSession
 		est.playerAtHook = playerAtHook || (aboard && current == PlayerActivity.AT_HOOK_IDLE);
 		est.playerRolling = playerRolling;
 		est.inventoryFull = inventoryFull;
-		est.inventorySalvage = hookedInInventory;
 		est.freeInventorySlots = freeInventorySlots;
-		est.countInventorySalvage = settings.countHookedSalvage;
 		est.wreckInReach = wreckInReach;
 		est.onlyHigherWrecksInReach = higherWrecksUp > 0 && !wreckInReach;
 		est.hazardous = hazardous;
@@ -1070,10 +1064,6 @@ public final class AfkSession
 			int delta = inventoryBefore - occupiedInventorySlots;
 			pendingHoldTicks = 0;
 			inventoryChanged = false;
-			if (delta > 0)
-			{
-				hookedInInventory = Math.max(0, hookedInInventory - delta);
-			}
 			if (delta != 0)
 			{
 				monitor.adjust(delta);

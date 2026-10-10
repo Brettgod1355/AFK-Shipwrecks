@@ -191,7 +191,7 @@ settings; make it custom once and every category follows.
 
 **Overlay**: when to show it (near wrecks, or always aboard); show timer (turning it off hides the
 countdown lines; the status lines, such as waiting for a wreck, stay); show clock time and its format
-(12-hour or 24-hour); count salvage you hooked; the cargo counter and what it shows (used of total,
+(12-hour or 24-hour); the cargo counter and what it shows (used of total,
 slots left or percent full); the hooks line; the wrecks line; text size (150% by default); and the
 countdown infobox (off by default). Whatever the settings, the overlay and the flashing notices step
 aside while a game interface fills the middle of the screen (the cargo hold, a skill guide, the quest

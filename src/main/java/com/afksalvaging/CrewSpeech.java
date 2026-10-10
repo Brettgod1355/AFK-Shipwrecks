@@ -27,6 +27,11 @@ public final class CrewSpeech
 	private static final String SORTING_DONE = "no more salvage to sort";
 	/** Game message when the boat is somewhere it may not salvage. */
 	private static final String HAZARDOUS = "not safe to salvage while in hazardous waters";
+	/**
+	 * The player's orders putting a crewmate on a hook or off their job: "Ex-Captain Siad, take control of
+	 * the starboard side rune salvaging hook!" and "Ex-Captain Siad, take a rest!".
+	 */
+	private static final Pattern CREW_ORDER = Pattern.compile("^.+, (?:take control of the .*salvaging hook|take a rest)!?$");
 	/** The ghostly cabin boy only ever says variations of "Wooo wooo." */
 	private static final Pattern GHOST_SPEECH = Pattern.compile("(?i)^(?:w+o+[ ,]*)+[.!]*$");
 
@@ -84,6 +89,12 @@ public final class CrewSpeech
 	{
 		String line = text == null ? "" : Text.removeTags(text).trim();
 		return !line.isEmpty() && GHOST_SPEECH.matcher(line).matches();
+	}
+
+	/** Whether this is the player ordering a crewmate onto a salvaging hook or to rest. */
+	public static boolean isCrewOrder(String text)
+	{
+		return CREW_ORDER.matcher(plain(text)).matches();
 	}
 
 	private static String plain(String text)

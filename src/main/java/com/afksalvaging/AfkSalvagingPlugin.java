@@ -32,6 +32,7 @@ import net.runelite.api.Item;
 import net.runelite.api.ItemComposition;
 import net.runelite.api.KeyCode;
 import net.runelite.api.Menu;
+import net.runelite.api.MessageNode;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.MenuAction;
 import net.runelite.api.NPC;
@@ -57,6 +58,8 @@ import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.OverheadTextChanged;
+import net.runelite.api.events.ResizeableChanged;
+import net.runelite.api.events.ScriptCallbackEvent;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetLoaded;
@@ -261,6 +264,9 @@ public class AfkSalvagingPlugin extends Plugin
 	private CrewSwapOverlay swapOverlay;
 
 	@Inject
+	private HookGuideOverlay hookGuideOverlay;
+
+	@Inject
 	private WreckOutlineOverlay wreckOutlineOverlay;
 
 	/** The spot last sent to the map or routed to; the sidebar highlights it. */
@@ -324,6 +330,10 @@ public class AfkSalvagingPlugin extends Plugin
 	private long testAlertAt;
 	/** The update line owed to the player, said on the first tick they are logged in. */
 	private String updateMessage;
+	private final ChatLines chatLines = new ChatLines();
+	/** Chat lines ordering a crewmate onto a hook or to rest, said at a salvaging spot: hidden while the setting is on. */
+	private final Set<Integer> hiddenCrewOrders = new java.util.LinkedHashSet<>();
+	private boolean chatTransparent;
 
 	@Provides
 	AfkSalvagingConfig provideConfig(ConfigManager configManager)
@@ -352,6 +362,7 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.add(worldOverlay);
 		overlayManager.add(holdSalvageOverlay);
 		overlayManager.add(swapOverlay);
+		overlayManager.add(hookGuideOverlay);
 		overlayManager.add(wreckOutlineOverlay);
 		overlayManager.add(sortOverlay);
 		markStore = new MarkStore(configManager);
@@ -379,8 +390,11 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.remove(holdOverlay);
 		overlayManager.remove(worldOverlay);
 		worldOverlay.reset();
+		chatLines.clear();
 		overlayManager.remove(holdSalvageOverlay);
 		overlayManager.remove(swapOverlay);
+		overlayManager.remove(hookGuideOverlay);
+		hookGuideOverlay.reset();
 		overlayManager.remove(wreckOutlineOverlay);
 		overlayManager.remove(sortOverlay);
 		removeInfoBox();
@@ -436,6 +450,11 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			// Other per-character data the plugin itself writes (remembered counts, rates, favourites, dropdowns): nothing to apply.
 			return;
+		}
+		if ("hideCrewOrders".equals(event.getKey()))
+		{
+			// Show or hide the hook orders already in the chatbox.
+			client.refreshChat();
 		}
 		applySpotSettings();
 		applyInfoBox();
@@ -592,6 +611,11 @@ public class AfkSalvagingPlugin extends Plugin
 	public void onVarbitChanged(VarbitChanged event)
 	{
 		int id = event.getVarbitId();
+		if (id == VarbitID.CHATBOX_TRANSPARENCY)
+		{
+			recolourChatLines();
+			return;
+		}
 		if (id == VarbitID.SAILING_LAST_PERSONAL_BOAT_BOARDED)
 		{
 			reloadHold();
@@ -651,6 +675,10 @@ public class AfkSalvagingPlugin extends Plugin
 		MenuAction action = event.getMenuAction();
 		// Any click at all, Examine and Cancel included, shows the player is here (review, 2026-10-04).
 		session.playerClicked();
+		if (event.getParam1() == InterfaceID.SailingSidepanel.FACILITIES_CONTENT_CLICKLAYER && option.equals("assign"))
+		{
+			hookGuideOverlay.assignClicked(event.getParam0());
+		}
 		if (action == MenuAction.CANCEL || option.startsWith("examine"))
 		{
 			return;
@@ -755,6 +783,15 @@ public class AfkSalvagingPlugin extends Plugin
 	public void onChatMessage(ChatMessage event)
 	{
 		ChatMessageType type = event.getType();
+		if (isOwnCrewOrderAtSpot(event))
+		{
+			hiddenCrewOrders.add(event.getMessageNode().getId());
+			while (hiddenCrewOrders.size() > ChatLines.KEPT)
+			{
+				hiddenCrewOrders.remove(hiddenCrewOrders.iterator().next());
+			}
+			return;
+		}
 		if (type != ChatMessageType.GAMEMESSAGE && type != ChatMessageType.SPAM
 			&& type != ChatMessageType.ENGINE && type != ChatMessageType.MESBOX)
 		{
@@ -777,6 +814,31 @@ public class AfkSalvagingPlugin extends Plugin
 		else if (CrewSpeech.reportsSortingDone(text))
 		{
 			session.sortingDoneLine(clock());
+		}
+	}
+
+	/** The player's own order putting a crewmate on a hook or to rest, said at a salvaging spot. */
+	private boolean isOwnCrewOrderAtSpot(ChatMessage event)
+	{
+		Player me = client.getLocalPlayer();
+		return me != null && me.getName() != null && event.getMessageNode() != null
+			&& Text.sanitize(me.getName()).equals(Text.sanitize(Text.removeTags(event.getName())))
+			&& session.view().atSpot && CrewSpeech.isCrewOrder(event.getMessage());
+	}
+
+	/** RuneLite's chat filter hook: a line hidden here stays hidden until the setting is turned off. */
+	@Subscribe
+	public void onScriptCallbackEvent(ScriptCallbackEvent event)
+	{
+		if (!"chatFilterCheck".equals(event.getEventName()) || !config.hideCrewOrders() || hiddenCrewOrders.isEmpty())
+		{
+			return;
+		}
+		int[] intStack = client.getIntStack();
+		int size = client.getIntStackSize();
+		if (hiddenCrewOrders.contains(intStack[size - 1]))
+		{
+			intStack[size - 3] = 0;
 		}
 	}
 
@@ -816,7 +878,6 @@ public class AfkSalvagingPlugin extends Plugin
 			otherBoatFullNotified = false;
 		}
 		AfkSession.Settings settings = session.settings();
-		settings.countHookedSalvage = config.countHookedSalvage();
 		settings.warnSlotsRemaining = config.warnSlotsRemaining();
 		settings.repeatFullMillis = config.repeatSeconds() * 1000L;
 		settings.graceMillis = config.reminderGraceSeconds() * 1000L;
@@ -848,7 +909,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			if (config.updateMessage())
 			{
-				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=" + tipColour() + ">" + updateMessage + "</col>", null);
+				sayTip(updateMessage);
 			}
 			updateMessage = null;
 			noteVersionSeen();
@@ -1434,9 +1495,38 @@ public class AfkSalvagingPlugin extends Plugin
 	// ---- Salvage spots: sidebar, double spot boxes ----
 
 	/** The plugin's chat line colour as the game's tag wants it: six hex digits, no transparency. */
-	private String tipColour()
+	/** A chat line from the plugin, in the blue that suits the chatbox as it is now. */
+	private void sayTip(String text)
 	{
-		return Palette.CHAT_TIP;
+		chatTransparent = isChatTransparent();
+		MessageNode node = client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", ChatLines.format(text, chatTransparent), null);
+		chatLines.remember(node, text);
+	}
+
+	/** The chatbox is see-through only in resizable mode with the game's transparency setting on. */
+	private boolean isChatTransparent()
+	{
+		return client.isResized() && client.getVarbitValue(VarbitID.CHATBOX_TRANSPARENCY) != 0;
+	}
+
+	@Subscribe
+	public void onResizeableChanged(ResizeableChanged event)
+	{
+		recolourChatLines();
+	}
+
+	/** Re-colours the plugin's recent chat lines when the chatbox turns transparent or back. */
+	private void recolourChatLines()
+	{
+		boolean transparent = isChatTransparent();
+		if (transparent == chatTransparent || chatLines.size() == 0)
+		{
+			chatTransparent = transparent;
+			return;
+		}
+		chatTransparent = transparent;
+		chatLines.recolour(transparent);
+		client.refreshChat();
 	}
 
 	/** The sorting colours from the settings, for the sidebar's list headings. */
@@ -1659,8 +1749,7 @@ public class AfkSalvagingPlugin extends Plugin
 			else
 			{
 				pendingMapTarget = point;
-				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
-					"<col=" + tipColour() + ">Open the world map and it will jump to " + what + ".</col>", null);
+				sayTip("Open the world map and it will jump to " + what + ".");
 			}
 		});
 	}
@@ -1689,7 +1778,7 @@ public class AfkSalvagingPlugin extends Plugin
 			if (problem != null)
 			{
 				setSpotStatus(problem, true);
-				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=" + tipColour() + ">" + problem + "</col>", null);
+				sayTip(problem);
 				return;
 			}
 			eventBus.post(ShortestPathMessages.routeTo(point));
@@ -1868,8 +1957,7 @@ public class AfkSalvagingPlugin extends Plugin
 		route(spot.getPoint(), spot.getSalvageName() + ", " + spot.getWhere(), "Auto route sent to Shortest Path: ", spot);
 		if (ShortestPathPresence.check(pluginManager).problem() == null)
 		{
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=" + tipColour() + ">Auto route: "
-				+ spot.getSalvageName() + ", " + spot.getWhere() + ".</col>", null);
+			sayTip("Auto route: " + spot.getSalvageName() + ", " + spot.getWhere() + ".");
 		}
 	}
 
@@ -2064,9 +2152,8 @@ public class AfkSalvagingPlugin extends Plugin
 			case WORLD_TIP:
 				if (config.worldTip())
 				{
-					client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
-						"<col=" + tipColour() + ">Waiting for a wreck? On the salvaging worlds (" + salvagingWorldsText()
-							+ ") every site is worked, so wrecks near you come back sooner.</col>", null);
+					sayTip("Waiting for a wreck? On the salvaging worlds (" + salvagingWorldsText()
+						+ ") every site is worked, so wrecks near you come back sooner.");
 				}
 				break;
 			default:

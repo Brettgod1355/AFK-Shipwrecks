@@ -153,19 +153,6 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "countHookedSalvage",
-		name = "Count salvage you hooked",
-		description = "Treat salvage you hooked yourself and have not yet deposited as bound for the hold. "
-			+ "Salvage you withdrew to sort is never counted.",
-		section = OVERLAY,
-		position = 4
-	)
-	default boolean countHookedSalvage()
-	{
-		return true;
-	}
-
-	@ConfigItem(
 		keyName = "salvagingWorlds",
 		name = "Salvaging worlds",
 		description = "World numbers to treat as salvaging worlds, where wrecks come back quickly because every site "
@@ -270,6 +257,33 @@ public interface AfkSalvagingConfig extends Config
 		position = 4
 	)
 	default boolean swapAlert()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "hideCrewOrders",
+		name = "Hide crew orders in chat",
+		description = "At a salvaging spot, hide your own chat lines putting a crewmate on a hook or to rest "
+			+ "(\"Jenkins, take control of the starboard side salvaging hook!\", \"Jenkins, take a rest!\"). "
+			+ "Lines said anywhere else stay.",
+		section = REMINDERS,
+		position = 11
+	)
+	default boolean hideCrewOrders()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "hookGuide",
+		name = "Show where to click for an empty hook",
+		description = "While a hook is empty and a crewmate could take it, flash a green box on the next click: the Sailing "
+			+ "tab, the empty hook's Assign button, then the free crewmate with the most deckhandiness for that hook.",
+		section = REMINDERS,
+		position = 12
+	)
+	default boolean hookGuide()
 	{
 		return true;
 	}

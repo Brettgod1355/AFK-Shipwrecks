@@ -734,16 +734,15 @@ public class AfkSessionTest
 	}
 
 	@Test
-	public void thePlayersOwnSalvageCountsTowardsTheHoldUntilWithdrawn()
+	public void thePlayersOwnSalvageOnlyCountsOnceDeposited()
 	{
 		twoCrewOnHooks();
 		animation = SALVAGING;
 		ticks(10);
-		long etaBefore = session.view().estimate.getEtaMillis();
 		session.inventoryChanged(5, 5, java.util.Collections.singleton(ShipwreckType.MERCHANT), tick);
 		ticks(1);
-		assertEquals(5, session.getHookedInInventory());
-		assertTrue(session.view().estimate.getEtaMillis() < etaBefore);
+		// Carried salvage may be sorted at the station instead, so only the hold counts.
+		assertEquals(200, session.monitor().getUsed());
 		assertEquals(5, session.rate().lifetimeEvents());
 
 		// Depositing them moves them into the hold.
@@ -752,14 +751,12 @@ public class AfkSessionTest
 		session.inventoryChanged(0, 0, java.util.Collections.emptySet(), tick);
 		ticks(1);
 		assertEquals(205, session.monitor().getUsed());
-		assertEquals(0, session.getHookedInInventory());
 
 		// Withdrawing to sort takes them back out and they do not count.
 		session.holdActionClicked(true);
 		session.inventoryChanged(28, 28, java.util.Collections.singleton(ShipwreckType.MERCHANT), tick);
 		ticks(1);
 		assertEquals(177, session.monitor().getUsed());
-		assertEquals(0, session.getHookedInInventory());
 		animation = SORTING;
 		AfkSession.View view = ticks(2);
 		assertEquals(PlayerActivity.SORTING, view.activity);
@@ -926,9 +923,6 @@ public class AfkSessionTest
 		ticks(6);
 		session.inventoryChanged(5, 5, Collections.singleton(ShipwreckType.MERCHANT), tick);
 		ticks(1);
-		// Not hooked by the player, so not counted towards the hold.
-		assertEquals(0, session.getHookedInInventory());
-
 		// A withdraw click followed by the inventory shrinking is not a withdrawal.
 		session.holdActionClicked(true);
 		session.inventoryChanged(0, 0, Collections.emptySet(), tick);

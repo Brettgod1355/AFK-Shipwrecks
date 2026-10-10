@@ -44,10 +44,7 @@ public final class AfkEstimator
 		/** Whether the player is actually rolling. */
 		public boolean playerRolling;
 		public boolean inventoryFull;
-		/** Unsorted salvage in the player's inventory. */
-		public int inventorySalvage;
 		public int freeInventorySlots;
-		public boolean countInventorySalvage = true;
 		/** Whether a wreck the player has the level for is in reach of a manned hook. */
 		public boolean wreckInReach;
 		/** Whether a wreck is in reach that the player's level is too low for, and none they can use. */
@@ -104,11 +101,8 @@ public final class AfkEstimator
 		double holdPerHour = (crew + player) * 3600;
 		boolean approximate = !in.confident;
 
+		// Only what is in the hold counts: salvage the player hooked may be sorted rather than deposited.
 		int remaining = in.holdRemaining;
-		if (in.countInventorySalvage)
-		{
-			remaining = Math.max(0, remaining - Math.max(0, in.inventorySalvage));
-		}
 		// Time the crew alone would need with a wreck up the whole time: the figure for the paused states.
 		long crewWork = crew > 0 ? millis(remaining / crew) : -1;
 
