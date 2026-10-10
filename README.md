@@ -61,11 +61,13 @@ marked.
   instead. Lifetimes are the wiki's averages, so a wreck can outlive its clock: the line then says
   "any moment", and a minute past the clock the plugin drops it until the wreck is seen worked
   again. Where nobody is working the other wrecks there is nothing to go by and no line.
-- **Counts you too.** Salvage you hook yourself goes to your inventory first; the plugin counts
-  it as bound for the hold and knows you stop when your inventory is full or the wreck sinks.
-  Salvage you withdraw to sort is never counted, and sorting shows its own little countdown.
+- **Counts the hold, nothing else.** The clock only counts what is in the hold. Salvage you hook
+  yourself counts once you deposit it, and never if you sort it at the station. Salvage you
+  withdraw to sort is never counted, and sorting shows its own little countdown.
 - **Hook reminders.** Step off your hook to sort and forget to hand it over, and after a short
-  grace period it reminds you: "A salvaging hook is empty. Assign a crewmate to it." (Only at a
+  grace period it reminds you: "A salvaging hook is empty. Assign a crewmate to it." Flashing green
+  boxes then show you where to click: the Sailing tab, Facilities, the hook's Assign button and the
+  best free crewmate for it. The clicks are all yours. (Only at a
   salvaging spot, with a wreck site, up or sunk, within reach of your hooks; an empty hook on the
   way there, or at a dock beside the spots, is your business.) If nobody
   aboard can take the hook (a crewmate needs enough deckhandiness for it) and a wreck is up, it
@@ -220,6 +222,12 @@ warn (60 s; 0 never). Then:
 - Danger (on, always with a sound): while you are parked at a spot on your own boat, the boat taking
   damage, you being hit, or poison. A red DANGER notice flashes in the middle of the screen too (a
   setting, on).
+- Hide crew orders in chat (on): at a salvaging spot, your own "take control of the ... salvaging
+  hook!" and "take a rest!" lines stay out of the chatbox. Said anywhere else, they stay.
+- Show where to click for an empty hook (on): while a hook is empty and a crewmate could take it,
+  a flashing green box marks the next click: the Sailing tab, Facilities, the empty hook's Assign
+  button, then the free crewmate with the most deckhandiness for that hook (and the scrollbar or
+  Back when that is what's in the way). Boxes only; every click is yours.
 
 **Wrecks and parking**: Mark wrecks (hull, area, hull and area, or off; hull and area by default).
 The hull is outlined in cyan while the wreck is up and grey once it has sunk; the area is the box of
