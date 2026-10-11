@@ -45,6 +45,18 @@ public class CrewSpeechTest
 	}
 
 	@Test
+	public void recognisesTheOrdersPuttingACrewmateOnAHookOrToRest()
+	{
+		assertTrue(CrewSpeech.isCrewOrder("Ex-Captain Siad, take control of the starboard side rune salvaging hook!"));
+		assertTrue(CrewSpeech.isCrewOrder("<col=00ffff>Jenkins, take control of the port side salvaging hook!</col>"));
+		assertTrue(CrewSpeech.isCrewOrder("Ex-Captain Siad, take a rest!"));
+		assertFalse(CrewSpeech.isCrewOrder("Jenkins, take control of the sails!"));
+		assertFalse(CrewSpeech.isCrewOrder("You start operating the salvaging hook..."));
+		assertFalse(CrewSpeech.isCrewOrder("I could take a rest!"));
+		assertFalse(CrewSpeech.isCrewOrder(null));
+	}
+
+	@Test
 	public void recognisesThePlayersOwnDeposit()
 	{
 		assertTrue(CrewSpeech.reportsPlayerDeposit("You deposit some cargo into the cargo hold."));

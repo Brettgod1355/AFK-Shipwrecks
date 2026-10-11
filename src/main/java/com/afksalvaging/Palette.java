@@ -25,14 +25,27 @@ final class Palette
 	static final Color COUNTER_FULL = new Color(230, 60, 60);
 	/** The outline round a wreck that is up and salvageable: the game's own hover cyan, a little softer. */
 	static final Color WRECK_OUTLINE = new Color(90, 220, 230);
+	/**
+	 * Sunk wrecks, hull and box alike: grey, so a site waiting for its next wreck reads as inactive at a
+	 * glance (owner, 2026-10-07: "shows an overlay in grey when a spot is inactive").
+	 */
+	static final Color WRECK_SUNK = new Color(150, 150, 150);
+	/** A sunk wreck's timer: grey like its outline, lighter so the words read on dark water. */
+	static final Color WRECK_SUNK_TEXT = new Color(190, 190, 190);
+	/** The faint square round what the game has loaded (owner, 2026-10-08: "a subtle color"). */
+	static final Color SCENE_EDGE = new Color(255, 255, 255, 90);
 
 	// Sidebar.
 	static final Color SIDEBAR_IN_LEVEL = new Color(70, 200, 110);
 	static final Color SIDEBAR_BELOW_LEVEL = new Color(200, 110, 110);
 	static final Color SIDEBAR_MARKED = new Color(255, 200, 60);
 
-	/** The chat lines' colour, as a {@code <col=>} tag value (30, 90, 168). */
+	/** The empty-hook guide's flashing boxes: bright neon green (owner, 2026-10-07). */
+	static final Color HOOK_GUIDE = new Color(57, 255, 20);
+	/** The chat lines' colour on the parchment chatbox, as a {@code <col=>} tag value (30, 90, 168). */
 	static final String CHAT_TIP = "1e5aa8";
+	/** The chat lines' colour on the transparent chatbox, where the dark blue is hard to read (128, 192, 255). */
+	static final String CHAT_TIP_TRANSPARENT = "80c0ff";
 
 	private Palette()
 	{

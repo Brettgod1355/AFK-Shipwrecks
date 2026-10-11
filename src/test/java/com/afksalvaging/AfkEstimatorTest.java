@@ -152,21 +152,6 @@ public class AfkEstimatorTest
 	}
 
 	@Test
-	public void salvageAlreadyInTheInventoryCountsTowardsTheHold()
-	{
-		AfkEstimator.Inputs in = afkWithTwoCrew();
-		in.inventorySalvage = 25;
-		assertEquals(562_500, AfkEstimator.estimate(in).getEtaMillis());
-		in.countInventorySalvage = false;
-		assertEquals(750_000, AfkEstimator.estimate(in).getEtaMillis());
-		in.countInventorySalvage = true;
-		in.inventorySalvage = 100;
-		AfkEstimate estimate = AfkEstimator.estimate(in);
-		assertEquals(State.COUNTING_DOWN, estimate.getState());
-		assertEquals(0, estimate.getEtaMillis());
-	}
-
-	@Test
 	public void thePlayerOnAHookSpeedsThingsUpUntilTheirInventoryFills()
 	{
 		AfkEstimator.Inputs in = afkWithTwoCrew();

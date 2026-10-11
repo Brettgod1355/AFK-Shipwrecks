@@ -104,8 +104,11 @@ development tooling is not included in the plugin JAR.
   consulted to confirm which game objects represent a boat's cargo hold and salvaging hooks, which
   crewmate line reports a full hold, which varbits hold the crew slots and their assignments, and
   how a crewmate's stats are read from the game's crew table, and its wreck highlight was looked at
-  when the double salvage spot boxes were designed. This plugin's detection, alert and double-spot
-  code was written independently and none of that project's source is included.
+  when the double salvage spot boxes were designed. For 2.1 its cargo hold tracker
+  (`CargoHoldTracker`, at commit `af987f3`) and its issue reports were read to compare how deposits,
+  withdrawals and a crewmate banking the hold are counted, and its grey highlight of sunk shipwrecks
+  suggested the look of this plugin's sunk wrecks. This plugin's detection, counting, alert and
+  double-spot code was written independently and none of that project's source is included.
 - The [Shortest Path](https://github.com/Skretzo/shortest-path) plugin (BSD 2-Clause) was read, at
   its commit `038a190` of 2026-10-01, to learn the plugin messages it listens for: namespace
   `shortestpath`, names `path` and `clear`, and the `target` key. `ShortestPathMessages.java` builds

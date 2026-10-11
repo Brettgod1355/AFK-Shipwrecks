@@ -26,7 +26,7 @@ import net.runelite.client.ui.overlay.OverlayUtil;
 
 /**
  * Boxes the water so you know where to park: a yellow box around each wreck for where a hook can
- * reach it, and a green box where a hook reaches two wrecks at once.
+ * reach it (grey once the wreck has sunk), and a green box where a hook reaches two wrecks at once.
  * <p>
  * The game measures reach from the hook, not the boat, so a box is where a hook has to sit. Your
  * own hooks are known, so a double spot box changes colour and says "Parked" once every hook on the
@@ -40,8 +40,6 @@ public class SalvageBoxOverlay extends Overlay
 	static final String PARKED_TEXT = "Parked in double spot";
 	private static final Stroke OUTLINE = new BasicStroke(2);
 	private static final Stroke PARKED_OUTLINE = new BasicStroke(3);
-	/** How much dimmer a box is when its wreck, or one of its pair, has sunk. */
-	private static final float DIM = 0.45f;
 
 	private final Client client;
 	private final AfkSalvagingPlugin plugin;
@@ -62,8 +60,8 @@ public class SalvageBoxOverlay extends Overlay
 	public Dimension render(Graphics2D graphics)
 	{
 		boolean doubleSpots = config.doubleSpotBoxes();
-		boolean reachBoxes = config.wreckReachBoxes();
-		if (!doubleSpots && !reachBoxes)
+		boolean reachBoxes = config.wreckMarking().area();
+		if ((!doubleSpots && !reachBoxes) || !plugin.onSalvagingBoat())
 		{
 			return null;
 		}
@@ -104,7 +102,7 @@ public class SalvageBoxOverlay extends Overlay
 			for (WreckTracker.Site site : sites)
 			{
 				DoubleSpot.Box box = DoubleSpot.reachOverlap(site.getPoint(), site.getPoint(), reach);
-				drawBox(graphics, top, box, site.isActive() ? colour : dim(colour), OUTLINE, null);
+				drawBox(graphics, top, box, site.isActive() ? colour : sunk(colour), OUTLINE, null);
 			}
 		}
 
@@ -230,8 +228,9 @@ public class SalvageBoxOverlay extends Overlay
 		{
 			return;
 		}
-		Color fill = new Color(colour.getRed(), colour.getGreen(), colour.getBlue(),
-			stroke == PARKED_OUTLINE ? colour.getAlpha() / 2 : colour.getAlpha() / 5);
+		// "Fill the boxes" off draws outlines only (owner, 2026-10-08; the Sailing plugin's most asked-for option).
+		int fillAlpha = !config.boxFill() ? 0 : stroke == PARKED_OUTLINE ? colour.getAlpha() / 2 : colour.getAlpha() / 5;
+		Color fill = new Color(colour.getRed(), colour.getGreen(), colour.getBlue(), fillAlpha);
 		OverlayUtil.renderPolygon(graphics, area, colour, fill, stroke);
 		if (label != null)
 		{
@@ -243,8 +242,10 @@ public class SalvageBoxOverlay extends Overlay
 		}
 	}
 
-	private static Color dim(Color colour)
+	/** A sunk wreck's box: grey, as strong as the reach colour the player picked (owner, 2026-10-07). */
+	static Color sunk(Color colour)
 	{
-		return new Color(colour.getRed(), colour.getGreen(), colour.getBlue(), Math.round(colour.getAlpha() * DIM));
+		Color grey = Palette.WRECK_SUNK;
+		return new Color(grey.getRed(), grey.getGreen(), grey.getBlue(), colour.getAlpha());
 	}
 }

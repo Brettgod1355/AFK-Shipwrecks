@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,6 +33,7 @@ import net.runelite.api.Item;
 import net.runelite.api.ItemComposition;
 import net.runelite.api.KeyCode;
 import net.runelite.api.Menu;
+import net.runelite.api.MessageNode;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.MenuAction;
 import net.runelite.api.NPC;
@@ -53,10 +55,13 @@ import net.runelite.api.events.GameObjectDespawned;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.OverheadTextChanged;
+import net.runelite.api.events.ResizeableChanged;
+import net.runelite.api.events.ScriptCallbackEvent;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetLoaded;
@@ -132,6 +137,8 @@ public class AfkSalvagingPlugin extends Plugin
 
 	/** RuneScape-profile config key prefix for the remembered count of each boat slot. */
 	private static final String USED_KEY_PREFIX = "used.";
+	/** Per character and boat slot: the item types in that boat's hold, so stacks are known after a restart. */
+	private static final String HOLD_ITEMS_KEY_PREFIX = "holdItems.";
 	/** RuneScape-profile config key prefix for the learned rate correction of each wreck. */
 	private static final String RATE_KEY_PREFIX = "rate.";
 	/** How often the learned rate is written out while salvaging. */
@@ -146,6 +153,8 @@ public class AfkSalvagingPlugin extends Plugin
 	private static final String FILTER_KEY = "spotFilter";
 	private static final String NEAREST_FIRST_KEY = "spotNearestFirst";
 	private static final String AUTO_ROUTE_KEY = "autoRouteSpot";
+	/** Per character: whether each foldable block of the Spots tab is open, under this prefix and its key. */
+	private static final String FOLD_KEY_PREFIX = "spotFold.";
 	/** Ticks between updates of the sidebar's distances and session line. */
 	private static final int SIDEBAR_REFRESH_TICKS = 4;
 	/** Ticks after login before boarding counts as boarding: logging in aboard is not. */
@@ -259,7 +268,30 @@ public class AfkSalvagingPlugin extends Plugin
 	private CrewSwapOverlay swapOverlay;
 
 	@Inject
+	private HookGuideOverlay hookGuideOverlay;
+
+	@Inject
 	private WreckOutlineOverlay wreckOutlineOverlay;
+
+	@Inject
+	private WreckTimerOverlay wreckTimerOverlay;
+
+	@Inject
+	private DangerOverlay dangerOverlay;
+
+	@Inject
+	private HoldCountOverlay holdCountOverlay;
+
+	/** The item ids in the current boat's hold when it was last read, to tell a new stack from an added-to one. */
+	private final Set<Integer> holdItemIds = new HashSet<>();
+	/** The inventory's items at the last change, id to quantity, to see which types a deposit took. */
+	private Map<Integer, Integer> lastInventory = new HashMap<>();
+
+	/** Damage hitsplats on the player since the last game tick, for the danger alert. */
+	private int playerHitsSinceTick;
+
+	@Inject
+	private SceneEdgeOverlay sceneEdgeOverlay;
 
 	/** The spot last sent to the map or routed to; the sidebar highlights it. */
 	private SalvagingSpot pickedSpot;
@@ -322,6 +354,10 @@ public class AfkSalvagingPlugin extends Plugin
 	private long testAlertAt;
 	/** The update line owed to the player, said on the first tick they are logged in. */
 	private String updateMessage;
+	private final ChatLines chatLines = new ChatLines();
+	/** Chat lines ordering a crewmate onto a hook or to rest, said at a salvaging spot: hidden while the setting is on. */
+	private final Set<Integer> hiddenCrewOrders = new java.util.LinkedHashSet<>();
+	private boolean chatTransparent;
 
 	@Provides
 	AfkSalvagingConfig provideConfig(ConfigManager configManager)
@@ -334,6 +370,7 @@ public class AfkSalvagingPlugin extends Plugin
 	{
 		clearState();
 		noteVersion();
+		carryWreckMarking();
 		try
 		{
 			seaMap = SeaMap.load();
@@ -349,7 +386,12 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.add(worldOverlay);
 		overlayManager.add(holdSalvageOverlay);
 		overlayManager.add(swapOverlay);
+		overlayManager.add(hookGuideOverlay);
 		overlayManager.add(wreckOutlineOverlay);
+		overlayManager.add(wreckTimerOverlay);
+		overlayManager.add(dangerOverlay);
+		overlayManager.add(holdCountOverlay);
+		overlayManager.add(sceneEdgeOverlay);
 		overlayManager.add(sortOverlay);
 		markStore = new MarkStore(configManager);
 		if (markStore.migrate())
@@ -376,9 +418,16 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.remove(holdOverlay);
 		overlayManager.remove(worldOverlay);
 		worldOverlay.reset();
+		chatLines.clear();
 		overlayManager.remove(holdSalvageOverlay);
 		overlayManager.remove(swapOverlay);
+		overlayManager.remove(hookGuideOverlay);
+		hookGuideOverlay.reset();
 		overlayManager.remove(wreckOutlineOverlay);
+		overlayManager.remove(wreckTimerOverlay);
+		overlayManager.remove(dangerOverlay);
+		overlayManager.remove(holdCountOverlay);
+		overlayManager.remove(sceneEdgeOverlay);
 		overlayManager.remove(sortOverlay);
 		removeInfoBox();
 		if (worldRequest != null)
@@ -433,6 +482,11 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			// Other per-character data the plugin itself writes (remembered counts, rates, favourites, dropdowns): nothing to apply.
 			return;
+		}
+		if ("hideCrewOrders".equals(event.getKey()))
+		{
+			// Show or hide the hook orders already in the chatbox.
+			client.refreshChat();
 		}
 		applySpotSettings();
 		applyInfoBox();
@@ -495,6 +549,7 @@ public class AfkSalvagingPlugin extends Plugin
 			// Another character: their own favourites, dropdowns and Auto spot.
 			spotsPanel.setFavourites(loadFavourites());
 			spotsPanel.setChoices(spotFilterChoice(), nearestFirstChoice());
+			spotsPanel.setFolds(foldChoices());
 			spotsPanel.setAutoRoute(autoRouteSpot());
 		}
 	}
@@ -588,6 +643,11 @@ public class AfkSalvagingPlugin extends Plugin
 	public void onVarbitChanged(VarbitChanged event)
 	{
 		int id = event.getVarbitId();
+		if (id == VarbitID.CHATBOX_TRANSPARENCY)
+		{
+			recolourChatLines();
+			return;
+		}
 		if (id == VarbitID.SAILING_LAST_PERSONAL_BOAT_BOARDED)
 		{
 			reloadHold();
@@ -618,21 +678,33 @@ public class AfkSalvagingPlugin extends Plugin
 			return;
 		}
 		int current = currentBoatSlot();
-		if (current != 0 && slot != current)
+		if (slot != current)
 		{
-			// One of the player's other boats, for example viewed from the dock.
+			// One of the player's other boats, for example viewed from the dock, or no boat boarded yet
+			// to file it under (research, 2026-10-08: the Sailing plugin's #228).
 			return;
 		}
+		holdItemIds.clear();
+		for (Item item : event.getItemContainer().getItems())
+		{
+			if (item != null && item.getId() > -1 && item.getQuantity() > 0)
+			{
+				holdItemIds.add(item.getId());
+			}
+		}
+		saveHoldItems();
+		// The hold is known now: what the inventory would add to it may have changed.
+		session.holdSpaceRecounted(holdSpace(client.getItemContainer(InventoryID.INV)));
 		if (slot != monitoredSlot)
 		{
 			session.monitor().reset();
 			monitoredSlot = slot;
 		}
 		int used = CargoHoldMonitor.countUsed(event.getItemContainer().getItems());
-		if (session.monitor().hasCount() && session.monitor().getUsed() != used)
+		if (session.monitor().hasCount())
 		{
 			// With --debug, how far the tally had drifted by the time the hold was opened.
-			log.debug("Hold read {} where the tally said {}", used, session.monitor().getUsed());
+			log.debug("Hold read {} where the tally said {} at tick {}", used, session.monitor().getUsed(), client.getTickCount());
 		}
 		session.holdCount(used, client.getTickCount());
 		saveUsed();
@@ -647,6 +719,10 @@ public class AfkSalvagingPlugin extends Plugin
 		MenuAction action = event.getMenuAction();
 		// Any click at all, Examine and Cancel included, shows the player is here (review, 2026-10-04).
 		session.playerClicked();
+		if (event.getParam1() == InterfaceID.SailingSidepanel.FACILITIES_CONTENT_CLICKLAYER && option.equals("assign"))
+		{
+			hookGuideOverlay.assignClicked(event.getParam0());
+		}
 		if (action == MenuAction.CANCEL || option.startsWith("examine"))
 		{
 			return;
@@ -667,12 +743,25 @@ public class AfkSalvagingPlugin extends Plugin
 			session.extractorUsed(client.getTickCount());
 			return;
 		}
-		boolean holdAction = option.startsWith("deposit") || option.startsWith("withdraw");
+		// Crewmates bank the hold at a dock with a deposit box, and at the bank boat (owner, 2026-10-08; the
+		// Sailing plugin's #180). The option's exact wording is unconfirmed, so any "bank" option about
+		// cargo counts.
+		if (option.startsWith("bank") && (option.contains("cargo") || target.contains("cargo")))
+		{
+			session.holdBanked();
+			saveUsed();
+			holdItemIds.clear();
+			saveHoldItems();
+			return;
+		}
+		// Every deposit option on the hold: "Deposit", "Deposit-all", "Quick-deposit", "Deposit-held"
+		// (research, 2026-10-08: the live names vary and the Sailing plugin missed some, its #177).
+		boolean holdAction = option.contains("deposit") || option.startsWith("withdraw");
 		if (holdAction && (target.contains("cargo hold") || isCargoInterfaceOpen()))
 		{
 			// Quick deposits on the hold itself never open the interface, so the container is not
 			// resent. The session watches the inventory instead and applies the difference to the hold.
-			session.holdActionClicked(option.startsWith("withdraw"));
+			session.holdActionClicked(option.startsWith("withdraw"), isCargoInterfaceOpen());
 			return;
 		}
 		// Anything else the player does means they are not walking to the hold any more.
@@ -691,6 +780,16 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			// The map takes a position only once its own script has laid it out, a tick or two later.
 			mapFocusTicks = 2;
+		}
+	}
+
+	@Subscribe
+	public void onHitsplatApplied(HitsplatApplied event)
+	{
+		// Only the player's own damage counts towards the danger alert; others' hits are none of ours.
+		if (event.getActor() == client.getLocalPlayer() && event.getHitsplat().getAmount() > 0)
+		{
+			playerHitsSinceTick++;
 		}
 	}
 
@@ -751,6 +850,15 @@ public class AfkSalvagingPlugin extends Plugin
 	public void onChatMessage(ChatMessage event)
 	{
 		ChatMessageType type = event.getType();
+		if (isOwnCrewOrderAtSpot(event))
+		{
+			hiddenCrewOrders.add(event.getMessageNode().getId());
+			while (hiddenCrewOrders.size() > ChatLines.KEPT)
+			{
+				hiddenCrewOrders.remove(hiddenCrewOrders.iterator().next());
+			}
+			return;
+		}
 		if (type != ChatMessageType.GAMEMESSAGE && type != ChatMessageType.SPAM
 			&& type != ChatMessageType.ENGINE && type != ChatMessageType.MESBOX)
 		{
@@ -773,6 +881,31 @@ public class AfkSalvagingPlugin extends Plugin
 		else if (CrewSpeech.reportsSortingDone(text))
 		{
 			session.sortingDoneLine(clock());
+		}
+	}
+
+	/** The player's own order putting a crewmate on a hook or to rest, said at a salvaging spot. */
+	private boolean isOwnCrewOrderAtSpot(ChatMessage event)
+	{
+		Player me = client.getLocalPlayer();
+		return me != null && me.getName() != null && event.getMessageNode() != null
+			&& Text.sanitize(me.getName()).equals(Text.sanitize(Text.removeTags(event.getName())))
+			&& session.view().atSpot && CrewSpeech.isCrewOrder(event.getMessage());
+	}
+
+	/** RuneLite's chat filter hook: a line hidden here stays hidden until the setting is turned off. */
+	@Subscribe
+	public void onScriptCallbackEvent(ScriptCallbackEvent event)
+	{
+		if (!"chatFilterCheck".equals(event.getEventName()) || !config.hideCrewOrders() || hiddenCrewOrders.isEmpty())
+		{
+			return;
+		}
+		int[] intStack = client.getIntStack();
+		int size = client.getIntStackSize();
+		if (hiddenCrewOrders.contains(intStack[size - 1]))
+		{
+			intStack[size - 3] = 0;
 		}
 	}
 
@@ -812,13 +945,14 @@ public class AfkSalvagingPlugin extends Plugin
 			otherBoatFullNotified = false;
 		}
 		AfkSession.Settings settings = session.settings();
-		settings.countHookedSalvage = config.countHookedSalvage();
 		settings.warnSlotsRemaining = config.warnSlotsRemaining();
 		settings.repeatFullMillis = config.repeatSeconds() * 1000L;
 		settings.graceMillis = config.reminderGraceSeconds() * 1000L;
 		settings.repeatReminderMillis = config.reminderRepeatSeconds() * 1000L;
 		settings.salvagingWorld = salvagingWorld;
 		settings.idleWarnMillis = config.idleLogoutWarnSeconds() * 1000L;
+		settings.boostWarnBefore = config.boostWarnWhen().before();
+		settings.boostWarnAfter = config.boostWarnWhen().after();
 
 		AfkSession.TickInputs in = new AfkSession.TickInputs();
 		in.tick = tick;
@@ -828,6 +962,11 @@ public class AfkSalvagingPlugin extends Plugin
 		in.boatCrewCapacity = crewCapacity(boatEntity);
 		in.animation = player == null ? -1 : player.getAnimation();
 		in.boostedSailingLevel = client.getBoostedSkillLevel(Skill.SAILING);
+		in.realSailingLevel = client.getRealSkillLevel(Skill.SAILING);
+		in.boatHp = in.ownBoat ? client.getVarbitValue(VarbitID.SAILING_SIDEPANEL_BOAT_HP) : -1;
+		in.poisoned = client.getVarpValue(VarPlayerID.POISON) > 0;
+		in.playerHits = playerHitsSinceTick;
+		playerHitsSinceTick = 0;
 		in.hooks = hookInputs(boatEntity);
 		in.boatPoint = boatEntity == null ? null : topLevelPoint(boatEntity);
 		in.otherBoats = otherBoatPoints(boatEntity);
@@ -844,7 +983,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			if (config.updateMessage())
 			{
-				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=" + tipColour() + ">" + updateMessage + "</col>", null);
+				sayTip(updateMessage);
 			}
 			updateMessage = null;
 			noteVersionSeen();
@@ -956,6 +1095,16 @@ public class AfkSalvagingPlugin extends Plugin
 			}
 		}
 		return points;
+	}
+
+	/**
+	 * Whether the wreck overlays (reach and double spot boxes, hull outlines, timers) have a reason to show:
+	 * the player is on their own boat and it carries at least one salvaging hook (owner, 2026-10-11: "when
+	 * there is no salvaging hook on the boat, it doesn't highlight any overlays over the salvaging spots").
+	 */
+	public boolean onSalvagingBoat()
+	{
+		return isOwnBoat() && session.boat().hookCount() > 0;
 	}
 
 	/** Whether the player is aboard a boat that is their own. */
@@ -1076,6 +1225,23 @@ public class AfkSalvagingPlugin extends Plugin
 	private void noteVersionSeen()
 	{
 		configManager.setConfiguration(AfkSalvagingConfig.GROUP, "lastVersion", WhatsNew.VERSION);
+	}
+
+	/**
+	 * 2.1 put 2.0's "Wreck reach boxes" and "Outline wrecks that are up" switches into one "Mark wrecks"
+	 * dropdown. The first start on 2.1 reads the two old switches, sets the dropdown to match and notes
+	 * that it has, so a player who turned either off keeps their choice. A fresh install reads both
+	 * defaults (on), which is the dropdown's own default.
+	 */
+	private void carryWreckMarking()
+	{
+		if (config.wreckMarkingCarried())
+		{
+			return;
+		}
+		WreckMarking carried = WreckMarking.of(config.outlineWrecks(), config.wreckReachBoxes());
+		configManager.setConfiguration(AfkSalvagingConfig.GROUP, "wreckMarking", carried);
+		configManager.setConfiguration(AfkSalvagingConfig.GROUP, "wreckMarkingCarried", true);
 	}
 
 	// ---- Inventory sorting: boxes round items, marks, the sidebar lists ----
@@ -1413,9 +1579,38 @@ public class AfkSalvagingPlugin extends Plugin
 	// ---- Salvage spots: sidebar, double spot boxes ----
 
 	/** The plugin's chat line colour as the game's tag wants it: six hex digits, no transparency. */
-	private String tipColour()
+	/** A chat line from the plugin, in the blue that suits the chatbox as it is now. */
+	private void sayTip(String text)
 	{
-		return Palette.CHAT_TIP;
+		chatTransparent = isChatTransparent();
+		MessageNode node = client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", ChatLines.format(text, chatTransparent), null);
+		chatLines.remember(node, text);
+	}
+
+	/** The chatbox is see-through only in resizable mode with the game's transparency setting on. */
+	private boolean isChatTransparent()
+	{
+		return client.isResized() && client.getVarbitValue(VarbitID.CHATBOX_TRANSPARENCY) != 0;
+	}
+
+	@Subscribe
+	public void onResizeableChanged(ResizeableChanged event)
+	{
+		recolourChatLines();
+	}
+
+	/** Re-colours the plugin's recent chat lines when the chatbox turns transparent or back. */
+	private void recolourChatLines()
+	{
+		boolean transparent = isChatTransparent();
+		if (transparent == chatTransparent || chatLines.size() == 0)
+		{
+			chatTransparent = transparent;
+			return;
+		}
+		chatTransparent = transparent;
+		chatLines.recolour(transparent);
+		client.refreshChat();
 	}
 
 	/** The sorting colours from the settings, for the sidebar's list headings. */
@@ -1549,6 +1744,16 @@ public class AfkSalvagingPlugin extends Plugin
 			}
 
 			@Override
+			public void foldChanged(String fold, boolean open)
+			{
+				// Quietly unsaved when logged out: folding a block is not worth a "log in first" line.
+				if (configManager.getRSProfileKey() != null)
+				{
+					configManager.setRSProfileConfiguration(AfkSalvagingConfig.GROUP, FOLD_KEY_PREFIX + fold, Boolean.toString(open));
+				}
+			}
+
+			@Override
 			public void forgetLearnedRates()
 			{
 				clientThread.invokeLater(() ->
@@ -1560,6 +1765,8 @@ public class AfkSalvagingPlugin extends Plugin
 			}
 		});
 		spotsPanel.setChoices(spotFilterChoice(), nearestFirstChoice());
+		spotsPanel.setFolds(foldChoices());
+		spotsPanel.setSettings(SettingsSearch.entries(configManager.getConfigDescriptor(config)));
 		pushSortLists();
 		spotsPanel.setFavourites(loadFavourites());
 		spotsPanel.setAutoRoute(autoRouteSpot());
@@ -1626,8 +1833,7 @@ public class AfkSalvagingPlugin extends Plugin
 			else
 			{
 				pendingMapTarget = point;
-				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
-					"<col=" + tipColour() + ">Open the world map and it will jump to " + what + ".</col>", null);
+				sayTip("Open the world map and it will jump to " + what + ".");
 			}
 		});
 	}
@@ -1656,7 +1862,7 @@ public class AfkSalvagingPlugin extends Plugin
 			if (problem != null)
 			{
 				setSpotStatus(problem, true);
-				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=" + tipColour() + ">" + problem + "</col>", null);
+				sayTip(problem);
 				return;
 			}
 			eventBus.post(ShortestPathMessages.routeTo(point));
@@ -1808,6 +2014,21 @@ public class AfkSalvagingPlugin extends Plugin
 		return Boolean.parseBoolean(profileChoice(NEAREST_FIRST_KEY));
 	}
 
+	/** Which of the Spots tab's blocks the character logged in left open or folded; missing ones keep their default. */
+	private Map<String, Boolean> foldChoices()
+	{
+		Map<String, Boolean> open = new HashMap<>();
+		for (String fold : new String[]{SalvagingSpotPanel.FOLD_TOOLS, SalvagingSpotPanel.FOLD_DOCKS, SalvagingSpotPanel.FOLD_SESSION})
+		{
+			String stored = profileChoice(FOLD_KEY_PREFIX + fold);
+			if (stored != null && !stored.isEmpty())
+			{
+				open.put(fold, Boolean.parseBoolean(stored));
+			}
+		}
+		return open;
+	}
+
 	/** The player has just stepped from a dock onto their own boat: send the marked spot, if any. */
 	private void boarded()
 	{
@@ -1820,8 +2041,7 @@ public class AfkSalvagingPlugin extends Plugin
 		route(spot.getPoint(), spot.getSalvageName() + ", " + spot.getWhere(), "Auto route sent to Shortest Path: ", spot);
 		if (ShortestPathPresence.check(pluginManager).problem() == null)
 		{
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "<col=" + tipColour() + ">Auto route: "
-				+ spot.getSalvageName() + ", " + spot.getWhere() + ".</col>", null);
+			sayTip("Auto route: " + spot.getSalvageName() + ", " + spot.getWhere() + ".");
 		}
 	}
 
@@ -2008,6 +2228,23 @@ public class AfkSalvagingPlugin extends Plugin
 				// Off by default: for players who sort with their eyes elsewhere (owner, 2026-10-03).
 				notifier.notify(resolved(config.sortingDoneNotification()), "You have sorted all your salvage.");
 				break;
+			case CREW_STALLED:
+				notifier.notify(resolved(config.crewStalledNotification()), "Your crew have stopped salvaging although a wreck is "
+					+ "in reach. Nudge the boat or assign them again.");
+				break;
+			case WRECK_ROSE:
+				notifier.notify(resolved(config.wreckRoseNotification()), "A wreck has risen in reach.");
+				break;
+			case BOOST_RUNNING_OUT:
+				int at = session.view().boostLevelNeeded;
+				notifier.notify(resolved(config.boostDroppedNotification()), "Your Sailing boost is about to wear off: below level "
+					+ at + " your crew stop salvaging this wreck. Top it up.");
+				break;
+			case DANGER:
+				String what = session.view().danger;
+				notifier.notify(withSoundOn(resolved(config.dangerNotification())), "Danger at your salvaging spot: "
+					+ (what == null ? "check your boat" : what.toLowerCase()) + ".");
+				break;
 			case WAITING_FOR_WRECK:
 				WreckTracker.NextRise next = session.view().nextWreck;
 				notifier.notify(resolved(config.waitingNotification()), "Waiting for a wreck: every wreck in reach is down."
@@ -2016,9 +2253,8 @@ public class AfkSalvagingPlugin extends Plugin
 			case WORLD_TIP:
 				if (config.worldTip())
 				{
-					client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
-						"<col=" + tipColour() + ">Waiting for a wreck? On the salvaging worlds (" + salvagingWorldsText()
-							+ ") every site is worked, so wrecks near you come back sooner.</col>", null);
+					sayTip("Waiting for a wreck? On the salvaging worlds (" + salvagingWorldsText()
+						+ ") every site is worked, so wrecks near you come back sooner.");
 				}
 				break;
 			default:
@@ -2144,7 +2380,9 @@ public class AfkSalvagingPlugin extends Plugin
 	{
 		Item[] items = inventory == null ? null : inventory.getItems();
 		int occupied = 0;
+		int holdSpace = 0;
 		int salvage = 0;
+		Map<Integer, Integer> counts = new HashMap<>();
 		Set<ShipwreckType> types = EnumSet.noneOf(ShipwreckType.class);
 		if (items != null)
 		{
@@ -2155,6 +2393,11 @@ public class AfkSalvagingPlugin extends Plugin
 					continue;
 				}
 				occupied++;
+				counts.merge(item.getId(), item.getQuantity(), Integer::sum);
+				if (takesHoldSpace(item.getId()))
+				{
+					holdSpace++;
+				}
 				ShipwreckType type = ShipwreckType.fromSalvageItemId(item.getId());
 				if (type != null)
 				{
@@ -2163,7 +2406,82 @@ public class AfkSalvagingPlugin extends Plugin
 				}
 			}
 		}
-		session.inventoryChanged(occupied, salvage, types, client.getTickCount());
+		session.inventoryChanged(occupied, holdSpace, salvage, types, client.getTickCount());
+		// A deposit on the hold: any stackable type that left the inventory now has a stack there, so the
+		// next deposit of it adds nothing (owner, 2026-10-08).
+		if (session.holdDepositPending())
+		{
+			boolean learned = false;
+			for (int id : HoldItems.gone(lastInventory, counts))
+			{
+				if (!HoldWhitelist.TAKES_NO_SPACE.contains(id) && client.getItemDefinition(id).isStackable())
+				{
+					learned |= holdItemIds.add(id);
+				}
+			}
+			if (learned)
+			{
+				saveHoldItems();
+			}
+		}
+		lastInventory = counts;
+	}
+
+	/** How many of the inventory's slots would use a hold slot if deposited. */
+	private int holdSpace(ItemContainer inventory)
+	{
+		int space = 0;
+		Item[] items = inventory == null ? null : inventory.getItems();
+		if (items != null)
+		{
+			for (Item item : items)
+			{
+				if (item != null && item.getId() > -1 && item.getQuantity() > 0 && takesHoldSpace(item.getId()))
+				{
+					space++;
+				}
+			}
+		}
+		return space;
+	}
+
+	private void saveHoldItems()
+	{
+		if (monitoredSlot == 0 || configManager.getRSProfileKey() == null)
+		{
+			return;
+		}
+		String key = HOLD_ITEMS_KEY_PREFIX + monitoredSlot;
+		if (holdItemIds.isEmpty())
+		{
+			configManager.unsetRSProfileConfiguration(AfkSalvagingConfig.GROUP, key);
+		}
+		else
+		{
+			configManager.setRSProfileConfiguration(AfkSalvagingConfig.GROUP, key, HoldItems.encode(holdItemIds));
+		}
+	}
+
+	private void loadHoldItems(int slot)
+	{
+		if (configManager.getRSProfileKey() == null)
+		{
+			return;
+		}
+		HoldItems.decode(configManager.getRSProfileConfiguration(AfkSalvagingConfig.GROUP, HOLD_ITEMS_KEY_PREFIX + slot), holdItemIds);
+	}
+
+	/**
+	 * Whether depositing this inventory slot would use a hold slot: the Sailing kit takes none, and a
+	 * stackable item the hold already holds joins its stack (research, 2026-10-08).
+	 */
+	private boolean takesHoldSpace(int itemId)
+	{
+		if (HoldWhitelist.TAKES_NO_SPACE.contains(itemId))
+		{
+			return false;
+		}
+		return !(holdItemIds.contains(itemId) && client.getItemDefinition(itemId).isStackable());
 	}
 
 	private void loadCrewSlot(int slot)
@@ -2231,14 +2549,22 @@ public class AfkSalvagingPlugin extends Plugin
 	private void reloadHold()
 	{
 		int slot = currentBoatSlot();
-		if (slot != monitoredSlot)
+		boolean newSlot = slot != monitoredSlot;
+		if (newSlot)
 		{
 			session.monitor().reset();
+			holdItemIds.clear();
 			monitoredSlot = slot;
 		}
 		if (slot == 0)
 		{
 			return;
+		}
+		if (newSlot)
+		{
+			// What this boat's hold held when last seen, until it is opened again.
+			loadHoldItems(slot);
+			session.holdSpaceRecounted(holdSpace(client.getItemContainer(InventoryID.INV)));
 		}
 		// The client keeps the hold's container after the interface closes, but the server only
 		// updates it while the interface is open, so it is only the truth while that is showing.
@@ -2413,6 +2739,24 @@ public class AfkSalvagingPlugin extends Plugin
 	 * would otherwise be replaced by RuneLite's global settings on the way out, so those are copied in
 	 * first, exactly as the Notifier does, before the sound is switched off.
 	 */
+	/**
+	 * The danger alert always makes a sound (owner, 2026-10-08: "a flashing red overlay alert with sound"):
+	 * the notification as set, but with the system sound where it would otherwise be silent.
+	 */
+	private Notification withSoundOn(Notification base)
+	{
+		if (!base.isEnabled())
+		{
+			return base;
+		}
+		Notification resolved = base;
+		if (!base.isOverride() || !base.isInitialized())
+		{
+			resolved = withoutSound(base).withSound(runeLiteConfig.notificationSound());
+		}
+		return resolved.getSound() == NotificationSound.OFF ? resolved.withSound(NotificationSound.NATIVE) : resolved;
+	}
+
 	private Notification withoutSound(Notification base)
 	{
 		Notification resolved = base;

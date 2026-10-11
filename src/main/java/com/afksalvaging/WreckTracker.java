@@ -117,6 +117,12 @@ public final class WreckTracker
 		 * beside it, whichever came first. -1 when nobody has been seen working it. May lie in the
 		 * past when the wreck has outlived its clock.
 		 */
+		/** Whether this wreck outlived a clock that was then written off; it has no clock again until it sinks. */
+		boolean clockWrittenOff()
+		{
+			return active && (workedWrittenOff || othersWrittenOff) && sinksBy() < 0;
+		}
+
 		long sinksBy()
 		{
 			if (!active)

@@ -13,8 +13,10 @@ import net.runelite.api.gameval.ObjectID;
  * <p>
  * A wreck is one game object while it can be salvaged and a different "stump" object once it has sunk.
  * The lifetime is how long a wreck lasts once anyone starts salvaging it, from the wiki's "average
- * duration" column; it is an average, not a guarantee. The XP figures are per piece of salvage and
- * are what let a Sailing XP drop be traced to whoever earned it.
+ * duration" column; it is an average, not a guarantee. Fremennik's is measured instead: 223 s, from
+ * 167 of 172 worked wrecks sinking 222.6 to 224 s after the work started (owner's clients,
+ * 2026-10-10/11; the wiki says 220). The XP figures are per piece of salvage and are what let a
+ * Sailing XP drop be traced to whoever earned it.
  */
 public enum ShipwreckType
 {
@@ -24,7 +26,7 @@ public enum ShipwreckType
 	LARGE("Large", 53, 180, 48, 24, ObjectID.SAILING_LARGE_SHIPWRECK, ObjectID.SAILING_LARGE_SHIPWRECK_STUMP, ItemID.SAILING_LARGE_SHIPWRECK_SALVAGE),
 	PIRATE("Pirate", 64, 180, 76, 31.5, ObjectID.SAILING_PIRATE_SHIPWRECK, ObjectID.SAILING_PIRATE_SHIPWRECK_STUMP, ItemID.SAILING_PIRATE_SHIPWRECK_SALVAGE),
 	MERCENARY("Mercenary", 73, 195, 138, 63.5, ObjectID.SAILING_MERCENARY_SHIPWRECK, ObjectID.SAILING_MERCENARY_SHIPWRECK_STUMP, ItemID.SAILING_MERCENARY_SHIPWRECK_SALVAGE),
-	FREMENNIK("Fremennik", 80, 220, 162, 75, ObjectID.SAILING_FREMENNIK_SHIPWRECK, ObjectID.SAILING_FREMENNIK_SHIPWRECK_STUMP, ItemID.SAILING_FREMENNIK_SHIPWRECK_SALVAGE),
+	FREMENNIK("Fremennik", 80, 223, 162, 75, ObjectID.SAILING_FREMENNIK_SHIPWRECK, ObjectID.SAILING_FREMENNIK_SHIPWRECK_STUMP, ItemID.SAILING_FREMENNIK_SHIPWRECK_SALVAGE),
 	MERCHANT("Merchant", 87, 240, 200, 95, ObjectID.SAILING_MERCHANT_SHIPWRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, ItemID.SAILING_MERCHANT_SHIPWRECK_SALVAGE);
 
 	private final String displayName;

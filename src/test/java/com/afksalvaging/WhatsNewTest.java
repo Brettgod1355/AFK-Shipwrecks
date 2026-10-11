@@ -61,6 +61,8 @@ public class WhatsNewTest
 	{
 		String line = WhatsNew.message(null, true);
 		assertTrue(line, line.startsWith("Cargo Hold Alert is now AFK Shipwrecks " + WhatsNew.VERSION + ": "));
+		// A 1.0 player hears what the rename brought, not only the latest step.
+		assertTrue(line, line.endsWith(WhatsNew.RENAME_NOTE + "."));
 	}
 
 	@Test
@@ -69,6 +71,9 @@ public class WhatsNewTest
 		assertFalse(WhatsNew.NOTE.contains("http"));
 		assertFalse(WhatsNew.NOTE.contains("\n"));
 		assertFalse("the full stop is added when it is said", WhatsNew.NOTE.endsWith("."));
+		assertFalse(WhatsNew.RENAME_NOTE.contains("http"));
+		assertFalse(WhatsNew.RENAME_NOTE.contains("\n"));
+		assertFalse(WhatsNew.RENAME_NOTE.endsWith("."));
 	}
 
 	private static String versionIn(String file, String regex) throws IOException
