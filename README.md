@@ -14,11 +14,13 @@ https://github.com/user-attachments/assets/6f1cf6bd-e389-4eec-a42c-ddaa5d2442fa
 
 Parked in a double spot as the hold fills: the overlay counting down, the nearly-full and full
 banners, the countdown infobox in the corner, then emptying the hold and the timer starting over.
+Video not playing? [Watch it on GitHub](https://github.com/Brettgod1355/AFK-Shipwrecks#see-it-in-action).
 
 https://github.com/user-attachments/assets/6b5b42ff-b842-4c68-9973-07f69d166191
 
 Sailing in and parking: the reach boxes and the double spot appear as you arrive, the label counts
 your hooks in, and once both are in it says you are parked.
+Video not playing? [Watch it on GitHub](https://github.com/Brettgod1355/AFK-Shipwrecks#see-it-in-action).
 
 <p>
 <img src="docs/images/sidebar-spots.png" width="300" alt="The sidebar's Spots tab: the Discord and GitHub buttons, Test alert and Forget rates, the filter and sort, the Auto route note, the nearest dock you can use and the nearest where your crew bank the hold, the session line and a favourite spot with Map, Route, star and Auto">
