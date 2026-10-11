@@ -223,6 +223,82 @@ public class AfkSessionTest
 	}
 
 	@Test
+	public void salvageAlreadyInAHoldReadIsNotCountedAgain()
+	{
+		// In game (2026-10-10): a crewmate's salvage at tick 150 was counted at tick 153, after the hold
+		// was opened at tick 151 and already held it, so the tally ran one high until the next opening.
+		twoCrewOnHooks();
+		session.holdCount(100, tick);
+		ticks(6);
+		session.crewLine("Jolly Jim", tick);
+		ticks(1);
+		session.holdCount(101, tick);
+		ticks(3);
+		assertEquals(101, session.monitor().getUsed());
+		// Salvage after the read still counts.
+		session.crewLine("Jolly Jim", tick);
+		ticks(3);
+		assertEquals(102, session.monitor().getUsed());
+	}
+
+	@Test
+	public void xpHeldBackWhileTheHoldWasOpenIsNotCountedAgain()
+	{
+		// In game (2026-10-11, 11:21): four salvages landed while the hold was open, the game held the crew's
+		// XP back, and on closing paid it in one drop (four shares), which was counted as four new salvages.
+		twoCrewOnHooks();
+		ticks(10);
+		session.holdCount(140, tick);
+		interfaceOpen = true;
+		for (int i = 1; i <= 4; i++)
+		{
+			ticks(5);
+			session.holdCount(140 + i, tick);
+		}
+		// In game the hold stayed open about 100 ticks; anything waiting on a read had long expired.
+		ticks(40);
+		interfaceOpen = false;
+		session.sailingXp(320, tick);
+		ticks(4);
+		assertEquals(144, session.monitor().getUsed());
+		// Salvage after that counts as usual.
+		ticks(10);
+		session.sailingXp(80, tick);
+		ticks(4);
+		assertEquals(145, session.monitor().getUsed());
+	}
+
+	@Test
+	public void salvageAReadShowedEarlyIsNotCountedWhenItsEventComesLate()
+	{
+		// In game (2026-10-10, 21:26): a salvage with no crew line showed in a hold read, and its XP came a
+		// few ticks after the read; it was counted again and the tally ran one high.
+		twoCrewOnHooks();
+		session.holdCount(147, tick);
+		ticks(6);
+		session.holdCount(148, tick);
+		ticks(1);
+		session.crewLine("Jolly Jim", tick);
+		ticks(4);
+		assertEquals(148, session.monitor().getUsed());
+		// The next salvage counts as usual.
+		session.crewLine("Jolly Jim", tick);
+		ticks(4);
+		assertEquals(149, session.monitor().getUsed());
+
+		// A withdrawal read between the early read and the late event does not lose it (21:42 the same day:
+		// 158, then 159 with the salvage, then 141 after taking 18 out, then the salvage's late XP).
+		ticks(30);
+		session.holdCount(150, tick);
+		ticks(1);
+		session.holdCount(132, tick);
+		ticks(1);
+		session.crewLine("Jolly Jim", tick);
+		ticks(4);
+		assertEquals(132, session.monitor().getUsed());
+	}
+
+	@Test
 	public void crewStillProducingMeansTheTallyWasHigh()
 	{
 		twoCrewOnHooks();
@@ -954,6 +1030,69 @@ public class AfkSessionTest
 		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
 		ticks(1);
 		assertEquals(205, session.monitor().getUsed());
+	}
+
+	@Test
+	public void theHoldResentBeforeAWithdrawLandsDoesNotEndIt()
+	{
+		// In game (2026-10-10): Withdraw-All, the hold resent unchanged a tick later, the window closed,
+		// and the 19 salvage that then left were only noticed when the hold was opened again.
+		twoCrewOnHooks();
+		ticks(6);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		session.holdCount(78, tick);
+		ticks(1);
+		session.holdActionClicked(true, true);
+		ticks(1);
+		session.holdCount(78, tick);
+		ticks(1);
+		session.inventoryChanged(19, 19, Collections.singleton(ShipwreckType.MERCHANT), tick);
+		ticks(1);
+		assertEquals(59, session.monitor().getUsed());
+
+		// When the resent hold already shows the withdrawal, the inventory change is not applied again.
+		session.holdActionClicked(true, true);
+		ticks(1);
+		session.holdCount(40, tick);
+		session.inventoryChanged(38, 38, Collections.singleton(ShipwreckType.MERCHANT), tick);
+		ticks(1);
+		assertEquals(40, session.monitor().getUsed());
+	}
+
+	@Test
+	public void aDepositEndsWithTheNextHoldReadEvenIfNothingChanged()
+	{
+		// In game (2026-10-10, 19:50): a deposit that joined a stack left the hold at 92; an item that then
+		// left the inventory some other way was counted as a deposit, and the tally ran one high.
+		twoCrewOnHooks();
+		ticks(6);
+		session.inventoryChanged(10, 10, Collections.emptySet(), tick);
+		session.holdCount(92, tick);
+		ticks(1);
+		session.holdActionClicked(false, true);
+		ticks(1);
+		session.holdCount(92, tick);
+		ticks(1);
+		session.inventoryChanged(9, 9, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(92, session.monitor().getUsed());
+	}
+
+	@Test
+	public void aWithdrawInsideTheOpenHoldStandsWhateverIsClickedNext()
+	{
+		// In game (2026-10-10): Withdraw-All in the open hold, Esc and a quick click elsewhere; the hold was
+		// not read again, and the tally kept 21 salvage that had left until the hold was next opened.
+		twoCrewOnHooks();
+		ticks(6);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		session.holdActionClicked(true, true);
+		session.holdActionCancelled();
+		ticks(1);
+		session.inventoryChanged(21, 21, Collections.singleton(ShipwreckType.MERCHANT), tick);
+		ticks(1);
+		assertEquals(179, session.monitor().getUsed());
 	}
 
 	@Test

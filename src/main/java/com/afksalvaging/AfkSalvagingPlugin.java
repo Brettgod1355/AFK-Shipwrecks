@@ -701,10 +701,10 @@ public class AfkSalvagingPlugin extends Plugin
 			monitoredSlot = slot;
 		}
 		int used = CargoHoldMonitor.countUsed(event.getItemContainer().getItems());
-		if (session.monitor().hasCount() && session.monitor().getUsed() != used)
+		if (session.monitor().hasCount())
 		{
 			// With --debug, how far the tally had drifted by the time the hold was opened.
-			log.debug("Hold read {} where the tally said {}", used, session.monitor().getUsed());
+			log.debug("Hold read {} where the tally said {} at tick {}", used, session.monitor().getUsed(), client.getTickCount());
 		}
 		session.holdCount(used, client.getTickCount());
 		saveUsed();
@@ -761,7 +761,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			// Quick deposits on the hold itself never open the interface, so the container is not
 			// resent. The session watches the inventory instead and applies the difference to the hold.
-			session.holdActionClicked(option.startsWith("withdraw"));
+			session.holdActionClicked(option.startsWith("withdraw"), isCargoInterfaceOpen());
 			return;
 		}
 		// Anything else the player does means they are not walking to the hold any more.

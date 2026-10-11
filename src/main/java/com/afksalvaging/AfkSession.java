@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import net.runelite.api.coords.WorldPoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Everything the plugin knows about the current salvaging session, and how it fits together.
@@ -21,6 +23,8 @@ import net.runelite.api.coords.WorldPoint;
  */
 public final class AfkSession
 {
+	private static final Logger log = LoggerFactory.getLogger(AfkSession.class);
+
 	/** Tiles from a hook within which a wreck can be worked. */
 	public static final int HOOK_RANGE = 8;
 	/** How near another boat's centre must be to a wreck to be taken as working it: hook reach plus half a sloop. */
@@ -254,6 +258,14 @@ public final class AfkSession
 	/** Whether the last tick found the player on their own boat: crew speech heard elsewhere is not ours. */
 	private boolean aboard;
 	private int lastContainerTick = Integer.MIN_VALUE;
+	/** The last tick the cargo hold interface was open; crew XP right after it is held-back pay. */
+	private int holdOpenTick = Integer.MIN_VALUE / 2;
+	private static final int HELD_BACK_XP_TICKS = 2;
+	/** Salvage a hold read showed before its event was counted, and the tick of that read. */
+	private int heldAhead;
+	/** More than this between reads is not salvage landing early (a login, a deposit). */
+	private static final int HELD_AHEAD_MAX = 3;
+	private int heldAheadTick = Integer.MIN_VALUE;
 	private int fullLineTick = Integer.MIN_VALUE;
 	private boolean inventoryKnown;
 	private int inventorySalvage;
@@ -269,6 +281,8 @@ public final class AfkSession
 	private Set<ShipwreckType> inventorySalvageTypes = Collections.emptySet();
 	private int pendingHoldTicks;
 	private boolean pendingWithdraw;
+	/** The pending click was made inside the open hold, so nothing the player does next can stop it. */
+	private boolean pendingInInterface;
 	private int inventoryBefore;
 	private boolean inventoryChanged;
 	private int sortingFinishTick = -1;
@@ -452,6 +466,18 @@ public final class AfkSession
 		{
 			return;
 		}
+		if (tick - holdOpenTick <= HELD_BACK_XP_TICKS)
+		{
+			// The game holds the crew's XP back while the hold is open and pays it all on closing ("You gain
+			// some experience by watching your crew work."). It is for salvage the hold reads already counted
+			// (in game, 2026-10-11: 260 XP, four level 4 shares, counted as four new salvages).
+			log.debug("{} Sailing XP at tick {} is held-back pay from the open hold, not counted", delta, tick);
+			stats.sailingXp += delta;
+			// What the open hold's reads and lines were still owed is in this pay too.
+			heldAhead = 0;
+			events.heldBackXpPaid();
+			return;
+		}
 		SalvageEvents.XpContext context = new SalvageEvents.XpContext();
 		context.wreck = view.wreckType;
 		context.playerSalvaging = activity.current() == PlayerActivity.SALVAGING;
@@ -522,8 +548,21 @@ public final class AfkSession
 	/** The player clicked Deposit or Withdraw on the hold, so the inventory is about to change. */
 	public void holdActionClicked(boolean withdraw)
 	{
+		holdActionClicked(withdraw, false);
+	}
+
+	/**
+	 * The player clicked Deposit or Withdraw on the hold, so the inventory is about to change.
+	 *
+	 * @param inInterface clicked inside the open hold: the game already has the order, so a click
+	 *                    elsewhere straight after cannot call it off (in game, 2026-10-10: Withdraw-All,
+	 *                    Esc and a quick click on, and 21 salvage left the hold uncounted)
+	 */
+	public void holdActionClicked(boolean withdraw, boolean inInterface)
+	{
 		pendingHoldTicks = HOLD_ACTION_TICKS;
 		pendingWithdraw = withdraw;
+		pendingInInterface = inInterface;
 		inventoryBefore = occupiedInventorySlots;
 		inventoryChanged = false;
 		hookWatch.noteHoldUse();
@@ -547,17 +586,42 @@ public final class AfkSession
 	/** The player clicked something else before reaching the hold, so the deposit or withdrawal is off. */
 	public void holdActionCancelled()
 	{
+		if (pendingInInterface)
+		{
+			return;
+		}
 		pendingHoldTicks = 0;
 		inventoryChanged = false;
 	}
 
-	/** An exact count of the hold arrived from the game. */
+	/**
+	 * An exact count of the hold arrived from the game. A withdrawal still being followed stays followed
+	 * unless the count went down: the game can resend the hold before the click has gone through (in
+	 * game, 2026-10-10: Withdraw-All, the hold resent unchanged a tick later, then the window closed and
+	 * 19 salvage left uncounted until it was opened again). A deposit ends here either way: an unchanged
+	 * hold means what was deposited joined a stack, and following on let an item that left the inventory
+	 * some other way be counted as a deposit (in game the same day, 19:50).
+	 */
 	public void holdCount(int used, int tick)
 	{
+		boolean showsPending = pendingHoldTicks <= 0 || !monitor.hasCount() || !pendingWithdraw
+			|| used < monitor.getUsed();
+		boolean depositPending = pendingHoldTicks > 0 && !pendingWithdraw;
+		int ahead = used - monitor.getUsed();
+		if (monitor.hasCount() && lastContainerTick != Integer.MIN_VALUE && ahead > 0 && ahead <= HELD_AHEAD_MAX
+			&& !depositPending)
+		{
+			// Salvage already in the hold that has not been counted yet; its event is still to come.
+			heldAhead += ahead;
+			heldAheadTick = tick;
+		}
 		monitor.setUsed(used);
 		lastContainerTick = tick;
-		pendingHoldTicks = 0;
-		inventoryChanged = false;
+		if (showsPending)
+		{
+			pendingHoldTicks = 0;
+			inventoryChanged = false;
+		}
 	}
 
 	/**
@@ -572,6 +636,7 @@ public final class AfkSession
 			return;
 		}
 		monitor.adjust(1);
+		log.debug("Tally +1 from the deposit line at tick {}: {}", currentTick, monitor.getUsed());
 	}
 
 	/** Whether a deposit click on the hold is being followed through the inventory right now. */
@@ -668,6 +733,9 @@ public final class AfkSession
 		rateWreck = null;
 		aboard = false;
 		lastContainerTick = Integer.MIN_VALUE;
+		holdOpenTick = Integer.MIN_VALUE / 2;
+		heldAhead = 0;
+		heldAheadTick = Integer.MIN_VALUE;
 		fullLineTick = Integer.MIN_VALUE;
 		inventoryKnown = false;
 		inventorySalvage = 0;
@@ -676,6 +744,7 @@ public final class AfkSession
 		inventorySalvageTypes = Collections.emptySet();
 		pendingHoldTicks = 0;
 		pendingWithdraw = false;
+		pendingInInterface = false;
 		inventoryChanged = false;
 		sortingFinishTick = -1;
 		lastActivity = PlayerActivity.IDLE;
@@ -722,6 +791,10 @@ public final class AfkSession
 		tick = in.tick;
 		now = in.now;
 		aboard = in.sailing && in.ownBoat;
+		if (in.cargoInterfaceOpen)
+		{
+			holdOpenTick = in.tick;
+		}
 
 		resolvePendingHoldAction();
 
@@ -853,9 +926,27 @@ public final class AfkSession
 			{
 				monitor.crewSalvagedWhileFull();
 			}
-			else if (!in.cargoInterfaceOpen && lastContainerTick != tick)
+			else if (in.cargoInterfaceOpen || event.getTick() <= lastContainerTick)
+			{
+				// Salvage is counted a few ticks after it lands; a hold read since then already holds it
+				// (seen in game, 2026-10-10: salvage at tick 150, the hold opened at 151, counted at 153).
+				heldAhead = Math.max(0, heldAhead - 1);
+				log.debug("Crew salvage not counted (event tick {}, hold open {}, last hold read at tick {}) at tick {}",
+					event.getTick(), in.cargoInterfaceOpen, lastContainerTick, tick);
+			}
+			else if (heldAhead > 0 && tick - heldAheadTick <= SalvageEvents.LATE_XP_TICKS)
+			{
+				// A hold read showed salvage nothing had counted yet, and this is its late event: a salvage with
+				// no crew line whose XP came after the hold was read (in game, 2026-10-10, 21:26).
+				heldAhead--;
+				log.debug("Crew salvage already in the hold read at tick {} (event tick {}) at tick {}",
+					heldAheadTick, event.getTick(), tick);
+			}
+			else
 			{
 				monitor.adjust(1);
+				log.debug("Tally +1 from crew salvage (deckhandiness {}, event tick {}) at tick {}: {}",
+					event.getDeckhandiness(), event.getTick(), tick, monitor.getUsed());
 			}
 		}
 		boolean ghostShouldBeSalvaging = ghostOnHook(hookSlots) && wreckInReach && parked && !confirmedFull;
@@ -1267,6 +1358,8 @@ public final class AfkSession
 			if (delta != 0)
 			{
 				monitor.adjust(delta);
+				log.debug("Tally {} from a hold {} click at tick {}: {}", delta, pendingWithdraw ? "withdraw" : "deposit",
+					currentTick, monitor.getUsed());
 			}
 		}
 		else
