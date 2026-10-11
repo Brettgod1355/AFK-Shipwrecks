@@ -1097,6 +1097,16 @@ public class AfkSalvagingPlugin extends Plugin
 		return points;
 	}
 
+	/**
+	 * Whether the wreck overlays (reach and double spot boxes, hull outlines, timers) have a reason to show:
+	 * the player is on their own boat and it carries at least one salvaging hook (owner, 2026-10-11: "when
+	 * there is no salvaging hook on the boat, it doesn't highlight any overlays over the salvaging spots").
+	 */
+	public boolean onSalvagingBoat()
+	{
+		return isOwnBoat() && session.boat().hookCount() > 0;
+	}
+
 	/** Whether the player is aboard a boat that is their own. */
 	public boolean isOwnBoat()
 	{

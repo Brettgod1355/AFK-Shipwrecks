@@ -48,7 +48,7 @@ public class WreckTimerOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		if (!config.wreckTimers() || !plugin.isOwnBoat())
+		if (!config.wreckTimers() || !plugin.onSalvagingBoat())
 		{
 			return null;
 		}

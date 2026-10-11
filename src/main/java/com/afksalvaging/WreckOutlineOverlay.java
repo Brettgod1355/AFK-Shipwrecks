@@ -48,7 +48,7 @@ public class WreckOutlineOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		if (!config.wreckMarking().hull() || !plugin.isOwnBoat())
+		if (!config.wreckMarking().hull() || !plugin.onSalvagingBoat())
 		{
 			return null;
 		}

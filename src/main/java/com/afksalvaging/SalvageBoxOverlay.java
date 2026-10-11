@@ -61,7 +61,7 @@ public class SalvageBoxOverlay extends Overlay
 	{
 		boolean doubleSpots = config.doubleSpotBoxes();
 		boolean reachBoxes = config.wreckMarking().area();
-		if (!doubleSpots && !reachBoxes)
+		if ((!doubleSpots && !reachBoxes) || !plugin.onSalvagingBoat())
 		{
 			return null;
 		}

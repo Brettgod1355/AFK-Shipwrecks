@@ -99,7 +99,10 @@ public class AfkSalvagingOverlay extends OverlayPanel
 
 		CargoHoldMonitor.Level holdBanner = plugin.bannerLevel(now);
 		HookWatch.Reason reminder = holdBanner == CargoHoldMonitor.Level.OK ? plugin.reminderBanner(now) : null;
-		boolean aboardOwnBoat = view.estimate.getState() != AfkEstimate.State.NOT_SAILING;
+		// A boat with no salvaging hook gets no panel at all (owner, 2026-10-11: "I was hoping that this overlay
+		// just wont appear if there are no hooks").
+		boolean aboardOwnBoat = view.estimate.getState() != AfkEstimate.State.NOT_SAILING
+			&& view.estimate.getState() != AfkEstimate.State.NO_HOOK;
 		if (aboardOwnBoat && config.overlayWhen() == OverlayWhen.NEAR_WRECKS)
 		{
 			// A salvaging spot, as far as the client can tell, is anywhere a wreck site is in view.
@@ -220,9 +223,6 @@ public class AfkSalvagingOverlay extends OverlayPanel
 		boolean crew = !view.crewOnHooks.isEmpty();
 		switch (estimate.getState())
 		{
-			case NO_HOOK:
-				lines.add(new Line("Timer", "no salvaging hook on this boat", dim));
-				break;
 			case HOLD_UNKNOWN:
 				lines.add(new Line("Timer", "open the cargo hold once to start", amber));
 				break;
