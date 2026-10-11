@@ -67,6 +67,23 @@ public class SidebarFitsTest
 				}
 			}
 		});
+		// Linux fonts draw the tab names wider than Windows does; the row must still fit, so check it with room to
+		// spare (CI on Linux, 2026-10-11: the fourth tab reached past the edge).
+		SwingUtilities.invokeAndWait(() ->
+		{
+			SalvagingSpotPanel panel = holder[0];
+			int narrow = PluginPanel.PANEL_WIDTH - 24;
+			panel.setSize(narrow, 3000);
+			layout(panel);
+			for (SalvagingSpotPanel.CompactTab t : all(panel, SalvagingSpotPanel.CompactTab.class))
+			{
+				Point at = SwingUtilities.convertPoint(t.getParent(), t.getLocation(), panel);
+				if (at.x + t.getWidth() > narrow + 1 || t.getMinimumSize().width > t.getWidth() + 1)
+				{
+					problems.add("tab row at " + narrow + " px: \"" + t.getText() + "\" does not fit");
+				}
+			}
+		});
 		assertEquals("the four tabs", 4, tabsSeen[0]);
 		assertTrue("cut off at the sidebar's width:\n" + String.join("\n", problems), problems.isEmpty());
 	}
@@ -82,12 +99,14 @@ public class SidebarFitsTest
 			{
 				continue;
 			}
+			// A tab may give up its side padding to fit; only its name has to (see CompactTab.getMinimumSize).
+			java.awt.Dimension need = c instanceof SalvagingSpotPanel.CompactTab ? c.getMinimumSize() : c.getPreferredSize();
 			if ((c instanceof JLabel || c instanceof AbstractButton)
-				&& (c.getPreferredSize().width > c.getWidth() + 1 || c.getPreferredSize().height > c.getHeight() + 1))
+				&& (need.width > c.getWidth() + 1 || need.height > c.getHeight() + 1))
 			{
 				String text = c instanceof JLabel ? ((JLabel) c).getText() : ((AbstractButton) c).getText();
 				problems.add(tab + ": \"" + (text == null ? "" : text.replaceAll("<[^>]+>", "").trim()) + "\" needs "
-					+ c.getPreferredSize().width + "x" + c.getPreferredSize().height + ", given " + c.getWidth() + "x" + c.getHeight());
+					+ need.width + "x" + need.height + ", given " + c.getWidth() + "x" + c.getHeight());
 			}
 			Point at = SwingUtilities.convertPoint(c.getParent(), c.getLocation(), panel);
 			if (at.x + c.getWidth() > width + 1)

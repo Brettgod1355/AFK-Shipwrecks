@@ -1223,6 +1223,19 @@ public class SalvagingSpotPanel extends PluginPanel
 			super(text, group, content);
 		}
 
+		/**
+		 * When the four tabs do not fit, each gives up its side padding before anything else: Linux fonts
+		 * draw the names a little wider than Windows, and the row ran past the sidebar's edge there (CI,
+		 * 2026-10-11). The name itself is never squeezed.
+		 */
+		@Override
+		public Dimension getMinimumSize()
+		{
+			Dimension preferred = getPreferredSize();
+			Insets insets = getInsets();
+			return new Dimension(preferred.width - insets.left - insets.right + 2, preferred.height);
+		}
+
 		@Override
 		public void setBorder(Border border)
 		{
