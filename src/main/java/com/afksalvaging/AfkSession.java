@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import net.runelite.api.coords.WorldPoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Everything the plugin knows about the current salvaging session, and how it fits together.
@@ -21,6 +23,8 @@ import net.runelite.api.coords.WorldPoint;
  */
 public final class AfkSession
 {
+	private static final Logger log = LoggerFactory.getLogger(AfkSession.class);
+
 	/** Tiles from a hook within which a wreck can be worked. */
 	public static final int HOOK_RANGE = 8;
 	/** How near another boat's centre must be to a wreck to be taken as working it: hook reach plus half a sloop. */
@@ -45,6 +49,11 @@ public final class AfkSession
 	public static final long WORLD_TIP_AFTER_MILLIS = 60_000;
 	/** How long every wreck in reach must have been down before the (optional) waiting notification. */
 	public static final long WAITING_ALERT_AFTER_MILLIS = 10_000;
+	/** How long the danger notice stays up after the last hit. */
+	static final long DANGER_SHOWN_MILLIS = 10_000;
+	/** At most one danger notification this often; the flashing notice covers the rest. */
+	static final long DANGER_REPEAT_MILLIS = 30_000;
+
 	/** Grace after "no more salvage to sort" before the (optional) done-sorting notification (owner: five seconds). */
 	public static final long SORTING_DONE_GRACE_MILLIS = 5_000;
 	/** Client ticks are 20 ms; the game's idle timeout is measured in them. */
@@ -93,7 +102,6 @@ public final class AfkSession
 	/** Player choices the session needs. */
 	public static final class Settings
 	{
-		public boolean countHookedSalvage = true;
 		public int warnSlotsRemaining;
 		public long repeatFullMillis;
 		public long graceMillis = 15_000;
@@ -101,6 +109,10 @@ public final class AfkSession
 		public boolean salvagingWorld;
 		/** Warn this long before the idle logout; 0 for never. */
 		public long idleWarnMillis = 60_000;
+		/** Warn a little before a Sailing boost wears off below the wreck's level (owner, 2026-10-08). */
+		public boolean boostWarnBefore = true;
+		/** Say so once the crew have stopped because the boost wore off (2.0's warning). */
+		public boolean boostWarnAfter = true;
 	}
 
 	/** A hook on the boat as the client sees it right now. */
@@ -129,6 +141,14 @@ public final class AfkSession
 		public int boatCrewCapacity;
 		public int animation;
 		public int boostedSailingLevel;
+		/** The Sailing level without boosts: a boost never wears off below it. */
+		public int realSailingLevel;
+		/** The boat's hit points as the Sailing side panel shows them, or -1 when unknown. */
+		public int boatHp = -1;
+		/** Whether the player is poisoned or envenomed. */
+		public boolean poisoned;
+		/** Damage hitsplats on the player since the last tick. */
+		public int playerHits;
 		public List<HookInput> hooks = Collections.emptyList();
 		/** Where the boat itself is, in the top-level world; it does not move when the player walks the deck. */
 		public WorldPoint boatPoint;
@@ -157,7 +177,15 @@ public final class AfkSession
 		BOOST_DROPPED,
 		WORLD_TIP,
 		/** The game will log the player out for idling soon, and they are aboard their own boat. */
-		IDLE_LOGOUT_SOON
+		IDLE_LOGOUT_SOON,
+		/** The crew stopped bringing salvage in although a wreck they can work is in reach (owner, 2026-10-08). */
+		CREW_STALLED,
+		/** A wreck rose in reach after a wait (owner, 2026-10-08). */
+		WRECK_ROSE,
+		/** A boost is about to wear off below the level the wreck in reach needs (owner, 2026-10-08). */
+		BOOST_RUNNING_OUT,
+		/** The boat is being damaged, or the player hit or poisoned, while parked at a spot (owner, 2026-10-08). */
+		DANGER
 	}
 
 	/** What to show. */
@@ -198,6 +226,10 @@ public final class AfkSession
 		/** The idle logout is within the warning window and the player is aboard their own boat. */
 		public boolean idleWarning;
 		public boolean showWorldTip;
+		/** What is endangering the boat right now, worded for the flashing notice, or null. */
+		public String danger;
+		/** The highest level a usable wreck in reach needs, or 0. */
+		public int boostLevelNeeded;
 		public boolean hazardous;
 	}
 
@@ -226,15 +258,31 @@ public final class AfkSession
 	/** Whether the last tick found the player on their own boat: crew speech heard elsewhere is not ours. */
 	private boolean aboard;
 	private int lastContainerTick = Integer.MIN_VALUE;
+	/** The last tick the cargo hold interface was open; crew XP right after it is held-back pay. */
+	private int holdOpenTick = Integer.MIN_VALUE / 2;
+	private static final int HELD_BACK_XP_TICKS = 2;
+	/** Salvage a hold read showed before its event was counted, and the tick of that read. */
+	private int heldAhead;
+	/** More than this between reads is not salvage landing early (a login, a deposit). */
+	private static final int HELD_AHEAD_MAX = 3;
+	private int heldAheadTick = Integer.MIN_VALUE;
 	private int fullLineTick = Integer.MIN_VALUE;
 	private boolean inventoryKnown;
 	private int inventorySalvage;
 	private int freeInventorySlots = INVENTORY_SLOTS;
+	/**
+	 * Inventory slots whose items would take hold space if deposited: tools take none, and a stack the
+	 * hold already has adds to it (research, 2026-10-08: the Sailing plugin counted both, its #226).
+	 */
 	private int occupiedInventorySlots;
+	/** The tick the session last ran, and when a hold click last turned into a counted inventory change. */
+	private int currentTick;
+	private int holdActionResolvedTick = Integer.MIN_VALUE;
 	private Set<ShipwreckType> inventorySalvageTypes = Collections.emptySet();
-	private int hookedInInventory;
 	private int pendingHoldTicks;
 	private boolean pendingWithdraw;
+	/** The pending click was made inside the open hold, so nothing the player does next can stop it. */
+	private boolean pendingInInterface;
 	private int inventoryBefore;
 	private boolean inventoryChanged;
 	private int sortingFinishTick = -1;
@@ -246,6 +294,15 @@ public final class AfkSession
 	private long waitingSince = -1;
 	private boolean worldTipGiven;
 	private boolean waitingNotified;
+	private boolean crewStallNotified;
+	private boolean boostRunningOutNotified;
+	/** The boat's hit points last tick, and whether the player was poisoned then. */
+	private int lastBoatHp = -1;
+	private boolean lastPoisoned;
+	/** Until when the last danger is shown, what it was, and when the last danger notification went out. */
+	private long dangerUntil = -1;
+	private String dangerText;
+	private long dangerNotifiedAt = -1;
 	/** When the game last said there was no more salvage to sort, or -1. */
 	private long sortingDoneAt = -1;
 	private boolean boostDropNotified;
@@ -285,6 +342,17 @@ public final class AfkSession
 		}
 	}
 
+	/** The highest Sailing level among the wrecks the crew can work in reach: a boost below it stops one of them. */
+	static int highestLevelNeeded(List<WreckTracker.Site> eligible)
+	{
+		int needed = 0;
+		for (WreckTracker.Site site : eligible)
+		{
+			needed = Math.max(needed, site.getType().getSailingLevel());
+		}
+		return needed;
+	}
+
 	public CargoHoldMonitor monitor()
 	{
 		return monitor;
@@ -293,6 +361,24 @@ public final class AfkSession
 	public CrewRoster roster()
 	{
 		return roster;
+	}
+
+	/** The idle crewmate with the most deckhandiness who can work a hook needing this much, or null. */
+	public Crewmate bestIdleFor(int needed, int tick)
+	{
+		int floor = boat.hasWhirlpoolKeg() ? 2 : 0;
+		Crewmate best = null;
+		int bestDeckhandiness = 0;
+		for (Crewmate crewmate : roster.idle(tick))
+		{
+			int deckhandiness = Math.max(floor, crewmate.effectiveDeckhandiness());
+			if (deckhandiness >= needed && (best == null || deckhandiness > bestDeckhandiness))
+			{
+				best = crewmate;
+				bestDeckhandiness = deckhandiness;
+			}
+		}
+		return best;
 	}
 
 	public BoatFacilities boat()
@@ -318,11 +404,6 @@ public final class AfkSession
 	public PlayerActivity activity()
 	{
 		return activity.current();
-	}
-
-	public int getHookedInInventory()
-	{
-		return hookedInInventory;
 	}
 
 	/** Milliseconds before the game's idle logout, from the client's idle counters, or -1 when it is not counting. */
@@ -385,6 +466,18 @@ public final class AfkSession
 		{
 			return;
 		}
+		if (tick - holdOpenTick <= HELD_BACK_XP_TICKS)
+		{
+			// The game holds the crew's XP back while the hold is open and pays it all on closing ("You gain
+			// some experience by watching your crew work."). It is for salvage the hold reads already counted
+			// (in game, 2026-10-11: 260 XP, four level 4 shares, counted as four new salvages).
+			log.debug("{} Sailing XP at tick {} is held-back pay from the open hold, not counted", delta, tick);
+			stats.sailingXp += delta;
+			// What the open hold's reads and lines were still owed is in this pay too.
+			heldAhead = 0;
+			events.heldBackXpPaid();
+			return;
+		}
 		SalvageEvents.XpContext context = new SalvageEvents.XpContext();
 		context.wreck = view.wreckType;
 		context.playerSalvaging = activity.current() == PlayerActivity.SALVAGING;
@@ -416,12 +509,23 @@ public final class AfkSession
 	 */
 	public void inventoryChanged(int occupied, int salvage, Set<ShipwreckType> salvageTypes, int tick)
 	{
+		inventoryChanged(occupied, occupied, salvage, salvageTypes, tick);
+	}
+
+	/**
+	 * The inventory changed.
+	 *
+	 * @param occupied   slots with anything in them
+	 * @param holdSpace  of those, the slots that would take hold space if deposited (see {@link #occupiedInventorySlots})
+	 */
+	public void inventoryChanged(int occupied, int holdSpace, int salvage, Set<ShipwreckType> salvageTypes, int tick)
+	{
 		if (inventoryKnown)
 		{
 			if (pendingHoldTicks > 0)
 			{
 				// Only a change in the direction the click implies can be that click's doing.
-				boolean matches = pendingWithdraw ? occupied > inventoryBefore : occupied < inventoryBefore;
+				boolean matches = pendingWithdraw ? holdSpace > inventoryBefore : holdSpace < inventoryBefore;
 				if (matches)
 				{
 					inventoryChanged = true;
@@ -429,22 +533,13 @@ public final class AfkSession
 			}
 			int gained = salvage - inventorySalvage;
 			boolean withdrawing = pendingHoldTicks > 0 && pendingWithdraw;
-			if (gained > 0 && withdrawing)
-			{
-				hookedInInventory = 0;
-			}
-			else if (gained > 0 && aboard && activity.current() == PlayerActivity.SALVAGING)
+			if (gained > 0 && !withdrawing && aboard && activity.current() == PlayerActivity.SALVAGING)
 			{
 				events.playerGain(gained, tick);
-				hookedInInventory += gained;
-			}
-			if (salvage < hookedInInventory)
-			{
-				hookedInInventory = salvage;
 			}
 		}
 		inventoryKnown = true;
-		occupiedInventorySlots = occupied;
+		occupiedInventorySlots = holdSpace;
 		inventorySalvage = salvage;
 		freeInventorySlots = Math.max(0, INVENTORY_SLOTS - occupied);
 		inventorySalvageTypes = salvageTypes == null ? Collections.emptySet() : salvageTypes;
@@ -453,15 +548,24 @@ public final class AfkSession
 	/** The player clicked Deposit or Withdraw on the hold, so the inventory is about to change. */
 	public void holdActionClicked(boolean withdraw)
 	{
+		holdActionClicked(withdraw, false);
+	}
+
+	/**
+	 * The player clicked Deposit or Withdraw on the hold, so the inventory is about to change.
+	 *
+	 * @param inInterface clicked inside the open hold: the game already has the order, so a click
+	 *                    elsewhere straight after cannot call it off (in game, 2026-10-10: Withdraw-All,
+	 *                    Esc and a quick click on, and 21 salvage left the hold uncounted)
+	 */
+	public void holdActionClicked(boolean withdraw, boolean inInterface)
+	{
 		pendingHoldTicks = HOLD_ACTION_TICKS;
 		pendingWithdraw = withdraw;
+		pendingInInterface = inInterface;
 		inventoryBefore = occupiedInventorySlots;
 		inventoryChanged = false;
 		hookWatch.noteHoldUse();
-		if (withdraw)
-		{
-			hookedInInventory = 0;
-		}
 	}
 
 	/** The game said there is no more salvage to sort; the notice follows after a grace, unless sorting starts again. */
@@ -482,23 +586,86 @@ public final class AfkSession
 	/** The player clicked something else before reaching the hold, so the deposit or withdrawal is off. */
 	public void holdActionCancelled()
 	{
+		if (pendingInInterface)
+		{
+			return;
+		}
 		pendingHoldTicks = 0;
 		inventoryChanged = false;
 	}
 
-	/** An exact count of the hold arrived from the game. */
+	/**
+	 * An exact count of the hold arrived from the game. A withdrawal still being followed stays followed
+	 * unless the count went down: the game can resend the hold before the click has gone through (in
+	 * game, 2026-10-10: Withdraw-All, the hold resent unchanged a tick later, then the window closed and
+	 * 19 salvage left uncounted until it was opened again). A deposit ends here either way: an unchanged
+	 * hold means what was deposited joined a stack, and following on let an item that left the inventory
+	 * some other way be counted as a deposit (in game the same day, 19:50).
+	 */
 	public void holdCount(int used, int tick)
 	{
+		boolean showsPending = pendingHoldTicks <= 0 || !monitor.hasCount() || !pendingWithdraw
+			|| used < monitor.getUsed();
+		boolean depositPending = pendingHoldTicks > 0 && !pendingWithdraw;
+		int ahead = used - monitor.getUsed();
+		if (monitor.hasCount() && lastContainerTick != Integer.MIN_VALUE && ahead > 0 && ahead <= HELD_AHEAD_MAX
+			&& !depositPending)
+		{
+			// Salvage already in the hold that has not been counted yet; its event is still to come.
+			heldAhead += ahead;
+			heldAheadTick = tick;
+		}
 		monitor.setUsed(used);
 		lastContainerTick = tick;
-		pendingHoldTicks = 0;
-		inventoryChanged = false;
+		if (showsPending)
+		{
+			pendingHoldTicks = 0;
+			inventoryChanged = false;
+		}
 	}
 
-	/** The game said the player deposited one piece of carried cargo without opening the hold. */
+	/**
+	 * The game said the player deposited one piece of carried cargo without opening the hold. A hold
+	 * click being followed through the inventory already counts it, so then nothing is added: the
+	 * line and the inventory change are the same deposit (research, 2026-10-08).
+	 */
 	public void depositLine()
 	{
+		if (pendingHoldTicks > 0 || currentTick - holdActionResolvedTick <= 1)
+		{
+			return;
+		}
 		monitor.adjust(1);
+		log.debug("Tally +1 from the deposit line at tick {}: {}", currentTick, monitor.getUsed());
+	}
+
+	/** Whether a deposit click on the hold is being followed through the inventory right now. */
+	public boolean holdDepositPending()
+	{
+		return pendingHoldTicks > 0 && !pendingWithdraw;
+	}
+
+	/**
+	 * The inventory's hold-space count, worked out again because what the hold holds became known: a
+	 * cannonball the hold turns out to have no longer counts as a slot to deposit.
+	 */
+	public void holdSpaceRecounted(int holdSpace)
+	{
+		if (pendingHoldTicks <= 0)
+		{
+			occupiedInventorySlots = holdSpace;
+		}
+	}
+
+	/**
+	 * A crewmate at a dock (or the bank boat) was asked to bank the hold's cargo (owner, 2026-10-08; the
+	 * Sailing plugin's #180). The hold is taken as emptied, as an estimate until it is next opened.
+	 */
+	public void holdBanked()
+	{
+		pendingHoldTicks = 0;
+		inventoryChanged = false;
+		monitor.setEstimatedUsed(0);
 	}
 
 	/** A wreck object is in view. */
@@ -533,11 +700,24 @@ public final class AfkSession
 		usableWreckLastTick = false;
 		hazardous = false;
 		countdown.reset();
+		clearDanger();
+	}
+
+	/** Forgets the danger notice and the last boat hit points: a new world or a new login starts clean. */
+	private void clearDanger()
+	{
+		lastBoatHp = -1;
+		lastPoisoned = false;
+		dangerUntil = -1;
+		dangerText = null;
+		crewStallNotified = false;
+		boostRunningOutNotified = false;
 	}
 
 	/** Everything the boat knows is stale, for example after logging out. Learned rates are kept in memory. */
 	public void reset()
 	{
+		clearDanger();
 		flushMemory();
 		view = new View();
 		monitor.reset();
@@ -553,15 +733,18 @@ public final class AfkSession
 		rateWreck = null;
 		aboard = false;
 		lastContainerTick = Integer.MIN_VALUE;
+		holdOpenTick = Integer.MIN_VALUE / 2;
+		heldAhead = 0;
+		heldAheadTick = Integer.MIN_VALUE;
 		fullLineTick = Integer.MIN_VALUE;
 		inventoryKnown = false;
 		inventorySalvage = 0;
 		freeInventorySlots = INVENTORY_SLOTS;
 		occupiedInventorySlots = 0;
 		inventorySalvageTypes = Collections.emptySet();
-		hookedInInventory = 0;
 		pendingHoldTicks = 0;
 		pendingWithdraw = false;
+		pendingInInterface = false;
 		inventoryChanged = false;
 		sortingFinishTick = -1;
 		lastActivity = PlayerActivity.IDLE;
@@ -603,10 +786,15 @@ public final class AfkSession
 	 */
 	public List<Notice> tick(TickInputs in)
 	{
+		currentTick = in.tick;
 		List<Notice> notices = new ArrayList<>();
 		tick = in.tick;
 		now = in.now;
 		aboard = in.sailing && in.ownBoat;
+		if (in.cargoInterfaceOpen)
+		{
+			holdOpenTick = in.tick;
+		}
 
 		resolvePendingHoldAction();
 
@@ -627,7 +815,6 @@ public final class AfkSession
 		if (current == PlayerActivity.SORTING && lastActivity != PlayerActivity.SORTING)
 		{
 			hookWatch.noteSortingStarted();
-			hookedInInventory = 0;
 			sortingFinishTick = tick + SORT_TICKS * inventorySalvage;
 		}
 		else if (current != PlayerActivity.SORTING)
@@ -739,9 +926,27 @@ public final class AfkSession
 			{
 				monitor.crewSalvagedWhileFull();
 			}
-			else if (!in.cargoInterfaceOpen && lastContainerTick != tick)
+			else if (in.cargoInterfaceOpen || event.getTick() <= lastContainerTick)
+			{
+				// Salvage is counted a few ticks after it lands; a hold read since then already holds it
+				// (seen in game, 2026-10-10: salvage at tick 150, the hold opened at 151, counted at 153).
+				heldAhead = Math.max(0, heldAhead - 1);
+				log.debug("Crew salvage not counted (event tick {}, hold open {}, last hold read at tick {}) at tick {}",
+					event.getTick(), in.cargoInterfaceOpen, lastContainerTick, tick);
+			}
+			else if (heldAhead > 0 && tick - heldAheadTick <= SalvageEvents.LATE_XP_TICKS)
+			{
+				// A hold read showed salvage nothing had counted yet, and this is its late event: a salvage with
+				// no crew line whose XP came after the hold was read (in game, 2026-10-10, 21:26).
+				heldAhead--;
+				log.debug("Crew salvage already in the hold read at tick {} (event tick {}) at tick {}",
+					heldAheadTick, event.getTick(), tick);
+			}
+			else
 			{
 				monitor.adjust(1);
+				log.debug("Tally +1 from crew salvage (deckhandiness {}, event tick {}) at tick {}: {}",
+					event.getDeckhandiness(), event.getTick(), tick, monitor.getUsed());
 			}
 		}
 		boolean ghostShouldBeSalvaging = ghostOnHook(hookSlots) && wreckInReach && parked && !confirmedFull;
@@ -787,9 +992,7 @@ public final class AfkSession
 		est.playerAtHook = playerAtHook || (aboard && current == PlayerActivity.AT_HOOK_IDLE);
 		est.playerRolling = playerRolling;
 		est.inventoryFull = inventoryFull;
-		est.inventorySalvage = hookedInInventory;
 		est.freeInventorySlots = freeInventorySlots;
-		est.countInventorySalvage = settings.countHookedSalvage;
 		est.wreckInReach = wreckInReach;
 		est.onlyHigherWrecksInReach = higherWrecksUp > 0 && !wreckInReach;
 		est.hazardous = hazardous;
@@ -817,6 +1020,8 @@ public final class AfkSession
 			shown = countdown.update(estimate.hasEta() ? estimate.getEtaMillis() : -1, running, now);
 		}
 
+		// A wreck rising after a real wait is worth a word (owner, 2026-10-08); a wait of a tick or two is not.
+		boolean waitedLong = waitingSince >= 0 && now - waitingSince >= WAITING_ALERT_AFTER_MILLIS;
 		// Waiting is only waiting at a spot: the voyage there, with the crew on hooks and nothing in
 		// reach, is the same estimate state but not time waited (owner, 2026-10-04).
 		if (estimate.getState() == AfkEstimate.State.WAITING_FOR_WRECK && atSpot)
@@ -880,7 +1085,7 @@ public final class AfkSession
 				// Only when the crew were salvaging a wreck they could work a tick ago: arriving at a
 				// wreck above your level stops nobody, and the overlay already names the level needed
 				// (review, 2026-10-04).
-				if (usableWreckLastTick)
+				if (usableWreckLastTick && settings.boostWarnAfter)
 				{
 					notices.add(Notice.BOOST_DROPPED);
 				}
@@ -891,6 +1096,85 @@ public final class AfkSession
 			boostDropNotified = false;
 		}
 		usableWreckLastTick = wreckInReach && crewOnHooks;
+
+		// Before the boost wears off: boosts fall back one level at a time, so a boosted level that is
+		// exactly what the wreck needs, above the real level, stops the crew at the next drop.
+		int needed = wreckInReach ? highestLevelNeeded(eligible) : 0;
+		boolean boostAtTheEdge = aboard && crewOnHooks && wreckInReach && needed > 0
+			&& in.boostedSailingLevel > in.realSailingLevel && in.boostedSailingLevel - 1 < needed;
+		if (boostAtTheEdge)
+		{
+			if (!boostRunningOutNotified && settings.boostWarnBefore)
+			{
+				notices.add(Notice.BOOST_RUNNING_OUT);
+			}
+			boostRunningOutNotified = true;
+		}
+		else
+		{
+			boostRunningOutNotified = false;
+		}
+		view.boostLevelNeeded = needed;
+
+		// The crew have stopped although a wreck is in reach: the game shows nothing for it, and a nudge
+		// of the boat or a fresh assignment usually starts them again (owner, 2026-10-08).
+		boolean crewStalled = aboard && atSpot && crewOnHooks && wreckInReach
+			&& estimate.getState() == AfkEstimate.State.STALLED;
+		if (crewStalled)
+		{
+			if (!crewStallNotified)
+			{
+				crewStallNotified = true;
+				notices.add(Notice.CREW_STALLED);
+			}
+		}
+		else
+		{
+			crewStallNotified = false;
+		}
+
+		if (waitedLong && wreckInReach && atSpot)
+		{
+			notices.add(Notice.WRECK_ROSE);
+		}
+
+		// Danger while parked at a spot: the boat losing hit points, the player being hit, or poison.
+		// Only on the player's own boat at a salvaging spot, so ship combat elsewhere never sets it off.
+		String danger = null;
+		if (aboard && in.ownBoat && atSpot)
+		{
+			if (in.boatHp >= 0 && lastBoatHp >= 0 && in.boatHp < lastBoatHp)
+			{
+				danger = "Your boat is taking damage";
+			}
+			else if (in.playerHits > 0)
+			{
+				danger = "You are being hit";
+			}
+			else if (in.poisoned && !lastPoisoned)
+			{
+				danger = "You have been poisoned";
+			}
+		}
+		lastBoatHp = in.ownBoat ? in.boatHp : -1;
+		lastPoisoned = in.poisoned;
+		if (danger != null)
+		{
+			dangerText = danger;
+			dangerUntil = now + DANGER_SHOWN_MILLIS;
+			if (dangerNotifiedAt < 0 || now - dangerNotifiedAt >= DANGER_REPEAT_MILLIS)
+			{
+				dangerNotifiedAt = now;
+				notices.add(Notice.DANGER);
+			}
+		}
+		// Poison keeps the notice up until it is cured; a hit shows for a few seconds after the last one.
+		boolean dangerShown = aboard && in.ownBoat && atSpot && (now < dangerUntil || (in.poisoned && dangerText != null));
+		view.danger = dangerShown ? (in.poisoned && now >= dangerUntil ? "You are poisoned" : dangerText) : null;
+		if (!dangerShown)
+		{
+			dangerText = null;
+		}
 
 		// The idle logout: one warning per idle stretch, only aboard the player's own boat, where
 		// being logged out is what the whole plugin exists to prevent going unnoticed.
@@ -1070,13 +1354,12 @@ public final class AfkSession
 			int delta = inventoryBefore - occupiedInventorySlots;
 			pendingHoldTicks = 0;
 			inventoryChanged = false;
-			if (delta > 0)
-			{
-				hookedInInventory = Math.max(0, hookedInInventory - delta);
-			}
+			holdActionResolvedTick = currentTick;
 			if (delta != 0)
 			{
 				monitor.adjust(delta);
+				log.debug("Tally {} from a hold {} click at tick {}: {}", delta, pendingWithdraw ? "withdraw" : "deposit",
+					currentTick, monitor.getUsed());
 			}
 		}
 		else

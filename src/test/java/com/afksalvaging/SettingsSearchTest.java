@@ -1,0 +1,146 @@
+/*
+ * SPDX-License-Identifier: BSD-2-Clause
+ * Copyright (c) 2026, Brettgod1355 <github.com/Brettgod1355>
+ * See LICENSE for redistribution conditions and disclaimer.
+ */
+package com.afksalvaging;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import net.runelite.client.config.Alpha;
+import net.runelite.client.config.ConfigDescriptor;
+import net.runelite.client.config.ConfigGroup;
+import net.runelite.client.config.ConfigItem;
+import net.runelite.client.config.ConfigItemDescriptor;
+import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.ConfigSectionDescriptor;
+import net.runelite.client.config.Range;
+import net.runelite.client.config.Units;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+public class SettingsSearchTest
+{
+	/** The plugin's settings described the way RuneLite's ConfigManager describes them. */
+	static ConfigDescriptor describe() throws Exception
+	{
+		List<ConfigSectionDescriptor> sections = new ArrayList<>();
+		for (Field field : AfkSalvagingConfig.class.getDeclaredFields())
+		{
+			ConfigSection section = field.getAnnotation(ConfigSection.class);
+			if (section != null)
+			{
+				sections.add(new ConfigSectionDescriptor((String) field.get(null), section));
+			}
+		}
+		List<ConfigItemDescriptor> items = new ArrayList<>();
+		for (Method method : AfkSalvagingConfig.class.getDeclaredMethods())
+		{
+			ConfigItem item = method.getAnnotation(ConfigItem.class);
+			if (item != null)
+			{
+				items.add(new ConfigItemDescriptor(item, method.getGenericReturnType(), method.getAnnotation(Range.class),
+					method.getAnnotation(Alpha.class), method.getAnnotation(Units.class)));
+			}
+		}
+		return new ConfigDescriptor(AfkSalvagingConfig.class.getAnnotation(ConfigGroup.class), sections, items);
+	}
+
+	private static List<SettingsSearch.Entry> entries() throws Exception
+	{
+		return SettingsSearch.entries(describe());
+	}
+
+	@Test
+	public void hiddenSettingsAreNeverFound() throws Exception
+	{
+		for (SettingsSearch.Entry entry : entries())
+		{
+			assertFalse(entry.getName().isEmpty());
+		}
+		assertTrue(SettingsSearch.find(entries(), "wreckMarkingCarried").isEmpty());
+		assertTrue(SettingsSearch.find(entries(), "lastVersion").isEmpty());
+	}
+
+	@Test
+	public void aWordFindsTheSettingAndSaysWhereItIs() throws Exception
+	{
+		List<SettingsSearch.Entry> found = SettingsSearch.find(entries(), "banner size");
+		assertEquals("Banner size", found.get(0).getName());
+		assertEquals("AFK Shipwrecks settings > Banner", found.get(0).where());
+
+		found = SettingsSearch.find(entries(), "MARK WRECKS");
+		assertEquals("Mark wrecks", found.get(0).getName());
+		assertEquals("Wrecks and parking", found.get(0).getSection());
+	}
+
+	@Test
+	public void nameMatchesComeBeforeDescriptionMatches() throws Exception
+	{
+		List<SettingsSearch.Entry> found = SettingsSearch.find(entries(), "grace");
+		assertEquals("Grace period", found.get(0).getName());
+	}
+
+	@Test
+	public void everyWordMustMatchAndEmptyFindsNothing() throws Exception
+	{
+		assertTrue(SettingsSearch.find(entries(), "banner zzzz").isEmpty());
+		assertTrue(SettingsSearch.find(entries(), "   ").isEmpty());
+		assertTrue(SettingsSearch.find(entries(), null).isEmpty());
+	}
+
+	@Test
+	public void resultsAreCapped() throws Exception
+	{
+		// "e" is in nearly every setting.
+		assertEquals(SettingsSearch.MAX_RESULTS, SettingsSearch.find(entries(), "e").size());
+	}
+
+	@Test
+	public void looseSettingsKeepThePanelsOrder() throws Exception
+	{
+		List<SettingsSearch.Entry> all = entries();
+		assertEquals("Default notification", all.get(0).getName());
+		assertEquals("Say when updated", all.get(all.size() - 1).getName());
+	}
+
+	@Test
+	public void everySectionStartsClosedAndHoldsSomething() throws Exception
+	{
+		ConfigDescriptor descriptor = describe();
+		Set<String> used = new HashSet<>();
+		for (ConfigItemDescriptor item : descriptor.getItems())
+		{
+			if (!item.getItem().hidden())
+			{
+				used.add(item.getItem().section());
+			}
+		}
+		for (ConfigSectionDescriptor section : descriptor.getSections())
+		{
+			assertTrue(section.name() + " starts open", section.getSection().closedByDefault());
+			assertTrue(section.name() + " is empty", used.contains(section.getKey()));
+		}
+	}
+
+	@Test
+	public void onlyTwoSettingsSitOutsideTheSections() throws Exception
+	{
+		List<String> loose = new ArrayList<>();
+		for (SettingsSearch.Entry entry : entries())
+		{
+			if (entry.getSection().isEmpty())
+			{
+				loose.add(entry.getName());
+			}
+		}
+		assertEquals(2, loose.size());
+	}
+}

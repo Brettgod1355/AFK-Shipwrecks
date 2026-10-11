@@ -83,6 +83,15 @@ public final class HoldWhitelist
 	 * "just all the cballs by default"). The rest of {@link #SEED} keeps its items from being
 	 * called drops, but they are only deposits when the player marks them.
 	 */
+	/**
+	 * The Sailing kit the hold keeps without using a slot (wiki, "Cargo hold": the log, spyglass, duck,
+	 * crowbar and diving gear take no space). Depositing one leaves the count as it was.
+	 */
+	static final Set<Integer> TAKES_NO_SPACE = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+		ItemID.SAILING_LOG_INITIAL, ItemID.SAILING_LOG, ItemID.SAILING_CHARTING_SPYGLASS,
+		ItemID.SAILING_CHARTING_CURRENT_DUCK, ItemID.SAILING_CHARTING_CROWBAR,
+		ItemID.HUNDRED_PIRATE_DIVING_HELMET, ItemID.HUNDRED_PIRATE_DIVING_BACKPACK)));
+
 	static final Set<Integer> CANNONBALLS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
 		ItemID.BRONZE_CANNONBALL, ItemID.IRON_CANNONBALL, ItemID.MCANNONBALL, ItemID.MITHRIL_CANNONBALL,
 		ItemID.ADAMANT_CANNONBALL, ItemID.RUNE_CANNONBALL, ItemID.DRAGON_CANNONBALL, ItemID.GRANITE_CANNONBALL,

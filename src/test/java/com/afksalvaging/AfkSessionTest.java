@@ -73,6 +73,11 @@ public class AfkSessionTest
 	private boolean sailing = true;
 	private boolean ownBoat = true;
 	private int level = 99;
+	/** The unboosted level; follows {@link #level} unless a test sets it. */
+	private int realLevel = -1;
+	private int boatHp = -1;
+	private boolean poisoned;
+	private int playerHits;
 	private boolean interfaceOpen;
 	private WorldPoint playerPoint = PLAYER;
 	private WorldPoint boatPoint = BOAT;
@@ -113,6 +118,11 @@ public class AfkSessionTest
 		in.boatCrewCapacity = 5;
 		in.animation = animation;
 		in.boostedSailingLevel = level;
+		in.realSailingLevel = realLevel < 0 ? level : realLevel;
+		in.boatHp = boatHp;
+		in.poisoned = poisoned;
+		in.playerHits = playerHits;
+		playerHits = 0;
 		in.hooks = Arrays.asList(
 			new AfkSession.HookInput(HOOK_A, SalvagingHookTier.DRAGON, false),
 			new AfkSession.HookInput(HOOK_B, SalvagingHookTier.DRAGON, true));
@@ -210,6 +220,82 @@ public class AfkSessionTest
 		ticks(1);
 		assertEquals(State.HOLD_FULL, session.view().estimate.getState());
 		assertEquals(1, count(Notice.HOLD_FULL));
+	}
+
+	@Test
+	public void salvageAlreadyInAHoldReadIsNotCountedAgain()
+	{
+		// In game (2026-10-10): a crewmate's salvage at tick 150 was counted at tick 153, after the hold
+		// was opened at tick 151 and already held it, so the tally ran one high until the next opening.
+		twoCrewOnHooks();
+		session.holdCount(100, tick);
+		ticks(6);
+		session.crewLine("Jolly Jim", tick);
+		ticks(1);
+		session.holdCount(101, tick);
+		ticks(3);
+		assertEquals(101, session.monitor().getUsed());
+		// Salvage after the read still counts.
+		session.crewLine("Jolly Jim", tick);
+		ticks(3);
+		assertEquals(102, session.monitor().getUsed());
+	}
+
+	@Test
+	public void xpHeldBackWhileTheHoldWasOpenIsNotCountedAgain()
+	{
+		// In game (2026-10-11, 11:21): four salvages landed while the hold was open, the game held the crew's
+		// XP back, and on closing paid it in one drop (four shares), which was counted as four new salvages.
+		twoCrewOnHooks();
+		ticks(10);
+		session.holdCount(140, tick);
+		interfaceOpen = true;
+		for (int i = 1; i <= 4; i++)
+		{
+			ticks(5);
+			session.holdCount(140 + i, tick);
+		}
+		// In game the hold stayed open about 100 ticks; anything waiting on a read had long expired.
+		ticks(40);
+		interfaceOpen = false;
+		session.sailingXp(320, tick);
+		ticks(4);
+		assertEquals(144, session.monitor().getUsed());
+		// Salvage after that counts as usual.
+		ticks(10);
+		session.sailingXp(80, tick);
+		ticks(4);
+		assertEquals(145, session.monitor().getUsed());
+	}
+
+	@Test
+	public void salvageAReadShowedEarlyIsNotCountedWhenItsEventComesLate()
+	{
+		// In game (2026-10-10, 21:26): a salvage with no crew line showed in a hold read, and its XP came a
+		// few ticks after the read; it was counted again and the tally ran one high.
+		twoCrewOnHooks();
+		session.holdCount(147, tick);
+		ticks(6);
+		session.holdCount(148, tick);
+		ticks(1);
+		session.crewLine("Jolly Jim", tick);
+		ticks(4);
+		assertEquals(148, session.monitor().getUsed());
+		// The next salvage counts as usual.
+		session.crewLine("Jolly Jim", tick);
+		ticks(4);
+		assertEquals(149, session.monitor().getUsed());
+
+		// A withdrawal read between the early read and the late event does not lose it (21:42 the same day:
+		// 158, then 159 with the salvage, then 141 after taking 18 out, then the salvage's late XP).
+		ticks(30);
+		session.holdCount(150, tick);
+		ticks(1);
+		session.holdCount(132, tick);
+		ticks(1);
+		session.crewLine("Jolly Jim", tick);
+		ticks(4);
+		assertEquals(132, session.monitor().getUsed());
 	}
 
 	@Test
@@ -734,16 +820,15 @@ public class AfkSessionTest
 	}
 
 	@Test
-	public void thePlayersOwnSalvageCountsTowardsTheHoldUntilWithdrawn()
+	public void thePlayersOwnSalvageOnlyCountsOnceDeposited()
 	{
 		twoCrewOnHooks();
 		animation = SALVAGING;
 		ticks(10);
-		long etaBefore = session.view().estimate.getEtaMillis();
 		session.inventoryChanged(5, 5, java.util.Collections.singleton(ShipwreckType.MERCHANT), tick);
 		ticks(1);
-		assertEquals(5, session.getHookedInInventory());
-		assertTrue(session.view().estimate.getEtaMillis() < etaBefore);
+		// Carried salvage may be sorted at the station instead, so only the hold counts.
+		assertEquals(200, session.monitor().getUsed());
 		assertEquals(5, session.rate().lifetimeEvents());
 
 		// Depositing them moves them into the hold.
@@ -752,14 +837,12 @@ public class AfkSessionTest
 		session.inventoryChanged(0, 0, java.util.Collections.emptySet(), tick);
 		ticks(1);
 		assertEquals(205, session.monitor().getUsed());
-		assertEquals(0, session.getHookedInInventory());
 
 		// Withdrawing to sort takes them back out and they do not count.
 		session.holdActionClicked(true);
 		session.inventoryChanged(28, 28, java.util.Collections.singleton(ShipwreckType.MERCHANT), tick);
 		ticks(1);
 		assertEquals(177, session.monitor().getUsed());
-		assertEquals(0, session.getHookedInInventory());
 		animation = SORTING;
 		AfkSession.View view = ticks(2);
 		assertEquals(PlayerActivity.SORTING, view.activity);
@@ -926,9 +1009,6 @@ public class AfkSessionTest
 		ticks(6);
 		session.inventoryChanged(5, 5, Collections.singleton(ShipwreckType.MERCHANT), tick);
 		ticks(1);
-		// Not hooked by the player, so not counted towards the hold.
-		assertEquals(0, session.getHookedInInventory());
-
 		// A withdraw click followed by the inventory shrinking is not a withdrawal.
 		session.holdActionClicked(true);
 		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
@@ -950,6 +1030,69 @@ public class AfkSessionTest
 		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
 		ticks(1);
 		assertEquals(205, session.monitor().getUsed());
+	}
+
+	@Test
+	public void theHoldResentBeforeAWithdrawLandsDoesNotEndIt()
+	{
+		// In game (2026-10-10): Withdraw-All, the hold resent unchanged a tick later, the window closed,
+		// and the 19 salvage that then left were only noticed when the hold was opened again.
+		twoCrewOnHooks();
+		ticks(6);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		session.holdCount(78, tick);
+		ticks(1);
+		session.holdActionClicked(true, true);
+		ticks(1);
+		session.holdCount(78, tick);
+		ticks(1);
+		session.inventoryChanged(19, 19, Collections.singleton(ShipwreckType.MERCHANT), tick);
+		ticks(1);
+		assertEquals(59, session.monitor().getUsed());
+
+		// When the resent hold already shows the withdrawal, the inventory change is not applied again.
+		session.holdActionClicked(true, true);
+		ticks(1);
+		session.holdCount(40, tick);
+		session.inventoryChanged(38, 38, Collections.singleton(ShipwreckType.MERCHANT), tick);
+		ticks(1);
+		assertEquals(40, session.monitor().getUsed());
+	}
+
+	@Test
+	public void aDepositEndsWithTheNextHoldReadEvenIfNothingChanged()
+	{
+		// In game (2026-10-10, 19:50): a deposit that joined a stack left the hold at 92; an item that then
+		// left the inventory some other way was counted as a deposit, and the tally ran one high.
+		twoCrewOnHooks();
+		ticks(6);
+		session.inventoryChanged(10, 10, Collections.emptySet(), tick);
+		session.holdCount(92, tick);
+		ticks(1);
+		session.holdActionClicked(false, true);
+		ticks(1);
+		session.holdCount(92, tick);
+		ticks(1);
+		session.inventoryChanged(9, 9, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(92, session.monitor().getUsed());
+	}
+
+	@Test
+	public void aWithdrawInsideTheOpenHoldStandsWhateverIsClickedNext()
+	{
+		// In game (2026-10-10): Withdraw-All in the open hold, Esc and a quick click elsewhere; the hold was
+		// not read again, and the tally kept 21 salvage that had left until the hold was next opened.
+		twoCrewOnHooks();
+		ticks(6);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		session.holdActionClicked(true, true);
+		session.holdActionCancelled();
+		ticks(1);
+		session.inventoryChanged(21, 21, Collections.singleton(ShipwreckType.MERCHANT), tick);
+		ticks(1);
+		assertEquals(179, session.monitor().getUsed());
 	}
 
 	@Test
@@ -1019,5 +1162,215 @@ public class AfkSessionTest
 		// 1000 client ticks of 20 ms, the keyboard idle 200 of them and the mouse 500: the keyboard counts.
 		assertEquals(16_000, AfkSession.idleLogoutMillis(1000, 500, 200));
 		assertEquals(0, AfkSession.idleLogoutMillis(100, 200, 300));
+	}
+
+	@Test
+	public void theCrewStoppingWithAWreckInReachIsSaidOnce()
+	{
+		twoCrewOnHooks();
+		ticks(330);
+		assertEquals(State.STALLED, session.view().estimate.getState());
+		assertEquals(1, count(Notice.CREW_STALLED));
+		ticks(50);
+		assertEquals("once per stall", 1, count(Notice.CREW_STALLED));
+		// Salvage arrives again, then they stop again later: said again.
+		session.crewLine("Jolly Jim", tick);
+		ticks(3);
+		assertEquals(State.COUNTING_DOWN, session.view().estimate.getState());
+		ticks(400);
+		assertEquals(2, count(Notice.CREW_STALLED));
+	}
+
+	@Test
+	public void aWreckRisingAfterARealWaitIsSaid()
+	{
+		twoCrewOnHooks();
+		ticks(10);
+		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, now);
+		ticks(5);
+		// A few seconds is no wait: nothing said when it rises.
+		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK, now);
+		ticks(3);
+		assertEquals(0, count(Notice.WRECK_ROSE));
+		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK_STUMP, now);
+		ticks(30);
+		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK, now);
+		ticks(3);
+		assertEquals(1, count(Notice.WRECK_ROSE));
+	}
+
+	@Test
+	public void aBoostAtTheWrecksLevelIsWarnedBeforeItWearsOff()
+	{
+		twoCrewOnHooks();
+		realLevel = 85;
+		level = 89;
+		ticks(5);
+		assertEquals("two levels of boost to spare", 0, count(Notice.BOOST_RUNNING_OUT));
+		level = 87;
+		ticks(2);
+		assertEquals(1, count(Notice.BOOST_RUNNING_OUT));
+		assertEquals(87, session.view().boostLevelNeeded);
+		ticks(20);
+		assertEquals("once until topped up", 1, count(Notice.BOOST_RUNNING_OUT));
+		// It wears off: the after-warning follows, as in 2.0.
+		level = 86;
+		ticks(2);
+		assertEquals(1, count(Notice.BOOST_DROPPED));
+	}
+
+	@Test
+	public void theBoostWarningsFollowTheBeforeAndAfterChoice()
+	{
+		twoCrewOnHooks();
+		session.settings().boostWarnBefore = false;
+		session.settings().boostWarnAfter = true;
+		realLevel = 85;
+		level = 87;
+		ticks(5);
+		assertEquals(0, count(Notice.BOOST_RUNNING_OUT));
+		level = 86;
+		ticks(2);
+		assertEquals(1, count(Notice.BOOST_DROPPED));
+
+		session.settings().boostWarnBefore = true;
+		session.settings().boostWarnAfter = false;
+		level = 87;
+		ticks(5);
+		assertEquals(1, count(Notice.BOOST_RUNNING_OUT));
+		level = 86;
+		ticks(2);
+		assertEquals("after is off", 1, count(Notice.BOOST_DROPPED));
+	}
+
+	@Test
+	public void noBoostWarningWhenTheRealLevelIsEnough()
+	{
+		twoCrewOnHooks();
+		realLevel = 87;
+		level = 87;
+		ticks(10);
+		assertEquals(0, count(Notice.BOOST_RUNNING_OUT));
+	}
+
+	@Test
+	public void theBoatTakingDamageAtASpotIsDanger()
+	{
+		twoCrewOnHooks();
+		boatHp = 100;
+		ticks(3);
+		assertNull(session.view().danger);
+		boatHp = 90;
+		tick();
+		assertEquals("Your boat is taking damage", session.view().danger);
+		assertEquals(1, count(Notice.DANGER));
+		boatHp = 80;
+		ticks(5);
+		assertEquals("at most one notification every 30 seconds", 1, count(Notice.DANGER));
+		ticks(20);
+		assertNull("ten seconds after the last hit it goes", session.view().danger);
+		boatHp = 70;
+		ticks(60);
+		boatHp = 60;
+		tick();
+		assertEquals(2, count(Notice.DANGER));
+	}
+
+	@Test
+	public void poisonStaysUpUntilCuredAndHitsCount()
+	{
+		twoCrewOnHooks();
+		ticks(3);
+		poisoned = true;
+		tick();
+		assertEquals("You have been poisoned", session.view().danger);
+		ticks(40);
+		assertEquals("You are poisoned", session.view().danger);
+		poisoned = false;
+		tick();
+		assertNull(session.view().danger);
+		playerHits = 1;
+		tick();
+		assertEquals("You are being hit", session.view().danger);
+	}
+
+	@Test
+	public void noDangerAwayFromASpotOrOnSomeoneElsesBoat()
+	{
+		twoCrewOnHooks();
+		ownBoat = false;
+		boatHp = 100;
+		ticks(2);
+		boatHp = 50;
+		poisoned = true;
+		ticks(2);
+		assertNull(session.view().danger);
+		assertEquals(0, count(Notice.DANGER));
+	}
+
+	@Test
+	public void bankingTheHoldAtADockEmptiesTheCount()
+	{
+		twoCrewOnHooks();
+		ticks(2);
+		assertEquals(200, session.monitor().getUsed());
+		session.holdBanked();
+		assertEquals(0, session.monitor().getUsed());
+		assertTrue("an estimate until the hold is opened", session.monitor().isEstimate());
+		session.holdCount(3, tick);
+		assertEquals(3, session.monitor().getUsed());
+	}
+
+	@Test
+	public void theDepositLineIsNotCountedOnTopOfTheInventoryChange()
+	{
+		ticks(2);
+		session.inventoryChanged(5, 5, 0, Collections.emptySet(), tick);
+		session.holdActionClicked(false);
+		// The game's line arrives while the click is still being followed: the inventory change counts it.
+		session.depositLine();
+		ticks(1);
+		session.inventoryChanged(4, 4, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(201, session.monitor().getUsed());
+		// Right after it resolved, the same deposit's line is not counted again either.
+		session.depositLine();
+		assertEquals(201, session.monitor().getUsed());
+		// A line with no hold click behind it is a deposit of its own.
+		ticks(5);
+		session.depositLine();
+		assertEquals(202, session.monitor().getUsed());
+	}
+
+	@Test
+	public void depositingSomethingThatTakesNoHoldSpaceLeavesTheCount()
+	{
+		ticks(2);
+		// Five items, of which two take no hold space (a tool, or a stack the hold already has).
+		session.inventoryChanged(5, 3, 0, Collections.emptySet(), tick);
+		session.holdActionClicked(false);
+		// Deposit-all: everything leaves the inventory, but only three new slots are used in the hold.
+		session.inventoryChanged(0, 0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(203, session.monitor().getUsed());
+	}
+
+	@Test
+	public void learningWhatTheHoldHoldsChangesWhatADepositAdds()
+	{
+		ticks(2);
+		// Two cannonball stacks in the inventory, not yet known to be in the hold: two slots' worth.
+		session.inventoryChanged(2, 2, 0, Collections.emptySet(), tick);
+		// The hold is read and turns out to hold both types already.
+		session.holdSpaceRecounted(0);
+		session.holdActionClicked(false);
+		assertTrue(session.holdDepositPending());
+		session.inventoryChanged(0, 0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals("joining existing stacks uses no slot", 200, session.monitor().getUsed());
+		// No slot changed hands, so the click is followed for its usual window and then let go.
+		ticks(AfkSession.HOLD_ACTION_TICKS);
+		assertFalse(session.holdDepositPending());
+		assertEquals(200, session.monitor().getUsed());
 	}
 }

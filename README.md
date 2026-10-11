@@ -61,11 +61,13 @@ marked.
   instead. Lifetimes are the wiki's averages, so a wreck can outlive its clock: the line then says
   "any moment", and a minute past the clock the plugin drops it until the wreck is seen worked
   again. Where nobody is working the other wrecks there is nothing to go by and no line.
-- **Counts you too.** Salvage you hook yourself goes to your inventory first; the plugin counts
-  it as bound for the hold and knows you stop when your inventory is full or the wreck sinks.
-  Salvage you withdraw to sort is never counted, and sorting shows its own little countdown.
+- **Counts the hold, nothing else.** The clock only counts what is in the hold. Salvage you hook
+  yourself counts once you deposit it, and never if you sort it at the station. Salvage you
+  withdraw to sort is never counted, and sorting shows its own little countdown.
 - **Hook reminders.** Step off your hook to sort and forget to hand it over, and after a short
-  grace period it reminds you: "A salvaging hook is empty. Assign a crewmate to it." (Only at a
+  grace period it reminds you: "A salvaging hook is empty. Assign a crewmate to it." Flashing green
+  boxes then show you where to click: the Sailing tab, Facilities, the hook's Assign button and the
+  best free crewmate for it. The clicks are all yours. (Only at a
   salvaging spot, with a wreck site, up or sunk, within reach of your hooks; an empty hook on the
   way there, or at a dock beside the spots, is your business.) If nobody
   aboard can take the hook (a crewmate needs enough deckhandiness for it) and a wreck is up, it
@@ -86,8 +88,11 @@ marked.
 - **A countdown infobox.** Optionally, the time to a full hold as one of RuneLite's small
   infoboxes, AFK written above the time and the detail on hover, so it stays in view with the
   overlay hidden.
-- **A sidebar with three tabs.** Spots (Test alert and Forget rates at the top, the nearest dock and the list), Sorting
-  (each inventory sorting list with what you added, and the default cannonballs under Deposit) and Tips.
+- **A sidebar with four tabs.** Spots (the tools, the nearest docks and the session line, each under a
+  heading you can fold away, then the list), Sorting (each inventory sorting list with what you added, and
+  the default cannonballs under Deposit), Tips, which starts with Find a setting: type a word and it
+  lists the matching settings and which section each one is in, and Feedback, with big buttons to the
+  GitHub issues (readable without an account; opening a new one needs a free GitHub account) or the Discord. They only open your browser; the plugin itself sends nothing.
 - **Knows where the wrecks are.** The Spots tab lists all 29 salvaging hotspots, filtered by
   wreck, down to the ones your level allows, or to your favourites, sorted by wreck or nearest to
   you first, with the Sailing level each needs, where it sits from the nearest port and how far it
@@ -180,10 +185,26 @@ while waiting for a wreck, carries a "~". Other lines you may see:
 
 ## Settings
 
-**Timer**: show timer (turning it off hides the countdown lines; the status lines, such as waiting
-for a wreck, stay); show clock time; clock format (12-hour or 24-hour); count salvage you hooked; salvaging worlds (default
-`596, 597`); salvaging world tip; salvaging world alert (a flashing notice mid-screen while you wait for a
-wreck off those worlds, on by default).
+Every section starts folded, so the settings open as a short list of headings, in this order.
+Can't find something? The sidebar's Tips tab has Find a setting.
+
+**Default notification**, at the top: how every notification in the plugin is sent unless its own
+setting is off or set to custom with the cog. Left plain it is RuneLite's own notification
+settings; make it custom once and every category follows.
+
+**Overlay**: when to show it (near wrecks, or always aboard); show timer (turning it off hides the
+countdown lines; the status lines, such as waiting for a wreck, stay); show clock time and its format
+(12-hour or 24-hour); the cargo counter and what it shows (used of total,
+slots left or percent full); the count written on the cargo hold itself (on); the hooks line; the wrecks line; text size (150% by default); and the
+countdown infobox (off by default). Whatever the settings, the overlay and the flashing notices step
+aside while a game interface fills the middle of the screen (the cargo hold, a skill guide, the quest
+journal, a diary, the collection log, the settings, the world map) and come back when it closes.
+
+**Full hold**: the full-hold notification and how often it repeats, then the early warning (slots
+left, 5 by default, 0 for none; and whether it plays a sound).
+
+**Banner**: show it, flash it, its size (150% by default), how long it stays, and colours for the
+full, nearly-full and reminder banners.
 
 **Reminders**: seven RuneLite notifications you can shape separately (hook empty with a crewmate
 free; your hook is idle; a better crewmate is free; crew stopped because your level is too low;
@@ -192,35 +213,56 @@ wreck in reach has been down ten seconds, and done sorting at the station, five 
 game says so and only if you have not clicked anything since), whether the swap also flashes mid-screen (on by default), the
 grace period before the first reminder (10 s by default; using the hold buys a little more,
 settling in to sort shortens it), how often to repeat, and how long before the idle logout to
-warn (60 s; 0 never).
+warn (60 s; 0 never). Then:
+- Crew stopped, wreck in reach (on): the crew have stopped bringing salvage in while a wreck they can
+  work is right there. The game shows nothing for this; nudge the boat or assign them again.
+- A wreck rose (off): a wreck came up in reach after you waited for one.
+- Boost warning: before the boost wears off below the wreck's level, after the crew stop, or both
+  (both by default).
+- Danger (on, always with a sound): while you are parked at a spot on your own boat, the boat taking
+  damage, you being hit, or poison. A red DANGER notice flashes in the middle of the screen too (a
+  setting, on).
+- Hide crew orders in chat (on): at a salvaging spot, your own "take control of the ... salvaging
+  hook!" and "take a rest!" lines stay out of the chatbox. Said anywhere else, they stay.
+- Show where to click for an empty hook (on): while a hook is empty and a crewmate could take it,
+  a flashing green box marks the next click: the Sailing tab, Facilities, the empty hook's Assign
+  button, then the free crewmate with the most deckhandiness for that hook (and the scrollbar or
+  Back when that is what's in the way). Boxes only; every click is yours.
 
-**Default notification**, at the top of the settings: how every notification in the plugin is sent
-unless its own setting is off or set to custom with the cog. Left plain it is RuneLite's own
-notification settings; make it custom once and every category follows. **Cargo full** and **Early
-warning**: as before. **Banner**: as before, now 150% in size by default, plus a
-colour for the reminder banner and a colour for the nearly-full banner. **Overlay**: when to show it (near
-wrecks, or always aboard), the cargo counter and what it shows (used of total, slots left or
-percent full), the hooks line, the wrecks line, text size (150% by default), and the countdown infobox (off by
-default). Whatever the settings, the overlay and the flashing notices step aside while a game
-interface fills the middle of the screen (the cargo hold, a skill guide, the quest journal, a
-diary, the collection log, the settings, the world map) and come back when it closes.
+**Wrecks and parking**: Mark wrecks (hull, area, hull and area, or off; hull and area by default).
+The hull is outlined in cyan while the wreck is up and grey once it has sunk; the area is the box of
+water a hook can reach it from, yellow while it is up and grey once sunk. Then the box colour; hiding
+those boxes while you are parked (on by default); filling the boxes (on; off draws outlines only); double spot boxes (on or off), their colour (green)
+and the colour they change to once you are parked (a faint cyan); whether to label the double spot
+boxes; how long after the boat stops they go (20 s; 0 never); and whether "Parked in double spot"
+stays once they have gone (on by default). The outlines, boxes and wreck timers only show on your own
+boat, and only when it has a salvaging hook, so a boat set up for something else keeps a clear view.
 
-**Colours**: only the ones you notice are settings: the banners, the boxes on the water and the
-four sorting boxes, each in its own section. The overlay text, the counter's shading, the sidebar
-and the chat lines use fixed colours, to keep the settings short.
+**Wreck tracking**: Timers on wrecks (on by default): every wreck in view gets
+"Sinks in ≤ 1:20" in cyan while it is up, and a sunk one gets "Sunk - next ≤ 0:45" in grey for when the
+next wreck can rise ("maybe next" when another sunk site in view could take it instead). A wreck nobody
+has been seen working says "no clock yet" rather than guessing. Show what the plugin sees (off by
+default): a faint dashed square round the area the game has loaded. The plugin only knows about wrecks
+inside it, so if a far set of wrecks is outside the square, sail a little toward it.
+
+**Salvaging worlds**: the worlds to count as salvaging worlds (default `596, 597`), the chat tip, and
+the alert (a flashing notice mid-screen while you wait for a wreck off those worlds, on by default).
+
+**Sidebar**: show the sidebar; show the nearest docks (the one you can use and the one where your
+crew bank the hold); "Only docks I can use", which turns the dock requirements check off; and auto
+route when boarding (the spot itself is marked in the sidebar).
 
 **Inventory sorting**: box inventory items; where (on my boat at a salvaging spot, whenever aboard,
 everywhere); the alch threshold; keep instead when the GE price beats the alch value by a margin
 (off by default); the shift-right-click AFK Shipwrecks menu, shown only on your own boat; whether kept items get a box at all (off by default);
 highlighting the cargo hold itself in the Deposit colour (off by default); boxing the salvage
-inside the open hold so it is easy to find and click (on by default); and the four colours. Under Salvage spots, "Only docks I can use" turns the dock requirements check off.
+inside the open hold so it is easy to find and click (on by default); and the four colours.
 
-**Salvage spots**: show the sidebar; wreck reach boxes (hidden while you are parked, on by default) and their
-colour (yellow); outline wrecks that are up (on by default); double spot boxes (on or off), their
-colour (green) and the colour they change to once you are parked (a faint cyan); whether to label the
-double spot boxes; how long after the boat stops they go (20 s; 0 never); whether "Parked in double
-spot" stays once they have gone (on by default); show the nearest docks (the
-one you can use and the one where your crew bank the hold); and auto route when boarding (the spot itself is marked in the sidebar). Favourites, the dropdown choices
+**Colours**: only the ones you notice are settings: the banners, the boxes on the water and the
+four sorting boxes, each in its own section. The overlay text, the counter's shading, the wreck
+outlines, the sidebar and the chat lines use fixed colours, to keep the settings short.
+
+Favourites, the dropdown choices, which sidebar blocks are folded
 and the Auto spot are kept per character, filed against the id Jagex gives the account rather than
 its name, so a name change keeps them and two characters on one RuneLite account do not share an
 Auto spot. Which items you mark Keep, Deposit, Alch or Drop is shared across your characters:
@@ -272,7 +314,7 @@ observations and has not been confirmed from the game's own code, so a box edge 
 If your hook sits in a box and only one wreck is being worked, tell me and I will fix the number.
 A double spot is a place, not a moment: the green box shows whenever its two wreck sites are in
 view, whether both wrecks are up, only one, or neither, since the next wreck rises on the same tile.
-So you can park in it and wait. Sunk wrecks' yellow boxes are drawn dimmer.
+So you can park in it and wait. Sunk wrecks' boxes turn grey.
 
 ## What it can and cannot know
 

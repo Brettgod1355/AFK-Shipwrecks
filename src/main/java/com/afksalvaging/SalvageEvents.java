@@ -6,8 +6,11 @@
 package com.afksalvaging;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Works out who salvaged what from the signals the client gets, without counting anything twice.
@@ -24,8 +27,16 @@ import java.util.List;
  */
 public final class SalvageEvents
 {
+	private static final Logger log = LoggerFactory.getLogger(SalvageEvents.class);
+
 	/** Ticks a line or XP term waits for its counterpart. */
 	public static final int WINDOW_TICKS = 2;
+	/**
+	 * Ticks a line already counted on its own still claims XP that turns up late. The game can pay the
+	 * crew's XP well after their line (in game, 2026-10-10: two salvages' XP arrived together 6 and 16
+	 * ticks after the salvage), and counting that XP again made the hold run high.
+	 */
+	public static final int LATE_XP_TICKS = 20;
 	/** Allowance for the XP boost of a keg of Horizon's lure. */
 	private static final double BOOST_TOLERANCE = 0.03;
 	/** Harvesting the crystal extractor gives 250 Sailing XP, a little more with Horizon's lure. */
@@ -101,6 +112,8 @@ public final class SalvageEvents
 	}
 
 	private final List<Pending> lines = new ArrayList<>();
+	/** Lines counted on their own, still waiting to claim XP that arrives late. */
+	private final List<Pending> loneLines = new ArrayList<>();
 	private final List<Pending> xpTerms = new ArrayList<>();
 	private final List<Integer> ghostLines = new ArrayList<>();
 	private final List<Event> ready = new ArrayList<>();
@@ -113,9 +126,13 @@ public final class SalvageEvents
 		Pending term = takeMatching(xpTerms, deckhandiness, tick);
 		if (term != null)
 		{
-			ready.add(new Event(Source.CREW, term.deckhandiness > 0 ? term.deckhandiness : deckhandiness, tick));
+			log.debug("Salvage: crew line (deckhandiness {}) at tick {} matched XP from tick {}", deckhandiness, tick, term.tick);
+			// Dated by the earlier of the two, which is when the salvage landed.
+			ready.add(new Event(Source.CREW, term.deckhandiness > 0 ? term.deckhandiness : deckhandiness,
+				Math.min(term.tick, tick)));
 			return;
 		}
+		log.debug("Salvage: crew line (deckhandiness {}) at tick {} waits for XP", deckhandiness, tick);
 		lines.add(new Pending(deckhandiness, tick));
 	}
 
@@ -179,9 +196,9 @@ public final class SalvageEvents
 		{
 			if (!ghostLines.isEmpty() && tick - ghostLines.get(0) <= WINDOW_TICKS)
 			{
-				ghostLines.remove(0);
+				int wail = ghostLines.remove(0);
 				unmatchedGhostLines = 0;
-				ready.add(new Event(Source.CREW, 4, tick));
+				ready.add(new Event(Source.CREW, 4, Math.min(wail, tick)));
 			}
 			return;
 		}
@@ -216,6 +233,8 @@ public final class SalvageEvents
 			}
 		}
 		int[] best = explain(delta, amounts);
+		log.debug("Salvage: {} Sailing XP at tick {} read as {} against {}", delta, tick,
+			best == null ? "nothing" : Arrays.toString(best), amounts);
 		if (best == null)
 		{
 			return;
@@ -247,18 +266,34 @@ public final class SalvageEvents
 			Pending line = it.next();
 			if (tick - line.tick > WINDOW_TICKS)
 			{
+				log.debug("Salvage: crew line from tick {} had no XP; counted on its own at tick {}", line.tick, tick);
 				ready.add(new Event(Source.CREW, line.deckhandiness, line.tick));
+				if (line.tick > ignoreXpUntilTick)
+				{
+					// Its XP may still come. A line whose XP fell in an ignored stretch has had it already.
+					loneLines.add(line);
+				}
 				it.remove();
 			}
 		}
+		loneLines.removeIf(line -> tick - line.tick > LATE_XP_TICKS);
 		it = xpTerms.iterator();
 		while (it.hasNext())
 		{
 			Pending term = it.next();
 			if (tick - term.tick > WINDOW_TICKS)
 			{
-				ready.add(new Event(Source.CREW, term.deckhandiness, term.tick));
 				it.remove();
+				Pending counted = takeMatching(loneLines, term.deckhandiness, term.tick, LATE_XP_TICKS);
+				if (counted != null)
+				{
+					log.debug("Salvage: XP from tick {} (deckhandiness {}) is late pay for the line counted from tick {}",
+						term.tick, term.deckhandiness, counted.tick);
+					continue;
+				}
+				log.debug("Salvage: XP from tick {} (deckhandiness {}) had no crew line; counted on its own at tick {}",
+					term.tick, term.deckhandiness, tick);
+				ready.add(new Event(Source.CREW, term.deckhandiness, term.tick));
 			}
 		}
 		Iterator<Integer> ghosts = ghostLines.iterator();
@@ -275,9 +310,16 @@ public final class SalvageEvents
 		return out;
 	}
 
+	/** The XP held back while the hold was open was paid and set aside: no line still waits for its pay. */
+	public void heldBackXpPaid()
+	{
+		loneLines.clear();
+	}
+
 	public void reset()
 	{
 		lines.clear();
+		loneLines.clear();
 		xpTerms.clear();
 		ghostLines.clear();
 		ready.clear();
@@ -319,7 +361,10 @@ public final class SalvageEvents
 		Pending line = takeMatching(lines, deckhandiness, tick);
 		if (line != null)
 		{
-			ready.add(new Event(Source.CREW, deckhandiness, tick));
+			log.debug("Salvage: XP (deckhandiness {}) at tick {} matched a crew line from tick {}", deckhandiness, tick, line.tick);
+			// Dated by the line when it came first (in game, 2026-10-10: the line at tick 958, the hold read
+			// 119 at 958, the XP at 959; dated 959, the salvage was counted again on top of the read).
+			ready.add(new Event(Source.CREW, deckhandiness, Math.min(line.tick, tick)));
 			return;
 		}
 		if (deckhandiness == 4 && !ghostLines.isEmpty() && tick - ghostLines.get(0) <= WINDOW_TICKS)
@@ -333,11 +378,17 @@ public final class SalvageEvents
 	/** Removes and returns the oldest pending entry within the window whose deckhandiness agrees. */
 	private static Pending takeMatching(List<Pending> pending, int deckhandiness, int tick)
 	{
+		return takeMatching(pending, deckhandiness, tick, WINDOW_TICKS);
+	}
+
+	/** Removes and returns the oldest entry at most {@code window} ticks old whose deckhandiness agrees. */
+	private static Pending takeMatching(List<Pending> pending, int deckhandiness, int tick, int window)
+	{
 		Iterator<Pending> it = pending.iterator();
 		while (it.hasNext())
 		{
 			Pending p = it.next();
-			if (tick - p.tick > WINDOW_TICKS)
+			if (tick - p.tick > window)
 			{
 				continue;
 			}
@@ -352,7 +403,10 @@ public final class SalvageEvents
 
 	/**
 	 * Finds how many of each amount add up to the delta, allowing a point of rounding per term and a
-	 * small boost. Prefers the fewest terms. Returns null when nothing fits.
+	 * small boost. Prefers the fewest terms, then a sum closer by more than a point of rounding: 124 XP
+	 * while sorting is a level 3 crewmate and a sort (123.6), not two level 4 salvages (129.6), which
+	 * also fit the tolerance and were taken first (in game, 2026-10-10: one salvage counted as three).
+	 * Within a point of each other the first found stands. Returns null when nothing fits.
 	 */
 	static int[] explain(int delta, List<Double> amounts)
 	{
@@ -363,6 +417,7 @@ public final class SalvageEvents
 		int[] counts = new int[amounts.size()];
 		int[] best = null;
 		int bestTerms = Integer.MAX_VALUE;
+		double bestError = Double.MAX_VALUE;
 		int[] limit = new int[amounts.size()];
 		for (int i = 0; i < amounts.size(); i++)
 		{
@@ -379,13 +434,15 @@ public final class SalvageEvents
 				sum += counts[j] * amounts.get(j);
 				terms += counts[j];
 			}
-			if (terms > 0 && terms < bestTerms)
+			if (terms > 0 && terms <= bestTerms)
 			{
 				double tolerance = terms + sum * BOOST_TOLERANCE;
-				if (Math.abs(sum - delta) <= tolerance + 1e-9)
+				double error = Math.abs(sum - delta);
+				if (error <= tolerance + 1e-9 && (terms < bestTerms || error < bestError - 1))
 				{
 					best = counts.clone();
 					bestTerms = terms;
+					bestError = error;
 				}
 			}
 			// Advance the odometer.
