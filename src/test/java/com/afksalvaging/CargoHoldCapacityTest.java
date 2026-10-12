@@ -61,4 +61,16 @@ public class CargoHoldCapacityTest
 		assertEquals(CargoHoldCapacity.UNKNOWN, CargoHoldCapacity.firstNumber(null));
 		assertEquals(CargoHoldCapacity.UNKNOWN, CargoHoldCapacity.lastNumber(null));
 	}
+
+	@Test
+	public void aRememberedHoldSizeIsReadBackOnlyWhenItCanBeAHold()
+	{
+		assertEquals(160, CargoHoldCapacity.parseRemembered("160"));
+		assertEquals(240, CargoHoldCapacity.parseRemembered(" 240 "));
+		assertEquals(CargoHoldCapacity.UNKNOWN, CargoHoldCapacity.parseRemembered(null));
+		assertEquals(CargoHoldCapacity.UNKNOWN, CargoHoldCapacity.parseRemembered(""));
+		assertEquals(CargoHoldCapacity.UNKNOWN, CargoHoldCapacity.parseRemembered("lots"));
+		assertEquals(CargoHoldCapacity.UNKNOWN, CargoHoldCapacity.parseRemembered("0"));
+		assertEquals(CargoHoldCapacity.UNKNOWN, CargoHoldCapacity.parseRemembered("241"));
+	}
 }

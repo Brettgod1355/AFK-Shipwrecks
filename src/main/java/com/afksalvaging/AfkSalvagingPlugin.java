@@ -139,6 +139,8 @@ public class AfkSalvagingPlugin extends Plugin
 	private static final String USED_KEY_PREFIX = "used.";
 	/** Per character and boat slot: the item types in that boat's hold, so stacks are known after a restart. */
 	private static final String HOLD_ITEMS_KEY_PREFIX = "holdItems.";
+	/** Per character and boat slot: the hold size the hold window last showed, so the total is known at login. */
+	private static final String CAPACITY_KEY_PREFIX = "capacity.";
 	/** RuneScape-profile config key prefix for the learned rate correction of each wreck. */
 	private static final String RATE_KEY_PREFIX = "rate.";
 	/** How often the learned rate is written out while salvaging. */
@@ -2564,6 +2566,11 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			// What this boat's hold held when last seen, until it is opened again.
 			loadHoldItems(slot);
+			if (capacityFromInterface[slot] == CargoHoldCapacity.UNKNOWN)
+			{
+				// Its size as the hold window last showed it, so the counter has a total before the hold is seen.
+				capacityFromInterface[slot] = loadSavedCapacity(slot);
+			}
 			session.holdSpaceRecounted(holdSpace(client.getItemContainer(InventoryID.INV)));
 		}
 		// The client keeps the hold's container after the interface closes, but the server only
@@ -2623,7 +2630,11 @@ public class AfkSalvagingPlugin extends Plugin
 		int slot = monitoredSlot != 0 ? monitoredSlot : currentBoatSlot();
 		if (capacity > 0 && capacity <= CargoHoldCapacity.MAX_SLOTS && slot != 0)
 		{
-			capacityFromInterface[slot] = capacity;
+			if (capacityFromInterface[slot] != capacity)
+			{
+				capacityFromInterface[slot] = capacity;
+				saveCapacity(slot, capacity);
+			}
 			session.monitor().setCapacity(capacity);
 			log.debug("Cargo hold interface reports capacity {} for boat {}", capacity, slot);
 		}
@@ -2711,6 +2722,24 @@ public class AfkSalvagingPlugin extends Plugin
 				configManager.setRSProfileConfiguration(AfkSalvagingConfig.GROUP, key, used);
 			}
 		}
+	}
+
+	private void saveCapacity(int slot, int capacity)
+	{
+		if (configManager.getRSProfileKey() != null)
+		{
+			configManager.setRSProfileConfiguration(AfkSalvagingConfig.GROUP, CAPACITY_KEY_PREFIX + slot, capacity);
+		}
+	}
+
+	private int loadSavedCapacity(int slot)
+	{
+		if (configManager.getRSProfileKey() == null)
+		{
+			return CargoHoldCapacity.UNKNOWN;
+		}
+		return CargoHoldCapacity.parseRemembered(
+			configManager.getRSProfileConfiguration(AfkSalvagingConfig.GROUP, CAPACITY_KEY_PREFIX + slot));
 	}
 
 	private void loadSavedUsed(int slot)

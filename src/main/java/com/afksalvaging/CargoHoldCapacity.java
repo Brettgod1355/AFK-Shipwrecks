@@ -86,6 +86,27 @@ public final class CargoHoldCapacity
 	}
 
 	/**
+	 * A hold size remembered in the RuneScape profile, or {@link #UNKNOWN} when there is none or it cannot be
+	 * a hold's size (owner, 2026-10-12: the counter has its total right after login, before the hold is seen).
+	 */
+	public static int parseRemembered(String saved)
+	{
+		if (saved == null)
+		{
+			return UNKNOWN;
+		}
+		try
+		{
+			int capacity = Integer.parseInt(saved.trim());
+			return capacity > 0 && capacity <= MAX_SLOTS ? capacity : UNKNOWN;
+		}
+		catch (NumberFormatException e)
+		{
+			return UNKNOWN;
+		}
+	}
+
+	/**
 	 * Reads the first whole number from interface text such as {@code "37"} or {@code "37 / 40"}.
 	 *
 	 * @return the number, or {@link #UNKNOWN} when the text has none
