@@ -50,7 +50,7 @@ import net.runelite.client.util.LinkBrowser;
 
 /**
  * The sidebar: every salvaging hotspot, filtered and sorted from two dropdowns, each with buttons
- * to show it on the world map, route there with the Shortest Path plugin, pin it as a favourite
+ * to show it on the world map, route there with the Shortest Path plugin, pin it as a favorite
  * and mark it for the automatic route when boarding. Above the list, each under a heading that folds
  * it away: the tools (a test alert, forgetting the learned rates, clearing the route), the nearest
  * docks with their own Map and Route, and the session totals. The Sorting tab holds the inventory
@@ -79,7 +79,7 @@ public class SalvagingSpotPanel extends PluginPanel
 
 		void sortChanged(boolean nearestFirst);
 
-		void favouriteChanged(SalvagingSpot spot, boolean favourite);
+		void favoriteChanged(SalvagingSpot spot, boolean favorite);
 
 		/** The spot marked for the automatic route, or null for none. */
 		void autoRouteChanged(SalvagingSpot spot);
@@ -106,12 +106,12 @@ public class SalvagingSpotPanel extends PluginPanel
 	static final String FOLD_DOCKS = "docks";
 	static final String FOLD_SESSION = "session";
 
-	/** The sidebar's fixed colours; the sorting list headings follow the settings, see {@link #setSortColours}. */
+	/** The sidebar's fixed colors; the sorting list headings follow the settings, see {@link #setSortColors}. */
 	private final Color inLevel = Palette.SIDEBAR_IN_LEVEL;
 	private final Color belowLevel = Palette.SIDEBAR_BELOW_LEVEL;
 	private final Color marked = Palette.SIDEBAR_MARKED;
 	private final Color good = Palette.GOOD;
-	private final Map<SortRule, Color> sortColours = new EnumMap<>(SortRule.class);
+	private final Map<SortRule, Color> sortColors = new EnumMap<>(SortRule.class);
 	private Map<SortRule, List<String[]>> lastSortLists = new EnumMap<>(SortRule.class);
 	/** Text widths that wrap inside the panel: the top block, and a row with its own padding. */
 	private static final int TOP_TEXT_WIDTH = 190;
@@ -136,7 +136,7 @@ public class SalvagingSpotPanel extends PluginPanel
 	private static final String[][] FILTERS = {
 		{SpotList.FILTER_ALL, "All wrecks"},
 		{SpotList.FILTER_MY_LEVEL, "Spots I can salvage"},
-		{SpotList.FILTER_FAVOURITES, "Favourites"},
+		{SpotList.FILTER_FAVORITES, "Favorites"},
 	};
 
 	private final Actions actions;
@@ -155,7 +155,7 @@ public class SalvagingSpotPanel extends PluginPanel
 	private final JTextField sortName = new JTextField();
 	private final JComboBox<String> sortRule = new JComboBox<>();
 	private final List<String> filterKeys = new ArrayList<>();
-	private final Set<SalvagingSpot> favourites = EnumSet.noneOf(SalvagingSpot.class);
+	private final Set<SalvagingSpot> favorites = EnumSet.noneOf(SalvagingSpot.class);
 	/** The distance label of each listed row, updated in place as the player moves. */
 	private final List<SalvagingSpot> shown = new ArrayList<>();
 	private final List<JLabel> shownDistance = new ArrayList<>();
@@ -361,7 +361,7 @@ public class SalvagingSpotPanel extends PluginPanel
 
 	/**
 	 * A full-width black button with a brand logo and a few words, the larger kin of the title's link
-	 * buttons: the logo turns to its brand colour while the mouse is over it.
+	 * buttons: the logo turns to its brand color while the mouse is over it.
 	 */
 	private static JPanel bigLink(String restingFile, String hoverFile, String text, String tooltip, String url)
 	{
@@ -557,14 +557,14 @@ public class SalvagingSpotPanel extends PluginPanel
 		{
 			lastSortLists = lists;
 			sortLists.removeAll();
-			Map<SortRule, Color> colours = sortColours;
+			Map<SortRule, Color> colors = sortColors;
 			for (SortRule rule : SortRule.values())
 			{
 				List<String[]> rows = lists.get(rule);
 				int count = rows == null ? 0 : rows.size();
 				JLabel heading = new JLabel(rule.getLabel() + (count == 0 ? ": nothing marked" : ": " + count + " marked"));
 				heading.setFont(FontManager.getRunescapeBoldFont());
-				heading.setForeground(colours.getOrDefault(rule, Color.WHITE));
+				heading.setForeground(colors.getOrDefault(rule, Color.WHITE));
 				heading.setAlignmentX(LEFT_ALIGNMENT);
 				sortLists.add(heading);
 				if (rows != null)
@@ -599,26 +599,26 @@ public class SalvagingSpotPanel extends PluginPanel
 
 	// ---- What the plugin tells the panel; all safe to call from any thread ----
 
-	/** The four sorting colours from the settings, for the list headings. Transparency is dropped; the sidebar is opaque. */
-	public void setSortColours(Map<SortRule, Color> sorting)
+	/** The four sorting colors from the settings, for the list headings. Transparency is dropped; the sidebar is opaque. */
+	public void setSortColors(Map<SortRule, Color> sorting)
 	{
 		SwingUtilities.invokeLater(() ->
 		{
-			sortColours.clear();
+			sortColors.clear();
 			for (Map.Entry<SortRule, Color> entry : sorting.entrySet())
 			{
-				sortColours.put(entry.getKey(), opaque(entry.getValue()));
+				sortColors.put(entry.getKey(), opaque(entry.getValue()));
 			}
 			setSortLists(lastSortLists);
 		});
 	}
 
-	private static Color opaque(Color colour)
+	private static Color opaque(Color color)
 	{
-		return new Color(colour.getRed(), colour.getGreen(), colour.getBlue());
+		return new Color(color.getRed(), color.getGreen(), color.getBlue());
 	}
 
-	/** Recolours the levels for the player's Sailing level. */
+	/** Recolors the levels for the player's Sailing level. */
 	public void setSailingLevel(int level)
 	{
 		SwingUtilities.invokeLater(() ->
@@ -676,12 +676,12 @@ public class SalvagingSpotPanel extends PluginPanel
 		});
 	}
 
-	public void setFavourites(Set<SalvagingSpot> spots)
+	public void setFavorites(Set<SalvagingSpot> spots)
 	{
 		SwingUtilities.invokeLater(() ->
 		{
-			favourites.clear();
-			favourites.addAll(spots);
+			favorites.clear();
+			favorites.addAll(spots);
 			rebuild();
 		});
 	}
@@ -827,10 +827,10 @@ public class SalvagingSpotPanel extends PluginPanel
 	{
 		if (nearestFirst() && !seaToSpots.isEmpty())
 		{
-			return SpotList.arrange(filterKey(), sailingLevel, favourites, true, this::seaOrder);
+			return SpotList.arrange(filterKey(), sailingLevel, favorites, true, this::seaOrder);
 		}
 		// Off the water the sea distances are unknown, so the order falls back to the straight line.
-		return SpotList.arrange(filterKey(), sailingLevel, favourites, nearestFirst(), position);
+		return SpotList.arrange(filterKey(), sailingLevel, favorites, nearestFirst(), position);
 	}
 
 	/** Sailing distance for ordering: spots the sea does not reach go last. */
@@ -962,9 +962,9 @@ public class SalvagingSpotPanel extends PluginPanel
 		if (shown.isEmpty())
 		{
 			String why;
-			if (SpotList.FILTER_FAVOURITES.equals(filterKey()))
+			if (SpotList.FILTER_FAVORITES.equals(filterKey()))
 			{
-				why = "No favourites yet. Press the star on a spot to pin it here and to the top of every list.";
+				why = "No favorites yet. Press the star on a spot to pin it here and to the top of every list.";
 			}
 			else if (sailingLevel > 0)
 			{
@@ -995,12 +995,12 @@ public class SalvagingSpotPanel extends PluginPanel
 	private JPanel row(SalvagingSpot spot)
 	{
 		boolean canSalvage = sailingLevel >= spot.getSailingLevel();
-		boolean favourite = favourites.contains(spot);
+		boolean favorite = favorites.contains(spot);
 		JPanel row = new JPanel(new BorderLayout(0, 4));
 		row.setBackground(spot == picked ? ColorScheme.DARKER_GRAY_HOVER_COLOR : ColorScheme.DARKER_GRAY_COLOR);
 		row.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
 
-		JLabel name = new JLabel((favourite ? "★ " : "") + spot.getSalvageName());
+		JLabel name = new JLabel((favorite ? "★ " : "") + spot.getSalvageName());
 		name.setFont(FontManager.getRunescapeBoldFont());
 		name.setForeground(Color.WHITE);
 
@@ -1039,24 +1039,24 @@ public class SalvagingSpotPanel extends PluginPanel
 		map.addActionListener(e -> actions.showOnMap(spot));
 		JButton route = button("Route", "Ask the Shortest Path plugin to draw a route here.");
 		route.addActionListener(e -> actions.routeTo(spot));
-		JButton star = button(favourite ? "★" : "☆", favourite ? "Unpin this spot." : "Pin this spot to the top of every list.");
-		if (favourite)
+		JButton star = button(favorite ? "★" : "☆", favorite ? "Unpin this spot." : "Pin this spot to the top of every list.");
+		if (favorite)
 		{
 			star.setForeground(marked);
 		}
 		star.addActionListener(e ->
 		{
-			boolean now = !favourites.contains(spot);
+			boolean now = !favorites.contains(spot);
 			if (now)
 			{
-				favourites.add(spot);
+				favorites.add(spot);
 			}
 			else
 			{
-				favourites.remove(spot);
+				favorites.remove(spot);
 			}
 			rebuild();
-			actions.favouriteChanged(spot, now);
+			actions.favoriteChanged(spot, now);
 		});
 		JButton auto = button("Auto", spot == autoRoute ? "Stop routing here automatically when you board."
 			: "Route here automatically whenever you board your boat from a dock. Only one spot can be marked.");
@@ -1105,8 +1105,8 @@ public class SalvagingSpotPanel extends PluginPanel
 
 	/**
 	 * A square black button that opens a web page in the browser, showing the brand's white logo and,
-	 * while the mouse is over it, the brand's coloured logo on the same black (owner, 2026-10-04).
-	 * Both are the brands' own files, only scaled: neither Discord nor GitHub allows recolouring
+	 * while the mouse is over it, the brand's colored logo on the same black (owner, 2026-10-04).
+	 * Both are the brands' own files, only scaled: neither Discord nor GitHub allows recoloring
 	 * their logos, so the plugin swaps between their versions instead (see THIRD_PARTY_NOTICES).
 	 */
 	private static JLabel link(String restingFile, String hoverFile, String tooltip, String url)

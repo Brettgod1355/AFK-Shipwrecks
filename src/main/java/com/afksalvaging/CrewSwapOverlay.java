@@ -16,14 +16,14 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 /**
  * A flashing notice in the middle of the screen while a deckhandier crewmate sits idle and a
  * weaker one works a hook (owner, 2026-10-03: "a different overlay thats flashing to notify us
- * when we should swap npc's on the hook"). It stands, in the reminder banner's colour, from the
+ * when we should swap npc's on the hook"). It stands, in the reminder banner's color, from the
  * moment the swap is announced until it is made or the pair breaks up; a setting, on by default.
  * It sits a little below the salvaging-world notice, so the two never cover each other.
  */
 public class CrewSwapOverlay extends Overlay
 {
-	/** Pixels below the centre, clear of the salvaging-world notice. */
-	private static final int BELOW_CENTRE = 90;
+	/** Pixels below the center, clear of the salvaging-world notice. */
+	private static final int BELOW_CENTER = 90;
 
 	private final Client client;
 	private final AfkSalvagingPlugin plugin;
@@ -51,6 +51,6 @@ public class CrewSwapOverlay extends Overlay
 		}
 		return FlashingNotice.draw(graphics, client, "SWAP CREW",
 			swap.in.shortName() + " for " + swap.out.shortName() + " (" + swap.inDeckhandiness + " vs " + swap.outDeckhandiness + ")",
-			config.reminderBannerColor(), config.bannerScale() / 100f, System.currentTimeMillis(), BELOW_CENTRE);
+			config.reminderBannerColor(), config.bannerScale() / 100f, System.currentTimeMillis(), BELOW_CENTER);
 	}
 }

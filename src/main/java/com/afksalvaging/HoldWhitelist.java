@@ -18,7 +18,7 @@ import net.runelite.api.gameval.ItemID;
  * <p>
  * The game decides on the server and tells the client one inventory slot at a time: while the hold
  * is open, bit N of the varp {@code SAILING_BOAT_CARGOHOLD_SIDE_WHITELIST} is set when the item in
- * slot N can be deposited (the game's own side-panel script greys out the rest). This class learns
+ * slot N can be deposited (the game's own side-panel script grays out the rest). This class learns
  * from that, and starts from the wiki's list of storable items so it is right before the hold has
  * ever been opened. What the game says always wins over the wiki list.
  * <p>

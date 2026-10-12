@@ -12,12 +12,12 @@ import net.runelite.api.MessageNode;
 /**
  * The plugin's own chat lines, in a blue that suits the chatbox: dark on the parchment, light on the
  * transparent chatbox, where the dark blue was hard to read (owner, 2026-10-07). The recent lines are
- * kept so they can be re-coloured when the player switches transparency or between fixed and
+ * kept so they can be re-colored when the player switches transparency or between fixed and
  * resizable.
  */
 final class ChatLines
 {
-	/** How many recent lines are re-coloured; older ones have long scrolled out of view. */
+	/** How many recent lines are re-colored; older ones have long scrolled out of view. */
 	static final int KEPT = 30;
 
 	private final Deque<Line> lines = new ArrayDeque<>();
@@ -40,7 +40,7 @@ final class ChatLines
 		}
 	}
 
-	void recolour(boolean transparent)
+	void recolor(boolean transparent)
 	{
 		for (Line line : lines)
 		{

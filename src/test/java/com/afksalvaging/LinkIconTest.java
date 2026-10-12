@@ -25,7 +25,7 @@ public class LinkIconTest
 		// Discord's symbol is wider than tall (528 x 400); it keeps that shape.
 		BufferedImage discord = SalvagingSpotPanel.logo("discord_white.png");
 		assertEquals(12, discord.getHeight());
-		// Each coloured version is drawn at its white version's size, so hovering does not shift anything.
+		// Each colored version is drawn at its white version's size, so hovering does not shift anything.
 		BufferedImage white = SalvagingSpotPanel.logo("github_white.png");
 		BufferedImage green = SalvagingSpotPanel.logoLike("github_green.png", white);
 		assertEquals(white.getWidth(), green.getWidth());

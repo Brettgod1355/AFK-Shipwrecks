@@ -19,7 +19,7 @@ public class HoldInfoBoxTest
 	public void theLabelNeverTouchesTheTimeAtAnySizeItIsDrawnAt()
 	{
 		// RuneLite writes the time in its small font with the baseline 3 px above the bottom; its tallest glyph reaches about 13 px up.
-		for (int size = HoldInfoBox.SMALLEST_LABELLED; size <= 64; size++)
+		for (int size = HoldInfoBox.SMALLEST_LABELED; size <= 64; size++)
 		{
 			BufferedImage picture = HoldInfoBox.label(size);
 			assertEquals(size, picture.getWidth());
@@ -40,7 +40,7 @@ public class HoldInfoBoxTest
 			}
 			assertTrue("AFK is drawn at " + size, ink);
 		}
-		for (int size : new int[] {12, HoldInfoBox.SMALLEST_LABELLED - 1})
+		for (int size : new int[] {12, HoldInfoBox.SMALLEST_LABELED - 1})
 		{
 			BufferedImage blank = HoldInfoBox.label(size);
 			assertEquals(size, blank.getWidth());

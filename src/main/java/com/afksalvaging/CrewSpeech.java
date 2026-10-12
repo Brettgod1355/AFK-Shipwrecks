@@ -9,11 +9,11 @@ import java.util.regex.Pattern;
 import net.runelite.client.util.Text;
 
 /**
- * Recognises the crewmate speech and game messages that reveal cargo moving into the hold.
+ * Recognizes the crewmate speech and game messages that reveal cargo moving into the hold.
  * <p>
  * The game only transmits the hold's contents while the cargo hold interface is open, so
  * these lines are the only live signal while sailing. Matching is case-insensitive and
- * ignores colour tags.
+ * ignores color tags.
  */
 public final class CrewSpeech
 {

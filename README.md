@@ -25,8 +25,8 @@ Sailing in and parking: the reach boxes and the double spot appear as you arrive
 your hooks in, and once both are in it says you are parked.
 
 <p>
-<img src="docs/images/sidebar-spots.png" width="300" alt="The sidebar's Spots tab: the Discord and GitHub buttons, Test alert and Forget rates, the filter and sort, the Auto route note, the nearest dock you can use and the nearest where your crew bank the hold, the session line and a favourite spot with Map, Route, star and Auto">
-<img src="docs/images/spot-filter.png" width="300" alt="The spot filter: all wrecks, spots I can salvage, favourites, or one kind of salvage with its level">
+<img src="docs/images/sidebar-spots.png" width="300" alt="The sidebar's Spots tab: the Discord and GitHub buttons, Test alert and Forget rates, the filter and sort, the Auto route note, the nearest dock you can use and the nearest where your crew bank the hold, the session line and a favorite spot with Map, Route, star and Auto">
+<img src="docs/images/spot-filter.png" width="300" alt="The spot filter: all wrecks, spots I can salvage, favorites, or one kind of salvage with its level">
 </p>
 
 The sidebar: every salvaging spot with its distance by sea, the nearest docks, and routes through
@@ -98,9 +98,9 @@ marked.
   lists the matching settings and which section each one is in, and Feedback, with big buttons to the
   GitHub issues (readable without an account; opening a new one needs a free GitHub account) or the Discord. They only open your browser; the plugin itself sends nothing.
 - **Knows where the wrecks are.** The Spots tab lists all 29 salvaging hotspots, filtered by
-  wreck, down to the ones your level allows, or to your favourites, sorted by wreck or nearest to
+  wreck, down to the ones your level allows, or to your favorites, sorted by wreck or nearest to
   you first, with the Sailing level each needs, where it sits from the nearest port and how far it
-  is from you. Every one has a Map button, which centres the world map on it, a Route button,
+  is from you. Every one has a Map button, which centers the world map on it, a Route button,
   which hands it to the Shortest Path plugin to draw the way there (without that plugin it tells
   you to install it), a star to pin it to the top, and Auto, which marks it as the one spot to
   route to by itself whenever you board your boat from a dock. The dropdowns are remembered.
@@ -244,8 +244,8 @@ warn (60 s; 0 never). Then:
   Back when that is what's in the way). Boxes only; every click is yours.
 
 **Wrecks and parking**: Mark wrecks (hull, area, hull and area, or off; hull and area by default).
-The hull is outlined in cyan while the wreck is up and grey once it has sunk; the area is the box of
-water a hook can reach it from, yellow while it is up and grey once sunk. Then the box color; hiding
+The hull is outlined in cyan while the wreck is up and gray once it has sunk; the area is the box of
+water a hook can reach it from, yellow while it is up and gray once sunk. Then the box color; hiding
 those boxes while you are parked (on by default); filling the boxes (on; off draws outlines only); double spot boxes (on or off), their color (green)
 and the color they change to once you are parked (a faint cyan); whether to label the double spot
 boxes; how long after the boat stops they go (20 s; 0 never); and whether "Parked in double spot"
@@ -253,7 +253,7 @@ stays once they have gone (on by default). The outlines, boxes and wreck timers 
 boat, and only when it has a salvaging hook, so a boat set up for something else keeps a clear view.
 
 **Wreck tracking**: Timers on wrecks (on by default): every wreck in view gets
-"Sinks in ≤ 1:20" in cyan while it is up, and a sunk one gets "Sunk - next ≤ 0:45" in grey for when the
+"Sinks in ≤ 1:20" in cyan while it is up, and a sunk one gets "Sunk - next ≤ 0:45" in gray for when the
 next wreck can rise ("maybe next" when another sunk site in view could take it instead). A wreck nobody
 has been seen working says "no clock yet" rather than guessing. Show what the plugin sees (off by
 default): a faint dashed square round the area the game has loaded. The plugin only knows about wrecks
@@ -277,7 +277,7 @@ the salvage inside the open hold so it is easy to find and click (on by default)
 four sorting boxes, each in its own section. The overlay text, the counter's shading, the wreck
 outlines, the sidebar and the chat lines use fixed colors, to keep the settings short.
 
-Favourites, the dropdown choices, which sidebar blocks are folded
+Favorites, the dropdown choices, which sidebar blocks are folded
 and the Auto spot are kept per character, filed against the id Jagex gives the account rather than
 its name, so a name change keeps them and two characters on one RuneLite account do not share an
 Auto spot. Which items you mark Keep, Deposit, Alch or Drop is shared across your characters:
@@ -318,7 +318,7 @@ step off your boat, so the line does not hang about after it has done its job.
 
 The boxes are worked out, not looked up. A hook works any wreck within its reach, and reach is
 measured as a square around the wreck: that square is the yellow box. Where two yellow boxes
-overlap, a hook parked in the overlap works both wrecks: that overlap is the green box, labelled
+overlap, a hook parked in the overlap works both wrecks: that overlap is the green box, labeled
 "Double spot" (with how many of your hooks are in it, or "Parked"). The game measures reach from the hook rather than the boat (a game update
 changed it to that), so the boxes are about where a hook has to sit, not the whole boat. Your own
 hooks are known, so when every hook on the boat is inside a green box, both on a sloop, the box
@@ -329,7 +329,7 @@ observations and has not been confirmed from the game's own code, so a box edge 
 If your hook sits in a box and only one wreck is being worked, tell me and I will fix the number.
 A double spot is a place, not a moment: the green box shows whenever its two wreck sites are in
 view, whether both wrecks are up, only one, or neither, since the next wreck rises on the same tile.
-So you can park in it and wait. Sunk wrecks' boxes turn grey.
+So you can park in it and wait. Sunk wrecks' boxes turn gray.
 
 ## What it can and cannot know
 

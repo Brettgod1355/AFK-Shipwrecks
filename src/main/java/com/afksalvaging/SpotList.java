@@ -14,8 +14,8 @@ import java.util.function.ToIntFunction;
 import net.runelite.api.coords.WorldPoint;
 
 /**
- * Which spots the sidebar lists and in what order: the filter from the dropdown, favourites first,
- * then either the catalogue order (by wreck) or nearest the player first. Pure, so it can be tested
+ * Which spots the sidebar lists and in what order: the filter from the dropdown, favorites first,
+ * then either the catalog order (by wreck) or nearest the player first. Pure, so it can be tested
  * without Swing.
  */
 public final class SpotList
@@ -23,7 +23,8 @@ public final class SpotList
 	/** Dropdown choices that are not a wreck kind. Stored by name, so they must not be renamed. */
 	public static final String FILTER_ALL = "ALL";
 	public static final String FILTER_MY_LEVEL = "MY_LEVEL";
-	public static final String FILTER_FAVOURITES = "FAVOURITES";
+	/** The saved filter choice keeps its 2.0 spelling, so a player's chosen filter carries over. */
+	public static final String FILTER_FAVORITES = "FAVOURITES";
 
 	private SpotList()
 	{
@@ -45,7 +46,7 @@ public final class SpotList
 	/** A filter key that is one of the known choices, or ALL for anything else (an old or mistyped setting). */
 	public static String validFilter(String filterKey)
 	{
-		if (FILTER_MY_LEVEL.equals(filterKey) || FILTER_FAVOURITES.equals(filterKey) || wreckOf(filterKey) != null)
+		if (FILTER_MY_LEVEL.equals(filterKey) || FILTER_FAVORITES.equals(filterKey) || wreckOf(filterKey) != null)
 		{
 			return filterKey;
 		}
@@ -55,16 +56,16 @@ public final class SpotList
 	/**
 	 * The spots to list, in order.
 	 *
-	 * @param filterKey    ALL, MY_LEVEL, FAVOURITES or a {@link ShipwreckType} name
+	 * @param filterKey    ALL, MY_LEVEL, FAVORITES or a {@link ShipwreckType} name
 	 * @param sailingLevel the player's level, or 0 when unknown (MY_LEVEL then lists nothing)
-	 * @param favourites   spots pinned to the top
+	 * @param favorites   spots pinned to the top
 	 * @param nearestFirst sort by distance from {@code from} rather than by wreck
 	 * @param from         where the player is, or null when unknown (then the order is by wreck)
 	 */
-	public static List<SalvagingSpot> arrange(String filterKey, int sailingLevel, Set<SalvagingSpot> favourites,
+	public static List<SalvagingSpot> arrange(String filterKey, int sailingLevel, Set<SalvagingSpot> favorites,
 		boolean nearestFirst, WorldPoint from)
 	{
-		return arrange(filterKey, sailingLevel, favourites, nearestFirst,
+		return arrange(filterKey, sailingLevel, favorites, nearestFirst,
 			from == null ? null : s -> Mooring.distance(from, s.getPoint()));
 	}
 
@@ -74,7 +75,7 @@ public final class SpotList
 	 *
 	 * @param distance tiles to each spot, or null when unknown (then the order is by wreck)
 	 */
-	public static List<SalvagingSpot> arrange(String filterKey, int sailingLevel, Set<SalvagingSpot> favourites,
+	public static List<SalvagingSpot> arrange(String filterKey, int sailingLevel, Set<SalvagingSpot> favorites,
 		boolean nearestFirst, ToIntFunction<SalvagingSpot> distance)
 	{
 		List<SalvagingSpot> spots = new ArrayList<>();
@@ -89,13 +90,13 @@ public final class SpotList
 			{
 				continue;
 			}
-			if (FILTER_FAVOURITES.equals(filterKey) && !favourites.contains(spot))
+			if (FILTER_FAVORITES.equals(filterKey) && !favorites.contains(spot))
 			{
 				continue;
 			}
 			spots.add(spot);
 		}
-		Comparator<SalvagingSpot> order = Comparator.comparing((SalvagingSpot s) -> favourites.contains(s) ? 0 : 1);
+		Comparator<SalvagingSpot> order = Comparator.comparing((SalvagingSpot s) -> favorites.contains(s) ? 0 : 1);
 		if (nearestFirst && distance != null)
 		{
 			order = order.thenComparingInt(distance);
@@ -104,13 +105,13 @@ public final class SpotList
 		return spots;
 	}
 
-	/** Favourites as stored: enum names joined with commas. */
-	public static String encodeFavourites(Set<SalvagingSpot> favourites)
+	/** Favorites as stored: enum names joined with commas. */
+	public static String encodeFavorites(Set<SalvagingSpot> favorites)
 	{
 		StringBuilder out = new StringBuilder();
 		for (SalvagingSpot spot : SalvagingSpot.values())
 		{
-			if (favourites.contains(spot))
+			if (favorites.contains(spot))
 			{
 				out.append(out.length() == 0 ? "" : ",").append(spot.name());
 			}
@@ -118,23 +119,23 @@ public final class SpotList
 		return out.toString();
 	}
 
-	/** Favourites from storage; unknown names (a renamed spot) are dropped rather than failing. */
-	public static Set<SalvagingSpot> decodeFavourites(String stored)
+	/** Favorites from storage; unknown names (a renamed spot) are dropped rather than failing. */
+	public static Set<SalvagingSpot> decodeFavorites(String stored)
 	{
-		Set<SalvagingSpot> favourites = EnumSet.noneOf(SalvagingSpot.class);
+		Set<SalvagingSpot> favorites = EnumSet.noneOf(SalvagingSpot.class);
 		if (stored == null || stored.isEmpty())
 		{
-			return favourites;
+			return favorites;
 		}
 		for (String name : stored.split(","))
 		{
 			SalvagingSpot spot = spotNamed(name.trim());
 			if (spot != null)
 			{
-				favourites.add(spot);
+				favorites.add(spot);
 			}
 		}
-		return favourites;
+		return favorites;
 	}
 
 	/** The spot with this enum name, or null. */

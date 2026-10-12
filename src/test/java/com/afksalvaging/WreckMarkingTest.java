@@ -42,7 +42,7 @@ public class WreckMarkingTest
 	}
 
 	@Test
-	public void sunkBoxesAreGreyAsStrongAsThePickedColour()
+	public void sunkBoxesAreGrayAsStrongAsThePickedColor()
 	{
 		Color sunk = SalvageBoxOverlay.sunk(new Color(255, 215, 40, 190));
 		assertEquals(Palette.WRECK_SUNK.getRed(), sunk.getRed());

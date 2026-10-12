@@ -26,11 +26,11 @@ import net.runelite.client.ui.overlay.OverlayUtil;
 
 /**
  * Boxes the water so you know where to park: a yellow box around each wreck for where a hook can
- * reach it (grey once the wreck has sunk), and a green box where a hook reaches two wrecks at once.
+ * reach it (gray once the wreck has sunk), and a green box where a hook reaches two wrecks at once.
  * <p>
  * The game measures reach from the hook, not the boat, so a box is where a hook has to sit. Your
- * own hooks are known, so a double spot box changes colour and says "Parked" once every hook on the
- * boat is inside it; with only some of them in, the label counts them and the colour stays.
+ * own hooks are known, so a double spot box changes color and says "Parked" once every hook on the
+ * boat is inside it; with only some of them in, the label counts them and the color stays.
  * Wrecks live in the top-level world even while the player stands on a boat, so the boxes are placed
  * with the top-level world view's coordinates and drawn above the scene.
  */
@@ -108,11 +108,11 @@ public class SalvageBoxOverlay extends Overlay
 		// Once parked the yellow boxes have done their job and only clutter the view (owner, 2026-10-03).
 		if (reachBoxes && !(parkedSomewhere && config.hideReachWhenParked()))
 		{
-			Color colour = config.wreckReachColor();
+			Color color = config.wreckReachColor();
 			for (WreckTracker.Site site : sites)
 			{
 				DoubleSpot.Box box = DoubleSpot.reachOverlap(site.getPoint(), site.getPoint(), reach);
-				drawBox(graphics, top, box, site.isActive() ? colour : sunk(colour), OUTLINE, null);
+				drawBox(graphics, top, box, site.isActive() ? color : sunk(color), OUTLINE, null);
 			}
 		}
 
@@ -122,14 +122,14 @@ public class SalvageBoxOverlay extends Overlay
 		boolean restingLongEnough = hideAfter > 0 && plugin.getSession().view().boatStillMillis >= hideAfter * 1000L;
 		if (doubleSpots && !restingLongEnough)
 		{
-			Color colour = config.doubleSpotColor();
+			Color color = config.doubleSpotColor();
 			for (int i = 0; i < doubles.size(); i++)
 			{
 				DoubleSpot.Box box = doubles.get(i).getBox();
 				int inside = hooksInside[i];
 				boolean parked = !hooks.isEmpty() && inside == hooks.size();
-				// The spot is a place: full colour whether or not its wrecks are up right now.
-				Color drawn = parked ? config.doubleSpotParkedColor() : colour;
+				// The spot is a place: full color whether or not its wrecks are up right now.
+				Color drawn = parked ? config.doubleSpotParkedColor() : color;
 				String label = null;
 				if (config.doubleSpotLabels())
 				{
@@ -160,7 +160,7 @@ public class SalvageBoxOverlay extends Overlay
 		else if (doubleSpots && config.parkedTextAfterHide() && !hooks.isEmpty())
 		{
 			// The boxes have hidden, but the boat is still parked in one: say so where its label was,
-			// with no box (owner, 2026-10-04). Full strength, as a faint parked colour is a box fill.
+			// with no box (owner, 2026-10-04). Full strength, as a faint parked color is a box fill.
 			Color text = opaque(config.doubleSpotParkedColor());
 			LocalPoint boat = plugin.ownBoatLocation();
 			for (int i = 0; i < doubles.size(); i++)
@@ -183,23 +183,23 @@ public class SalvageBoxOverlay extends Overlay
 	}
 
 	/** Words at a point in the scene, such as the middle of the boat. */
-	private void drawText(Graphics2D graphics, LocalPoint at, String text, Color colour)
+	private void drawText(Graphics2D graphics, LocalPoint at, String text, Color color)
 	{
 		Point where = Perspective.getCanvasTextLocation(client, graphics, at, text, 0);
 		if (where != null)
 		{
-			OverlayUtil.renderTextLocation(graphics, where, text, colour);
+			OverlayUtil.renderTextLocation(graphics, where, text, color);
 		}
 	}
 
-	/** The colour with no transparency: a box fill may be faint, its words must not be. */
-	private static Color opaque(Color colour)
+	/** The color with no transparency: a box fill may be faint, its words must not be. */
+	private static Color opaque(Color color)
 	{
-		return new Color(colour.getRed(), colour.getGreen(), colour.getBlue());
+		return new Color(color.getRed(), color.getGreen(), color.getBlue());
 	}
 
 	/** Words where a double spot box's label goes, at its middle, with no box. */
-	private void drawLabel(Graphics2D graphics, WorldView top, DoubleSpot.Box box, String text, Color colour)
+	private void drawLabel(Graphics2D graphics, WorldView top, DoubleSpot.Box box, String text, Color color)
 	{
 		if (box == null)
 		{
@@ -211,15 +211,15 @@ public class SalvageBoxOverlay extends Overlay
 		{
 			return;
 		}
-		LocalPoint centre = new LocalPoint((low.getX() + high.getX()) / 2, (low.getY() + high.getY()) / 2, top);
-		Point at = Perspective.getCanvasTextLocation(client, graphics, centre, text, 0);
+		LocalPoint center = new LocalPoint((low.getX() + high.getX()) / 2, (low.getY() + high.getY()) / 2, top);
+		Point at = Perspective.getCanvasTextLocation(client, graphics, center, text, 0);
 		if (at != null)
 		{
-			OverlayUtil.renderTextLocation(graphics, at, text, colour);
+			OverlayUtil.renderTextLocation(graphics, at, text, color);
 		}
 	}
 
-	private void drawBox(Graphics2D graphics, WorldView top, DoubleSpot.Box box, Color colour, Stroke stroke, String label)
+	private void drawBox(Graphics2D graphics, WorldView top, DoubleSpot.Box box, Color color, Stroke stroke, String label)
 	{
 		if (box == null)
 		{
@@ -232,30 +232,30 @@ public class SalvageBoxOverlay extends Overlay
 			// Part of the box is outside the loaded scene; it shows once the boat is closer.
 			return;
 		}
-		LocalPoint centre = new LocalPoint((low.getX() + high.getX()) / 2, (low.getY() + high.getY()) / 2, top);
-		Polygon area = Perspective.getCanvasTileAreaPoly(client, centre, box.width(), box.height(), box.getPlane(), 0);
+		LocalPoint center = new LocalPoint((low.getX() + high.getX()) / 2, (low.getY() + high.getY()) / 2, top);
+		Polygon area = Perspective.getCanvasTileAreaPoly(client, center, box.width(), box.height(), box.getPlane(), 0);
 		if (area == null)
 		{
 			return;
 		}
 		// "Fill the boxes" off draws outlines only (owner, 2026-10-08; the Sailing plugin's most asked-for option).
-		int fillAlpha = !config.boxFill() ? 0 : stroke == PARKED_OUTLINE ? colour.getAlpha() / 2 : colour.getAlpha() / 5;
-		Color fill = new Color(colour.getRed(), colour.getGreen(), colour.getBlue(), fillAlpha);
-		OverlayUtil.renderPolygon(graphics, area, colour, fill, stroke);
+		int fillAlpha = !config.boxFill() ? 0 : stroke == PARKED_OUTLINE ? color.getAlpha() / 2 : color.getAlpha() / 5;
+		Color fill = new Color(color.getRed(), color.getGreen(), color.getBlue(), fillAlpha);
+		OverlayUtil.renderPolygon(graphics, area, color, fill, stroke);
 		if (label != null)
 		{
-			Point at = Perspective.getCanvasTextLocation(client, graphics, centre, label, 0);
+			Point at = Perspective.getCanvasTextLocation(client, graphics, center, label, 0);
 			if (at != null)
 			{
-				OverlayUtil.renderTextLocation(graphics, at, label, colour);
+				OverlayUtil.renderTextLocation(graphics, at, label, color);
 			}
 		}
 	}
 
-	/** A sunk wreck's box: grey, as strong as the reach colour the player picked (owner, 2026-10-07). */
-	static Color sunk(Color colour)
+	/** A sunk wreck's box: gray, as strong as the reach color the player picked (owner, 2026-10-07). */
+	static Color sunk(Color color)
 	{
-		Color grey = Palette.WRECK_SUNK;
-		return new Color(grey.getRed(), grey.getGreen(), grey.getBlue(), colour.getAlpha());
+		Color gray = Palette.WRECK_SUNK;
+		return new Color(gray.getRed(), gray.getGreen(), gray.getBlue(), color.getAlpha());
 	}
 }

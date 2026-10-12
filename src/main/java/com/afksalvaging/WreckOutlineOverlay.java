@@ -19,9 +19,9 @@ import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 /**
  * Outlines the hull of every wreck in view that the player's Sailing level lets them salvage, the
  * way the game outlines a wreck under the mouse (owner, 2026-10-03: "a nice indicator without being
- * too much mess of overlays on screen"): cyan while it is up, grey once it has sunk (owner,
+ * too much mess of overlays on screen"): cyan while it is up, gray once it has sunk (owner,
  * 2026-10-07). Wrecks above the player's level get nothing. Drawn when "Mark wrecks" includes the
- * hull; the colours are fixed.
+ * hull; the colors are fixed.
  */
 public class WreckOutlineOverlay extends Overlay
 {

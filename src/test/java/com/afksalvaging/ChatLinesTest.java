@@ -38,15 +38,15 @@ public class ChatLinesTest
 	}
 
 	@Test
-	public void switchingTransparencyRecoloursTheLinesAlreadyShown()
+	public void switchingTransparencyRecolorsTheLinesAlreadyShown()
 	{
 		ChatLines lines = new ChatLines();
 		AtomicReference<String> value = new AtomicReference<>(ChatLines.format("Auto route", false));
 		lines.remember(node(value), "Auto route");
 
-		lines.recolour(true);
+		lines.recolor(true);
 		assertEquals(ChatLines.format("Auto route", true), value.get());
-		lines.recolour(false);
+		lines.recolor(false);
 		assertEquals(ChatLines.format("Auto route", false), value.get());
 	}
 
@@ -63,7 +63,7 @@ public class ChatLinesTest
 			lines.remember(node(new AtomicReference<>()), "line " + i);
 		}
 		assertEquals(ChatLines.KEPT, lines.size());
-		lines.recolour(true);
+		lines.recolor(true);
 		// The oldest line has been dropped, so it is left as it was.
 		assertEquals("first", first.get());
 	}

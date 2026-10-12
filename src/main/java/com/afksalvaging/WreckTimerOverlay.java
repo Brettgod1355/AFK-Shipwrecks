@@ -21,7 +21,7 @@ import net.runelite.client.ui.overlay.OverlayUtil;
 
 /**
  * Writes a timer in the middle of every wreck in view, ours and the ones nearby (owner, 2026-10-08):
- * cyan while the wreck is up, grey once it has sunk. The colour only says up or sunk; it does not
+ * cyan while the wreck is up, gray once it has sunk. The color only says up or sunk; it does not
  * change as the time runs down (owner: "It just needs to change colors if it's active versus
  * inactive"). The words come from {@link WreckTimers}. A setting, on by default.
  */
@@ -65,8 +65,8 @@ public class WreckTimerOverlay extends Overlay
 			Point at = Perspective.getCanvasTextLocation(client, graphics, wreck.getLocalLocation(), timer.text, HEIGHT);
 			if (at != null)
 			{
-				Color colour = timer.up ? Palette.WRECK_OUTLINE : Palette.WRECK_SUNK_TEXT;
-				OverlayUtil.renderTextLocation(graphics, at, timer.text, colour);
+				Color color = timer.up ? Palette.WRECK_OUTLINE : Palette.WRECK_SUNK_TEXT;
+				OverlayUtil.renderTextLocation(graphics, at, timer.text, color);
 			}
 		}
 		return null;

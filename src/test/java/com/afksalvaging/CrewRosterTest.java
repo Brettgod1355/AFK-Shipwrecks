@@ -82,7 +82,7 @@ public class CrewRosterTest
 		assertTrue(roster.isOnHook(1, 50));
 		assertTrue(roster.isOnHook(1, 50 + CrewRoster.HEARD_SALVAGING_TICKS));
 		assertFalse(roster.isOnHook(1, 51 + CrewRoster.HEARD_SALVAGING_TICKS));
-		// An assignment we do not recognise could be a hook on some boat, so the line still counts.
+		// An assignment we do not recognize could be a hook on some boat, so the line still counts.
 		roster.setPosition(1, 22);
 		roster.noteSalvage(1, 60);
 		assertTrue(roster.isOnHook(1, 60));

@@ -45,12 +45,12 @@ public class HoldSalvageOverlay extends WidgetItemOverlay
 		{
 			return;
 		}
-		Color colour = Palette.ATTENTION;
-		graphics.setColor(new Color(colour.getRed(), colour.getGreen(), colour.getBlue(), 50));
+		Color color = Palette.ATTENTION;
+		graphics.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 50));
 		graphics.fill(bounds);
 		Stroke old = graphics.getStroke();
 		graphics.setStroke(OUTLINE);
-		graphics.setColor(colour);
+		graphics.setColor(color);
 		graphics.draw(bounds);
 		graphics.setStroke(old);
 	}

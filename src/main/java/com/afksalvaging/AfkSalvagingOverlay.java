@@ -35,14 +35,14 @@ public class AfkSalvagingOverlay extends OverlayPanel
 	/** Minimum space between a line's label and its value. */
 	private static final int LINE_GAP = 12;
 	private static final long FLASH_PERIOD_MS = 500;
-	// Fixed text colours (the banner colours stay settings).
+	// Fixed text colors (the banner colors stay settings).
 	private final Color counterEmpty = Palette.COUNTER_EMPTY;
 	private final Color counterFull = Palette.COUNTER_FULL;
 	private final Color amber = Palette.ATTENTION;
 	private final Color dim = Palette.DIM;
 	private final Color good = Palette.GOOD;
 	private final Color bad = Palette.BAD;
-	private final Color textColour = Palette.TEXT;
+	private final Color textColor = Palette.TEXT;
 
 	private final AfkSalvagingPlugin plugin;
 	private final AfkSalvagingConfig config;
@@ -184,7 +184,7 @@ public class AfkSalvagingOverlay extends OverlayPanel
 			width = Math.max(Math.round(BASE_WIDTH * scale), textWidth + 2 * ComponentConstants.STANDARD_BORDER + TEXT_PADDING);
 			panelComponent.getChildren().add(TitleComponent.builder()
 				.text(text)
-				.color(textColour)
+				.color(textColor)
 				.build());
 		}
 		panelComponent.setBackgroundColor(background);
@@ -200,8 +200,8 @@ public class AfkSalvagingOverlay extends OverlayPanel
 			panelComponent.getChildren().add(LineComponent.builder()
 				.left(line.left)
 				.right(line.right)
-				.leftColor(banner ? textColour : dim)
-				.rightColor(banner ? textColour : line.rightColor)
+				.leftColor(banner ? textColor : dim)
+				.rightColor(banner ? textColor : line.rightColor)
 				.leftFont(lineFont)
 				.rightFont(lineFont)
 				.build());
@@ -311,7 +311,7 @@ public class AfkSalvagingOverlay extends OverlayPanel
 					lines.add(new Line("Hold", "full once you deposit your salvage", amber));
 					break;
 				}
-				lines.add(new Line("Hold full in about", Durations.coarse(remaining), textColour));
+				lines.add(new Line("Hold full in about", Durations.coarse(remaining), textColor));
 				if (config.showClockTime() && remaining >= 0)
 				{
 					boolean twelveHour = config.clockFormat() == AfkSalvagingConfig.ClockFormat.TWELVE_HOUR;

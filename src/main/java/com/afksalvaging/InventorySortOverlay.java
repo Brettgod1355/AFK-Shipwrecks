@@ -16,7 +16,7 @@ import net.runelite.api.widgets.WidgetItem;
 import net.runelite.client.ui.overlay.WidgetItemOverlay;
 
 /**
- * A coloured box round each inventory item saying what to do with it: keep, hold, alch or drop.
+ * A colored box round each inventory item saying what to do with it: keep, hold, alch or drop.
  * Drawn only where the settings say, by default on the player's own boat at a salvaging spot.
  */
 public class InventorySortOverlay extends WidgetItemOverlay
@@ -58,21 +58,21 @@ public class InventorySortOverlay extends WidgetItemOverlay
 		{
 			return;
 		}
-		Color colour = colour(rule);
+		Color color = color(rule);
 		if (rule != SortRule.KEEP)
 		{
 			// Keep is an outline only (owner, 2026-10-03): what stays should not be tinted like what goes.
-			graphics.setColor(new Color(colour.getRed(), colour.getGreen(), colour.getBlue(), Math.min(colour.getAlpha(), 50)));
+			graphics.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), Math.min(color.getAlpha(), 50)));
 			graphics.fill(bounds);
 		}
 		Stroke old = graphics.getStroke();
 		graphics.setStroke(OUTLINE);
-		graphics.setColor(colour);
+		graphics.setColor(color);
 		graphics.draw(bounds);
 		graphics.setStroke(old);
 	}
 
-	private Color colour(SortRule rule)
+	private Color color(SortRule rule)
 	{
 		switch (rule)
 		{

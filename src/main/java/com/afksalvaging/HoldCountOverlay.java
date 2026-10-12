@@ -61,11 +61,11 @@ public class HoldCountOverlay extends Overlay
 		int capacity = monitor.getCapacity();
 		String text = config.counterStyle().format(used, capacity);
 		double fill = capacity > 0 ? Math.min(1.0, (double) used / capacity) : 0;
-		Color colour = ColorUtil.colorLerp(Palette.COUNTER_EMPTY, Palette.COUNTER_FULL, fill);
+		Color color = ColorUtil.colorLerp(Palette.COUNTER_EMPTY, Palette.COUNTER_FULL, fill);
 		Point at = Perspective.getCanvasTextLocation(client, graphics, hold.getLocalLocation(), text, HEIGHT);
 		if (at != null)
 		{
-			OverlayUtil.renderTextLocation(graphics, at, text, colour);
+			OverlayUtil.renderTextLocation(graphics, at, text, color);
 		}
 		return null;
 	}

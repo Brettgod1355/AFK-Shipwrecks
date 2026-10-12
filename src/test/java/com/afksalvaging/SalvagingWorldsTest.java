@@ -36,7 +36,7 @@ public class SalvagingWorldsTest
 	}
 
 	@Test
-	public void recognisesTheActivityLabelOrTheList()
+	public void recognizesTheActivityLabelOrTheList()
 	{
 		assertTrue(SalvagingWorlds.isSalvagingActivity("Salvaging"));
 		assertTrue(SalvagingWorlds.isSalvagingActivity("Sailing - salvaging"));

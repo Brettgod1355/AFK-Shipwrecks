@@ -450,7 +450,7 @@ public interface AfkSalvagingConfig extends Config
 		keyName = "notification",
 		name = "Notification",
 		description = "The RuneLite notification sent when the hold is completely full. "
-			+ "Use the gear to choose sound, tray popup, screen flash and focus behaviour.",
+			+ "Use the gear to choose sound, tray popup, screen flash and focus behavior.",
 		section = CARGO_FULL,
 		position = 0
 	)
@@ -722,7 +722,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Mark wrecks",
 		description = "How each wreck in view is marked. Hull outlines the wreck itself, the way the game outlines one "
 			+ "under the mouse. Area boxes the water round it where a hook can reach it. Wrecks that are up are drawn in "
-			+ "color (the hull only when your Sailing level lets you salvage it); sunk wrecks are drawn in grey, since "
+			+ "color (the hull only when your Sailing level lets you salvage it); sunk wrecks are drawn in gray, since "
 			+ "the next wreck rises on the same tile.",
 		section = SPOTS,
 		position = 0
@@ -736,7 +736,7 @@ public interface AfkSalvagingConfig extends Config
 		keyName = "wreckTimers",
 		name = "Timers on wrecks",
 		description = "Write on each wreck in view how long it has left: \"Sinks in ≤ 1:20\" while it is up (in cyan), "
-			+ "and on a sunk one when the next wreck can rise, \"Sunk - next ≤ 0:45\" (in grey; \"maybe next\" when "
+			+ "and on a sunk one when the next wreck can rise, \"Sunk - next ≤ 0:45\" (in gray; \"maybe next\" when "
 			+ "another sunk site could take it). A wreck's clock starts only once a boat is seen beside it or your hook "
 			+ "rolls on it; until then it says \"no clock yet\".",
 		section = TRACKING,
@@ -792,7 +792,7 @@ public interface AfkSalvagingConfig extends Config
 		keyName = "wreckReachColor",
 		name = "Wreck reach color",
 		description = "Outline color of the boxes round wrecks that are up (Mark wrecks: Area). The fill is a fainter "
-			+ "version of it. Sunk wrecks' boxes are grey.",
+			+ "version of it. Sunk wrecks' boxes are gray.",
 		section = SPOTS,
 		position = 1
 	)

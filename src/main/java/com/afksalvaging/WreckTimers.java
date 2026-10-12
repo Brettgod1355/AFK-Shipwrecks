@@ -18,7 +18,7 @@ import java.util.List;
  */
 final class WreckTimers
 {
-	/** What to draw on one wreck, and whether it is the up colour or the sunk colour. */
+	/** What to draw on one wreck, and whether it is the up color or the sunk color. */
 	static final class Timer
 	{
 		final String text;

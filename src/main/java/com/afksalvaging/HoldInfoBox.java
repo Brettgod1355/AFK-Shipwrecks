@@ -27,7 +27,7 @@ public class HoldInfoBox extends InfoBox
 	/** Pixels left clear above the word. */
 	private static final int LABEL_MARGIN = 1;
 	/** The smallest picture the word fits on above the time RuneLite writes (its top sits about 13 px above the bottom); below it the box is text only. */
-	static final int SMALLEST_LABELLED = 24;
+	static final int SMALLEST_LABELED = 24;
 
 	private final Supplier<AfkSession.View> view;
 	private final Supplier<CargoHoldMonitor.Level> holdLevel;
@@ -53,7 +53,7 @@ public class HoldInfoBox extends InfoBox
 	{
 		size = Math.max(2, size);
 		BufferedImage picture = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-		if (size < SMALLEST_LABELLED)
+		if (size < SMALLEST_LABELED)
 		{
 			return picture;
 		}
@@ -94,11 +94,11 @@ public class HoldInfoBox extends InfoBox
 	@Override
 	public Color getTextColor()
 	{
-		return colour(view.get(), holdLevel.get());
+		return color(view.get(), holdLevel.get());
 	}
 
-	/** The text's colour: red when it is over or blocked, amber when it wants a look, dim when nothing is happening. */
-	static Color colour(AfkSession.View v, CargoHoldMonitor.Level level)
+	/** The text's color: red when it is over or blocked, amber when it wants a look, dim when nothing is happening. */
+	static Color color(AfkSession.View v, CargoHoldMonitor.Level level)
 	{
 		if (level == CargoHoldMonitor.Level.FULL)
 		{
@@ -147,7 +147,7 @@ public class HoldInfoBox extends InfoBox
 			case STALLED:
 			case INVENTORY_FILLS_FIRST:
 			case WRECK_SINKS_FIRST:
-				// The last two are when you stop, not when the hold fills; the colour and tooltip say so.
+				// The last two are when you stop, not when the hold fills; the color and tooltip say so.
 				return Durations.tiny(v.countdownMillis);
 			case WAITING_FOR_WRECK:
 				// Only at a spot; on the way there the box has nothing to say (owner, 2026-10-04).

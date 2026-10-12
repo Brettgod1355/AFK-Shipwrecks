@@ -58,7 +58,7 @@ public class DoubleSpotTest
 	}
 
 	@Test
-	public void diagonalNeighboursGiveASquareishBox()
+	public void diagonalNeighborsGiveASquareishBox()
 	{
 		DoubleSpot.Box box = DoubleSpot.reachOverlap(new WorldPoint(100, 100, 0), new WorldPoint(106, 94, 0), REACH);
 		assertNotNull(box);

@@ -1070,12 +1070,12 @@ public class AfkSessionTest
 		// A deposit click the player walked away from changes nothing either.
 		session.inventoryChanged(5, 5, Collections.singleton(ShipwreckType.MERCHANT), tick);
 		session.holdActionClicked(false);
-		session.holdActionCancelled();
+		session.holdActionCanceled();
 		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
 		ticks(2);
 		assertEquals(200, session.monitor().getUsed());
 
-		// The walk to the hold takes a few ticks; the deposit is still recognised when it lands.
+		// The walk to the hold takes a few ticks; the deposit is still recognized when it lands.
 		session.inventoryChanged(5, 5, Collections.singleton(ShipwreckType.MERCHANT), tick);
 		session.holdActionClicked(false);
 		ticks(AfkSession.HOLD_ACTION_TICKS - 2);
@@ -1140,7 +1140,7 @@ public class AfkSessionTest
 		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
 		ticks(1);
 		session.holdActionClicked(true, true);
-		session.holdActionCancelled();
+		session.holdActionCanceled();
 		ticks(1);
 		session.inventoryChanged(21, 21, Collections.singleton(ShipwreckType.MERCHANT), tick);
 		ticks(1);

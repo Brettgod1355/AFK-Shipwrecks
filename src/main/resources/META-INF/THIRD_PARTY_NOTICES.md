@@ -50,14 +50,14 @@ project's own enum, with the "where" descriptions computed from it; no source co
 ## Discord and GitHub logos (trademarks, used as link buttons)
 
 The two buttons beside the sidebar's title show the brands' own logos, taken from their official
-brand pages on 2026-10-04 and only scaled down, never recoloured or redrawn:
+brand pages on 2026-10-04 and only scaled down, never recolored or redrawn:
 
 - Discord: `discord_white.png` and `discord_blurple.png` are `Discord-Symbol-White.png` and
-  `Discord-Symbol-Blurple.png` from the white and colour "Symbol" downloads at
-  <https://discord.com/branding>, which lists white and Blurple among the logo's colours.
+  `Discord-Symbol-Blurple.png` from the white and color "Symbol" downloads at
+  <https://discord.com/branding>, which lists white and Blurple among the logo's colors.
 - GitHub: `github_white.png` is `GitHub_Invertocat_White.png` from `GitHub_Logos.zip` at
   <https://brand.github.com/foundations/logo>. The pack has no green file, so `github_green.png` is
-  the green Invertocat cut from the same page's colour illustration
+  the green Invertocat cut from the same page's color illustration
   (<https://brand.github.com/_next/static/media/logo-04.c5edeefa.png>), with the black around it made
   transparent and its pixels otherwise unchanged; the page allows the mark "in white, black, or in
   few cases grey or green", and its use "as a social button to link to your GitHub profile or project".
@@ -75,7 +75,7 @@ plugin, commit `5370caa0f5f6a5bba4fbb42931722ca535ad3fd5`, via
 `licenses/Apache-2.0.txt` and the notices retained in the scripts and wrapper. This
 development tooling is not included in the plugin JAR.
 
-## Behaviour references (no code copied)
+## Behavior references (no code copied)
 
 - Game figures were checked against the [Old School RuneScape Wiki](https://oldschool.runescape.wiki),
   whose content is licensed [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/).
@@ -106,7 +106,7 @@ development tooling is not included in the plugin JAR.
   how a crewmate's stats are read from the game's crew table, and its wreck highlight was looked at
   when the double salvage spot boxes were designed. For 2.1 its cargo hold tracker
   (`CargoHoldTracker`, at commit `af987f3`) and its issue reports were read to compare how deposits,
-  withdrawals and a crewmate banking the hold are counted, and its grey highlight of sunk shipwrecks
+  withdrawals and a crewmate banking the hold are counted, and its gray highlight of sunk shipwrecks
   suggested the look of this plugin's sunk wrecks. This plugin's detection, counting, alert and
   double-spot code was written independently and none of that project's source is included.
 - The [Shortest Path](https://github.com/Skretzo/shortest-path) plugin (BSD 2-Clause) was read, at

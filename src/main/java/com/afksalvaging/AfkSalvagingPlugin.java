@@ -147,9 +147,10 @@ public class AfkSalvagingPlugin extends Plugin
 	/** How often the learned rate is written out while salvaging. */
 	private static final long MEMORY_FLUSH_MILLIS = 5 * 60_000L;
 	/** RuneScape-profile config key for the spots pinned in the sidebar. */
-	private static final String FAVOURITES_KEY = "spots.favourites";
+	/** Saved under its 2.0 spelling: renaming the key would lose every player's pinned spots. */
+	private static final String FAVORITES_KEY = "spots.favourites";
 	/**
-	 * The other choices made in the sidebar, kept per character like the favourites (owner,
+	 * The other choices made in the sidebar, kept per character like the favorites (owner,
 	 * 2026-10-03): RuneLite files them under the account's own id, so a name change keeps them and
 	 * two characters on one RuneLite account do not share an Auto spot.
 	 */
@@ -316,7 +317,7 @@ public class AfkSalvagingPlugin extends Plugin
 	/** The sidebar entry and its panel, present while the setting is on. */
 	private NavigationButton spotsButton;
 	private SalvagingSpotPanel spotsPanel;
-	/** A spot to centre the world map on once it has opened, or null. */
+	/** A spot to center the world map on once it has opened, or null. */
 	private WorldPoint pendingMapTarget;
 	/** Ticks to wait after the world map opens before it will take a position. */
 	private int mapFocusTicks;
@@ -494,7 +495,7 @@ public class AfkSalvagingPlugin extends Plugin
 		}
 		if (event.getProfile() != null)
 		{
-			// Other per-character data the plugin itself writes (remembered counts, rates, favourites, dropdowns): nothing to apply.
+			// Other per-character data the plugin itself writes (remembered counts, rates, favorites, dropdowns): nothing to apply.
 			return;
 		}
 		if ("hideCrewOrders".equals(event.getKey()))
@@ -560,8 +561,8 @@ public class AfkSalvagingPlugin extends Plugin
 		reloadSortLists();
 		if (spotsPanel != null)
 		{
-			// Another character: their own favourites, dropdowns and Auto spot.
-			spotsPanel.setFavourites(loadFavourites());
+			// Another character: their own favorites, dropdowns and Auto spot.
+			spotsPanel.setFavorites(loadFavorites());
 			spotsPanel.setChoices(spotFilterChoice(), nearestFirstChoice());
 			spotsPanel.setFolds(foldChoices());
 			spotsPanel.setAutoRoute(autoRouteSpot());
@@ -662,7 +663,7 @@ public class AfkSalvagingPlugin extends Plugin
 		int id = event.getVarbitId();
 		if (id == VarbitID.CHATBOX_TRANSPARENCY)
 		{
-			recolourChatLines();
+			recolorChatLines();
 			return;
 		}
 		if (id == VarbitID.SAILING_LAST_PERSONAL_BOAT_BOARDED)
@@ -782,7 +783,7 @@ public class AfkSalvagingPlugin extends Plugin
 			return;
 		}
 		// Anything else the player does means they are not walking to the hold any more.
-		session.holdActionCancelled();
+		session.holdActionCanceled();
 	}
 
 	@Subscribe
@@ -1214,7 +1215,7 @@ public class AfkSalvagingPlugin extends Plugin
 		shareSailingLevel();
 		if (spotsPanel != null)
 		{
-			spotsPanel.setFavourites(loadFavourites());
+			spotsPanel.setFavorites(loadFavorites());
 		}
 	}
 
@@ -1588,7 +1589,7 @@ public class AfkSalvagingPlugin extends Plugin
 
 	/**
 	 * While the cargo hold is open, the game marks each inventory slot it will accept in a varp
-	 * (its own side panel greys out the rest). Learn from it, by unnoted item id. Client thread.
+	 * (its own side panel grays out the rest). Learn from it, by unnoted item id. Client thread.
 	 */
 	private void learnHoldWhitelist()
 	{
@@ -1743,7 +1744,7 @@ public class AfkSalvagingPlugin extends Plugin
 
 	// ---- Salvage spots: sidebar, double spot boxes ----
 
-	/** The plugin's chat line colour as the game's tag wants it: six hex digits, no transparency. */
+	/** The plugin's chat line color as the game's tag wants it: six hex digits, no transparency. */
 	/** A chat line from the plugin, in the blue that suits the chatbox as it is now. */
 	private void sayTip(String text)
 	{
@@ -1761,11 +1762,11 @@ public class AfkSalvagingPlugin extends Plugin
 	@Subscribe
 	public void onResizeableChanged(ResizeableChanged event)
 	{
-		recolourChatLines();
+		recolorChatLines();
 	}
 
-	/** Re-colours the plugin's recent chat lines when the chatbox turns transparent or back. */
-	private void recolourChatLines()
+	/** Re-colors the plugin's recent chat lines when the chatbox turns transparent or back. */
+	private void recolorChatLines()
 	{
 		boolean transparent = isChatTransparent();
 		if (transparent == chatTransparent || chatLines.size() == 0)
@@ -1774,11 +1775,11 @@ public class AfkSalvagingPlugin extends Plugin
 			return;
 		}
 		chatTransparent = transparent;
-		chatLines.recolour(transparent);
+		chatLines.recolor(transparent);
 		client.refreshChat();
 	}
 
-	/** The sorting colours from the settings, for the sidebar's list headings. */
+	/** The sorting colors from the settings, for the sidebar's list headings. */
 	private void applyPalette()
 	{
 		Map<SortRule, Color> sorting = new EnumMap<>(SortRule.class);
@@ -1786,7 +1787,7 @@ public class AfkSalvagingPlugin extends Plugin
 		sorting.put(SortRule.HOLD, config.holdColor());
 		sorting.put(SortRule.ALCH, config.alchColor());
 		sorting.put(SortRule.DROP, config.dropColor());
-		spotsPanel.setSortColours(sorting);
+		spotsPanel.setSortColors(sorting);
 	}
 
 	/** Brings the sidebar in line with the settings. */
@@ -1858,9 +1859,9 @@ public class AfkSalvagingPlugin extends Plugin
 			}
 
 			@Override
-			public void favouriteChanged(SalvagingSpot spot, boolean favourite)
+			public void favoriteChanged(SalvagingSpot spot, boolean favorite)
 			{
-				saveFavourite(spot, favourite);
+				saveFavorite(spot, favorite);
 			}
 
 			@Override
@@ -1933,7 +1934,7 @@ public class AfkSalvagingPlugin extends Plugin
 		spotsPanel.setFolds(foldChoices());
 		spotsPanel.setSettings(SettingsSearch.entries(configManager.getConfigDescriptor(config)));
 		pushSortLists();
-		spotsPanel.setFavourites(loadFavourites());
+		spotsPanel.setFavorites(loadFavorites());
 		spotsPanel.setAutoRoute(autoRouteSpot());
 		spotsPanel.setDockShown(config.nearestDock());
 		spotsPanel.setSailingLevel(sailingLevelForSpots());
@@ -1976,7 +1977,7 @@ public class AfkSalvagingPlugin extends Plugin
 	}
 
 	/**
-	 * Centres the world map on a spot. The map can only be moved while it is open, and nothing in
+	 * Centers the world map on a spot. The map can only be moved while it is open, and nothing in
 	 * the API opens it for the player, so when it is closed the spot is kept until they open it.
 	 * Called from the sidebar, so the work moves to the client thread.
 	 */
@@ -2258,39 +2259,39 @@ public class AfkSalvagingPlugin extends Plugin
 			Durations.coarse(stats.waitingMillis), sorted);
 	}
 
-	private Set<SalvagingSpot> loadFavourites()
+	private Set<SalvagingSpot> loadFavorites()
 	{
 		if (configManager.getRSProfileKey() == null)
 		{
-			return SpotList.decodeFavourites(null);
+			return SpotList.decodeFavorites(null);
 		}
-		return SpotList.decodeFavourites(configManager.getRSProfileConfiguration(AfkSalvagingConfig.GROUP, FAVOURITES_KEY));
+		return SpotList.decodeFavorites(configManager.getRSProfileConfiguration(AfkSalvagingConfig.GROUP, FAVORITES_KEY));
 	}
 
-	private void saveFavourite(SalvagingSpot spot, boolean favourite)
+	private void saveFavorite(SalvagingSpot spot, boolean favorite)
 	{
 		if (configManager.getRSProfileKey() == null)
 		{
-			setSpotStatus("Favourites are kept per character: log in and press the star again to keep it.", true);
+			setSpotStatus("Favorites are kept per character: log in and press the star again to keep it.", true);
 			return;
 		}
-		Set<SalvagingSpot> favourites = loadFavourites();
-		if (favourite)
+		Set<SalvagingSpot> favorites = loadFavorites();
+		if (favorite)
 		{
-			favourites.add(spot);
+			favorites.add(spot);
 		}
 		else
 		{
-			favourites.remove(spot);
+			favorites.remove(spot);
 		}
-		String encoded = SpotList.encodeFavourites(favourites);
+		String encoded = SpotList.encodeFavorites(favorites);
 		if (encoded.isEmpty())
 		{
-			configManager.unsetRSProfileConfiguration(AfkSalvagingConfig.GROUP, FAVOURITES_KEY);
+			configManager.unsetRSProfileConfiguration(AfkSalvagingConfig.GROUP, FAVORITES_KEY);
 		}
 		else
 		{
-			configManager.setRSProfileConfiguration(AfkSalvagingConfig.GROUP, FAVOURITES_KEY, encoded);
+			configManager.setRSProfileConfiguration(AfkSalvagingConfig.GROUP, FAVORITES_KEY, encoded);
 		}
 	}
 
@@ -2958,7 +2959,7 @@ public class AfkSalvagingPlugin extends Plugin
 	}
 
 	/**
-	 * The same notification with its sound turned off. A notification the player has not customised
+	 * The same notification with its sound turned off. A notification the player has not customized
 	 * would otherwise be replaced by RuneLite's global settings on the way out, so those are copied in
 	 * first, exactly as the Notifier does, before the sound is switched off.
 	 */

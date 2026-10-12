@@ -21,7 +21,7 @@ import net.runelite.api.coords.WorldPoint;
  * The grid comes from {@code seamap.bin}, written by {@code tools/seamap} from the game cache:
  * the world cut into cells of {@link #cellSize} tiles a side, a cell being sea when at least half
  * its tiles are open water a boat can reach from a salvaging spot. Distances are the shortest way
- * over sea cells, moving to the eight neighbours, so they are the sailing distance give or take a
+ * over sea cells, moving to the eight neighbors, so they are the sailing distance give or take a
  * cell: the straight-line "tiles from you" was a long way out wherever land lies between.
  */
 public final class SeaMap

@@ -48,7 +48,7 @@ final class SuggestedDrops
 		ItemID.POTATO_CACTUS_SEED, ItemID.LANTADYME_SEED, ItemID.DWARF_WEED_SEED,
 		// Gems.
 		ItemID.UNCUT_OPAL, ItemID.UNCUT_JADE, ItemID.UNCUT_RED_TOPAZ,
-		// Jewellery and weapons.
+		// Jewelry and weapons.
 		ItemID.GOLD_RING, ItemID.SAPPHIRE_RING, ItemID.EMERALD_RING, ItemID.JEWL_EMERALD_BRACELET,
 		ItemID.MITHRIL_SCIMITAR, ItemID.MITHRIL_LONGSWORD, ItemID.TIARA,
 		// The ensouled head as the player holds it; the wiki's "Drop" version (13483) never reaches the inventory.

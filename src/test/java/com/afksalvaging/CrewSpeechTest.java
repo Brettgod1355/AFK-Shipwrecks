@@ -13,7 +13,7 @@ import static org.junit.Assert.assertTrue;
 public class CrewSpeechTest
 {
 	@Test
-	public void recognisesAFullHold()
+	public void recognizesAFullHold()
 	{
 		assertTrue(CrewSpeech.reportsFullHold("The cargo hold is full. I can't salvage anything."));
 		assertTrue(CrewSpeech.reportsFullHold("<col=ff0000>The cargo hold is full.</col>"));
@@ -22,7 +22,7 @@ public class CrewSpeechTest
 	}
 
 	@Test
-	public void recognisesCrewSalvage()
+	public void recognizesCrewSalvage()
 	{
 		assertTrue(CrewSpeech.reportsCrewSalvage("Managed to hook some salvage! I'll put it in the cargo hold."));
 		assertTrue(CrewSpeech.reportsCrewSalvage("Got one! I'll put it in the cargo hold."));
@@ -32,7 +32,7 @@ public class CrewSpeechTest
 	}
 
 	@Test
-	public void recognisesTheGhostsWordlessSpeech()
+	public void recognizesTheGhostsWordlessSpeech()
 	{
 		assertTrue(CrewSpeech.isGhostSpeech("Wooo."));
 		assertTrue(CrewSpeech.isGhostSpeech("Woooo wooo."));
@@ -45,7 +45,7 @@ public class CrewSpeechTest
 	}
 
 	@Test
-	public void recognisesTheOrdersPuttingACrewmateOnAHookOrToRest()
+	public void recognizesTheOrdersPuttingACrewmateOnAHookOrToRest()
 	{
 		assertTrue(CrewSpeech.isCrewOrder("Ex-Captain Siad, take control of the starboard side rune salvaging hook!"));
 		assertTrue(CrewSpeech.isCrewOrder("<col=00ffff>Jenkins, take control of the port side salvaging hook!</col>"));
@@ -57,7 +57,7 @@ public class CrewSpeechTest
 	}
 
 	@Test
-	public void recognisesThePlayersOwnDeposit()
+	public void recognizesThePlayersOwnDeposit()
 	{
 		assertTrue(CrewSpeech.reportsPlayerDeposit("You deposit some cargo into the cargo hold."));
 		assertFalse(CrewSpeech.reportsPlayerDeposit("Your crew pack the cargo they were holding into the cargo hold."));

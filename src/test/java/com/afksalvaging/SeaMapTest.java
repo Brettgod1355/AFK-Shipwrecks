@@ -84,7 +84,7 @@ public class SeaMapTest
 	{
 		SeaMap map = SeaMap.load();
 		assertTrue(map.seaCells() > 100_000);
-		assertTrue("Rellekka harbour", map.isSea(new WorldPoint(2630, 3708, 0)));
+		assertTrue("Rellekka harbor", map.isSea(new WorldPoint(2630, 3708, 0)));
 		assertFalse("Lumbridge castle", map.isSea(new WorldPoint(3222, 3218, 0)));
 		for (SalvagingSpot spot : SalvagingSpot.values())
 		{

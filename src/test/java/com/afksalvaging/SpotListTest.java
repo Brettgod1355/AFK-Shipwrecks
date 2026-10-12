@@ -20,7 +20,7 @@ public class SpotListTest
 	private static final Set<SalvagingSpot> NONE = EnumSet.noneOf(SalvagingSpot.class);
 
 	@Test
-	public void allListsEverySpotInCatalogueOrder()
+	public void allListsEverySpotInCatalogOrder()
 	{
 		List<SalvagingSpot> spots = SpotList.arrange(SpotList.FILTER_ALL, 0, NONE, false, (WorldPoint) null);
 		assertEquals(SalvagingSpot.values().length, spots.size());
@@ -50,18 +50,18 @@ public class SpotListTest
 	}
 
 	@Test
-	public void favouritesComeFirstAndCanBeTheWholeList()
+	public void favoritesComeFirstAndCanBeTheWholeList()
 	{
-		Set<SalvagingSpot> favourites = EnumSet.of(SalvagingSpot.MERCHANT_SUNBLEAK_ISLAND, SalvagingSpot.LARGE_WEISS);
-		List<SalvagingSpot> all = SpotList.arrange(SpotList.FILTER_ALL, 0, favourites, false, (WorldPoint) null);
+		Set<SalvagingSpot> favorites = EnumSet.of(SalvagingSpot.MERCHANT_SUNBLEAK_ISLAND, SalvagingSpot.LARGE_WEISS);
+		List<SalvagingSpot> all = SpotList.arrange(SpotList.FILTER_ALL, 0, favorites, false, (WorldPoint) null);
 		assertEquals(SalvagingSpot.LARGE_WEISS, all.get(0));
 		assertEquals(SalvagingSpot.MERCHANT_SUNBLEAK_ISLAND, all.get(1));
 		assertEquals(SalvagingSpot.SMALL_PANDEMONIUM, all.get(2));
-		assertEquals(2, SpotList.arrange(SpotList.FILTER_FAVOURITES, 0, favourites, false, (WorldPoint) null).size());
+		assertEquals(2, SpotList.arrange(SpotList.FILTER_FAVORITES, 0, favorites, false, (WorldPoint) null).size());
 	}
 
 	@Test
-	public void nearestFirstSortsByDistanceButFavouritesStayOnTop()
+	public void nearestFirstSortsByDistanceButFavoritesStayOnTop()
 	{
 		WorldPoint atUnkah = Mooring.RUINS_OF_UNKAH.getPoint();
 		List<SalvagingSpot> spots = SpotList.arrange(SpotList.FILTER_ALL, 0, NONE, true, atUnkah);
@@ -70,24 +70,24 @@ public class SpotListTest
 		{
 			assertTrue(Mooring.distance(atUnkah, spots.get(i - 1).getPoint()) <= Mooring.distance(atUnkah, spots.get(i).getPoint()));
 		}
-		Set<SalvagingSpot> favourite = EnumSet.of(SalvagingSpot.LARGE_WEISS);
-		assertEquals(SalvagingSpot.LARGE_WEISS, SpotList.arrange(SpotList.FILTER_ALL, 0, favourite, true, atUnkah).get(0));
-		// Without a position, nearest first falls back to the catalogue order.
+		Set<SalvagingSpot> favorite = EnumSet.of(SalvagingSpot.LARGE_WEISS);
+		assertEquals(SalvagingSpot.LARGE_WEISS, SpotList.arrange(SpotList.FILTER_ALL, 0, favorite, true, atUnkah).get(0));
+		// Without a position, nearest first falls back to the catalog order.
 		assertEquals(SalvagingSpot.SMALL_PANDEMONIUM, SpotList.arrange(SpotList.FILTER_ALL, 0, NONE, true, (WorldPoint) null).get(0));
 	}
 
 	@Test
 	public void storedChoicesSurviveARoundTripAndBadValues()
 	{
-		Set<SalvagingSpot> favourites = EnumSet.of(SalvagingSpot.BARRACUDA_UNKAH, SalvagingSpot.SMALL_LANDS_END);
-		assertEquals("SMALL_LANDS_END,BARRACUDA_UNKAH", SpotList.encodeFavourites(favourites));
-		assertEquals(favourites, SpotList.decodeFavourites("SMALL_LANDS_END,BARRACUDA_UNKAH"));
-		assertEquals(EnumSet.of(SalvagingSpot.BARRACUDA_UNKAH), SpotList.decodeFavourites("GONE_SPOT, BARRACUDA_UNKAH"));
-		assertTrue(SpotList.decodeFavourites(null).isEmpty());
-		assertTrue(SpotList.decodeFavourites("").isEmpty());
+		Set<SalvagingSpot> favorites = EnumSet.of(SalvagingSpot.BARRACUDA_UNKAH, SalvagingSpot.SMALL_LANDS_END);
+		assertEquals("SMALL_LANDS_END,BARRACUDA_UNKAH", SpotList.encodeFavorites(favorites));
+		assertEquals(favorites, SpotList.decodeFavorites("SMALL_LANDS_END,BARRACUDA_UNKAH"));
+		assertEquals(EnumSet.of(SalvagingSpot.BARRACUDA_UNKAH), SpotList.decodeFavorites("GONE_SPOT, BARRACUDA_UNKAH"));
+		assertTrue(SpotList.decodeFavorites(null).isEmpty());
+		assertTrue(SpotList.decodeFavorites("").isEmpty());
 		assertEquals(SpotList.FILTER_ALL, SpotList.validFilter("whatever"));
 		assertEquals("LARGE", SpotList.validFilter("LARGE"));
-		assertEquals(SpotList.FILTER_FAVOURITES, SpotList.validFilter(SpotList.FILTER_FAVOURITES));
+		assertEquals(SpotList.FILTER_FAVORITES, SpotList.validFilter(SpotList.FILTER_FAVORITES));
 		assertNull(SpotList.spotNamed("nope"));
 		assertEquals(SalvagingSpot.LARGE_WEISS, SpotList.spotNamed("LARGE_WEISS"));
 	}

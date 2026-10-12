@@ -30,9 +30,9 @@ final class FlashingNotice
 
 	/**
 	 * @param scale   the banner size setting as a fraction, 1 for 100%
-	 * @param yOffset pixels below the centre of the canvas, so two notices can stand clear of each other
+	 * @param yOffset pixels below the center of the canvas, so two notices can stand clear of each other
 	 */
-	static Dimension draw(Graphics2D graphics, Client client, String title, String detail, Color colour, float scale, long now, int yOffset)
+	static Dimension draw(Graphics2D graphics, Client client, String title, String detail, Color color, float scale, long now, int yOffset)
 	{
 		Font bold = FontManager.getRunescapeBoldFont();
 		Font titleFont = bold.deriveFont(bold.getSize2D() * scale);
@@ -47,10 +47,10 @@ final class FlashingNotice
 		int x = (client.getCanvasWidth() - width) / 2;
 		int y = (client.getCanvasHeight() - height) / 2 + yOffset;
 
-		Color background = colour;
+		Color background = color;
 		if ((now / FLASH_PERIOD_MS) % 2 == 1)
 		{
-			background = new Color(colour.getRed(), colour.getGreen(), colour.getBlue(), colour.getAlpha() / 3);
+			background = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha() / 3);
 		}
 		graphics.setColor(background);
 		graphics.fillRect(x, y, width, height);

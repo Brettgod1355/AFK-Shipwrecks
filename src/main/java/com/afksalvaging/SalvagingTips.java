@@ -44,13 +44,13 @@ public final class SalvagingTips
 				+ "game's code, so an edge may be a tile off. If a hook sits in a box and only one wreck is worked, "
 				+ "tell me."),
 		new Group("Wrecks and timers",
-			"Each wreck in view carries a timer: cyan \"Sinks in ≤\" while it is up, grey on a sunk one for when the "
+			"Each wreck in view carries a timer: cyan \"Sinks in ≤\" while it is up, gray on a sunk one for when the "
 				+ "next can rise (\"maybe next\" when another sunk site could take it).",
 			"A wreck's clock starts only once a boat is seen beside it or your hook rolls on it. Lifetimes are "
 				+ "averages, so past the clock it says \"any moment\".",
 			"While you wait, \"Next wreck here in ≤\" is the earliest another wreck in the area can sink: one rises "
 				+ "here the moment another sinks.",
-			"Wrecks within your level get an outline round the hull, cyan while up and grey once sunk. \"Mark "
+			"Wrecks within your level get an outline round the hull, cyan while up and gray once sunk. \"Mark "
 				+ "wrecks\" picks the hull, the area, both or neither.",
 			"The plugin only knows the wrecks in the area the game has loaded, a square of about 104 tiles that "
 				+ "moves as you sail. \"Show what the plugin sees\" draws it; sail toward wrecks outside it."),
@@ -72,7 +72,7 @@ public final class SalvagingTips
 		new Group("Sidebar",
 			"Map pans the world map while it is open; with it closed, press Map, then open the map. Route asks the "
 				+ "Shortest Path plugin to draw the way and clears itself when you arrive or step off your boat.",
-			"The star pins a spot to the top and to Favourites. Auto routes to one spot whenever you board from a "
+			"The star pins a spot to the top and to Favorites. Auto routes to one spot whenever you board from a "
 				+ "dock. These and the dropdowns are kept per character.",
 			"Distances are sailing distances round the land, give or take a few tiles. The dock boxes name the "
 				+ "nearest dock you can use and the nearest where your crew bank the hold.",

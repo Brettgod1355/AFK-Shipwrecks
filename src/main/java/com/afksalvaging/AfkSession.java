@@ -27,7 +27,7 @@ public final class AfkSession
 
 	/** Tiles from a hook within which a wreck can be worked. */
 	public static final int HOOK_RANGE = 8;
-	/** How near another boat's centre must be to a wreck to be taken as working it: hook reach plus half a sloop. */
+	/** How near another boat's center must be to a wreck to be taken as working it: hook reach plus half a sloop. */
 	public static final int OTHER_BOAT_REACH = HOOK_RANGE + 5;
 	/** Tiles from the player used when no hook position is known. */
 	public static final int PLAYER_RANGE = 12;
@@ -598,7 +598,7 @@ public final class AfkSession
 	}
 
 	/** The player clicked something else before reaching the hold, so the deposit or withdrawal is off. */
-	public void holdActionCancelled()
+	public void holdActionCanceled()
 	{
 		if (pendingInInterface)
 		{

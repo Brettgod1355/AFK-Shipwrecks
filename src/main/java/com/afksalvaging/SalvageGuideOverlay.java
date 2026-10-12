@@ -18,8 +18,8 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayUtil;
 
 /**
- * Outlines where the salvage goes next on the player's own boat: the cargo hold in the Deposit colour, the
- * salvaging station and a hook in fixed colours (owner, 2026-10-12). What to outline is worked out once a
+ * Outlines where the salvage goes next on the player's own boat: the cargo hold in the Deposit color, the
+ * salvaging station and a hook in fixed colors (owner, 2026-10-12). What to outline is worked out once a
  * tick by the plugin ({@link SalvageGuide}); this only draws it. Replaces 2.1's always-on hold outline.
  */
 public class SalvageGuideOverlay extends Overlay

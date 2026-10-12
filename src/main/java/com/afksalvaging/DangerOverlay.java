@@ -16,11 +16,11 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 /**
  * A flashing red DANGER notice above the middle of the screen while the boat is being damaged, the
  * player hit, or poisoned at a salvaging spot (owner, 2026-10-08). The sound comes with the "Danger"
- * notification. Above the centre, clear of the salvaging-world notice (centre) and the swap (below).
+ * notification. Above the center, clear of the salvaging-world notice (center) and the swap (below).
  */
 public class DangerOverlay extends Overlay
 {
-	private static final int ABOVE_CENTRE = -90;
+	private static final int ABOVE_CENTER = -90;
 
 	private final Client client;
 	private final AfkSalvagingPlugin plugin;
@@ -47,6 +47,6 @@ public class DangerOverlay extends Overlay
 		}
 		// Shown even over an open interface: danger matters more than tidiness.
 		return FlashingNotice.draw(graphics, client, "DANGER", danger, config.bannerColor(),
-			config.bannerScale() / 100f, System.currentTimeMillis(), ABOVE_CENTRE);
+			config.bannerScale() / 100f, System.currentTimeMillis(), ABOVE_CENTER);
 	}
 }

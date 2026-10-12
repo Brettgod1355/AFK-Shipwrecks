@@ -93,10 +93,10 @@ public class HookGuideOverlay extends Overlay
 		{
 			return null;
 		}
-		Color colour = Palette.HOOK_GUIDE;
-		graphics.setColor(new Color(colour.getRed(), colour.getGreen(), colour.getBlue(), 60));
+		Color color = Palette.HOOK_GUIDE;
+		graphics.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 60));
 		graphics.fill(target);
-		graphics.setColor(new Color(colour.getRed(), colour.getGreen(), colour.getBlue()));
+		graphics.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue()));
 		graphics.setStroke(new BasicStroke(2));
 		graphics.draw(new Rectangle(target.x - 1, target.y - 1, target.width + 2, target.height + 2));
 		return null;
