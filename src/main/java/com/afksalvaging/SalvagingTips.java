@@ -35,7 +35,7 @@ public final class SalvagingTips
 			"The boxes on the water are for your hooks, not the boat: the game measures reach from the hook, so a "
 				+ "hook has to sit inside a box. Yellow: a hook there reaches that wreck. Green: it reaches two at once.",
 			"Park so every hook is in a green box (both on a sloop, the one on a raft or skiff). It turns the parked "
-				+ "colour and says \"Parked\"; with only some hooks in, it counts them.",
+				+ "color and says \"Parked\"; with only some hooks in, it counts them.",
 			"A double spot is a place, not a moment: the green box stays while its wrecks are down, since the next "
 				+ "one rises on the same tile. Park and wait.",
 			"Once you are parked the yellow boxes go, the green ones go 20 seconds after the boat stops, and "

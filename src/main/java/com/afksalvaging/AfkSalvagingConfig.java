@@ -260,7 +260,7 @@ public interface AfkSalvagingConfig extends Config
 		keyName = "swapAlert",
 		name = "Flash the swap on screen",
 		description = "While a better crewmate is free, flash a SWAP CREW notice in the middle of the screen, in the "
-			+ "reminder banner colour, until the swap is made.",
+			+ "reminder banner color, until the swap is made.",
 		section = REMINDERS,
 		position = 4
 	)
@@ -561,8 +561,8 @@ public interface AfkSalvagingConfig extends Config
 	@Alpha
 	@ConfigItem(
 		keyName = "bannerColor",
-		name = "Full colour",
-		description = "Background colour of the banner when the hold is full.",
+		name = "Full color",
+		description = "Background color of the banner when the hold is full.",
 		section = BANNER,
 		position = 4
 	)
@@ -574,8 +574,8 @@ public interface AfkSalvagingConfig extends Config
 	@Alpha
 	@ConfigItem(
 		keyName = "warningBannerColor",
-		name = "Nearly full colour",
-		description = "Background colour of the banner for the early warning, so you can tell it from the full one at a glance.",
+		name = "Nearly full color",
+		description = "Background color of the banner for the early warning, so you can tell it from the full one at a glance.",
 		section = BANNER,
 		position = 5
 	)
@@ -587,8 +587,8 @@ public interface AfkSalvagingConfig extends Config
 	@Alpha
 	@ConfigItem(
 		keyName = "reminderBannerColor",
-		name = "Reminder colour",
-		description = "Background colour of the banner when a hook needs attention.",
+		name = "Reminder color",
+		description = "Background color of the banner when a hook needs attention.",
 		section = BANNER,
 		position = 6
 	)
@@ -680,7 +680,7 @@ public interface AfkSalvagingConfig extends Config
 		keyName = "countOnHold",
 		name = "Count on the hold",
 		description = "Write the cargo count on the cargo hold itself, as \"Counter shows\" sets it (for example 39/160), "
-			+ "coloured green to red as it fills.",
+			+ "colored green to red as it fills.",
 		section = OVERLAY,
 		position = 7
 	)
@@ -722,7 +722,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Mark wrecks",
 		description = "How each wreck in view is marked. Hull outlines the wreck itself, the way the game outlines one "
 			+ "under the mouse. Area boxes the water round it where a hook can reach it. Wrecks that are up are drawn in "
-			+ "colour (the hull only when your Sailing level lets you salvage it); sunk wrecks are drawn in grey, since "
+			+ "color (the hull only when your Sailing level lets you salvage it); sunk wrecks are drawn in grey, since "
 			+ "the next wreck rises on the same tile.",
 		section = SPOTS,
 		position = 0
@@ -790,8 +790,8 @@ public interface AfkSalvagingConfig extends Config
 	@Alpha
 	@ConfigItem(
 		keyName = "wreckReachColor",
-		name = "Wreck reach colour",
-		description = "Outline colour of the boxes round wrecks that are up (Mark wrecks: Area). The fill is a fainter "
+		name = "Wreck reach color",
+		description = "Outline color of the boxes round wrecks that are up (Mark wrecks: Area). The fill is a fainter "
 			+ "version of it. Sunk wrecks' boxes are grey.",
 		section = SPOTS,
 		position = 1
@@ -805,7 +805,7 @@ public interface AfkSalvagingConfig extends Config
 		keyName = "doubleSpotBoxes",
 		name = "Double spot boxes",
 		description = "Box the water where one hook reaches two wreck sites at once, whether or not both wrecks are up "
-			+ "right now. Park so every hook sits in the box and it changes colour and says Parked.",
+			+ "right now. Park so every hook sits in the box and it changes color and says Parked.",
 		section = SPOTS,
 		position = 3
 	)
@@ -817,8 +817,8 @@ public interface AfkSalvagingConfig extends Config
 	@Alpha
 	@ConfigItem(
 		keyName = "doubleSpotColor",
-		name = "Double spot colour",
-		description = "Outline colour of the double spot boxes while you are not parked in them. The fill is a fainter "
+		name = "Double spot color",
+		description = "Outline color of the double spot boxes while you are not parked in them. The fill is a fainter "
 			+ "version of it.",
 		section = SPOTS,
 		position = 4
@@ -831,8 +831,8 @@ public interface AfkSalvagingConfig extends Config
 	@Alpha
 	@ConfigItem(
 		keyName = "doubleSpotParkedColor",
-		name = "Parked colour",
-		description = "The colour a double spot box changes to once every hook on your boat is inside it: both hooks on a "
+		name = "Parked color",
+		description = "The color a double spot box changes to once every hook on your boat is inside it: both hooks on a "
 			+ "sloop, the one hook on a raft or skiff.",
 		section = SPOTS,
 		position = 5
@@ -938,7 +938,7 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "inventorySort",
 		name = "Box inventory items",
-		description = "Draw a coloured box round each item in your inventory: keep (sage), deposit (cyan), alch (green) "
+		description = "Draw a colored box round each item in your inventory: keep (sage), deposit (cyan), alch (green) "
 			+ "or drop (red). Unmarked items are sorted by what they are: plain bronze to dragon cannonballs (never noted) to deposit, "
 			+ "items that alch for at least the threshold to alch, and everything else gets no box. Drop is only "
 			+ "what you mark. Shift-right-click an item to mark it.",
@@ -1062,28 +1062,28 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@Alpha
-	@ConfigItem(keyName = "keepColor", name = "Keep colour", description = "", section = SORTING, position = 6)
+	@ConfigItem(keyName = "keepColor", name = "Keep color", description = "", section = SORTING, position = 6)
 	default Color keepColor()
 	{
 		return new Color(154, 163, 122, 255);
 	}
 
 	@Alpha
-	@ConfigItem(keyName = "holdColor", name = "Deposit colour", description = "", section = SORTING, position = 7)
+	@ConfigItem(keyName = "holdColor", name = "Deposit color", description = "", section = SORTING, position = 7)
 	default Color holdColor()
 	{
 		return new Color(60, 220, 230, 220);
 	}
 
 	@Alpha
-	@ConfigItem(keyName = "alchColor", name = "Alch colour", description = "", section = SORTING, position = 8)
+	@ConfigItem(keyName = "alchColor", name = "Alch color", description = "", section = SORTING, position = 8)
 	default Color alchColor()
 	{
 		return new Color(70, 220, 90, 220);
 	}
 
 	@Alpha
-	@ConfigItem(keyName = "dropColor", name = "Drop colour", description = "", section = SORTING, position = 9)
+	@ConfigItem(keyName = "dropColor", name = "Drop color", description = "", section = SORTING, position = 9)
 	default Color dropColor()
 	{
 		return new Color(240, 80, 80, 220);

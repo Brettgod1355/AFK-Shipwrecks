@@ -419,7 +419,7 @@ public class SalvagingSpotPanel extends PluginPanel
 		block.add(heading);
 		block.add(Box.createVerticalStrut(4));
 		settingsQuery.setFont(FontManager.getRunescapeSmallFont());
-		settingsQuery.setToolTipText("Type a word or two, such as banner, sound or colour.");
+		settingsQuery.setToolTipText("Type a word or two, such as banner, sound or color.");
 		settingsQuery.setAlignmentX(LEFT_ALIGNMENT);
 		settingsQuery.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
 		settingsQuery.getDocument().addDocumentListener(new DocumentListener()

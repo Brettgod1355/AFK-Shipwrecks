@@ -121,8 +121,8 @@ marked.
   the buttons and the rest of this README in short.
 - **Boxes on the water that say where to park.** A yellow box around each wreck for where a hook
   can reach it, and a green box where a hook reaches two wrecks at once. Park so every hook on your
-  boat sits in the green box and it changes colour and says "Parked". Each has its own switch and
-  colour, and the parked colour is its own setting too. The green boxes go 20 seconds after the boat stops, at
+  boat sits in the green box and it changes color and says "Parked". Each has its own switch and
+  color, and the parked color is its own setting too. The green boxes go 20 seconds after the boat stops, at
   login too, and come back the moment it moves (a setting; 0 keeps them). While you stay parked,
   the words "Parked in double spot" stay in the middle of your boat (a setting, on by default). The
   box's own words about your hooks sit there too. Wrecks that are up and within
@@ -131,7 +131,7 @@ marked.
   Read the section below before trusting them to the tile.
 
 - **Sorts your inventory for you to act on.** On your boat at a salvaging spot, inventory items
-  get a coloured box: sage keep (an outline only, and off unless you switch it on, since what stays
+  get a colored box: sage keep (an outline only, and off unless you switch it on, since what stays
   needs nothing doing), cyan deposit
   (into the cargo hold), green alch, red drop. With
   nothing marked, only two kinds get a box: the plain bronze to dragon cannonballs are Deposit (never noted ones, which
@@ -152,7 +152,7 @@ marked.
 - **Lights up your next stop on deck.** Carrying salvage, the salvaging station gets an amber outline
   (the cargo hold, if your boat has no station yet), and it gets brighter once your inventory is full
   off the hook. After sorting, drop your Drop items and alch your Alch items first; then the cargo hold
-  lights up in the Deposit colour for anything to deposit, or when there is more salvage in it to sort.
+  lights up in the Deposit color for anything to deposit, or when there is more salvage in it to sort.
   With nothing left to do and a wreck in reach, a hook lights up green as well, so you can pick: go
   again from the hold, or get on a hook yourself. It picks a free hook, or else the one your weakest
   crewmate is on (clicking a hook a crewmate is working sends them off to rest). Open the hold and
@@ -217,7 +217,7 @@ journal, a diary, the collection log, the settings, the world map) and come back
 left, 5 by default, 0 for none; and whether it plays a sound). The repeats wait while your boat is
 moving, so sailing a full hold to the bank is quiet; they pick up again a full interval after you stop.
 
-**Banner**: show it, flash it, its size (150% by default), how long it stays, and colours for the
+**Banner**: show it, flash it, its size (150% by default), how long it stays, and colors for the
 full, nearly-full and reminder banners.
 
 **Reminders**: seven RuneLite notifications you can shape separately (hook empty with a crewmate
@@ -245,9 +245,9 @@ warn (60 s; 0 never). Then:
 
 **Wrecks and parking**: Mark wrecks (hull, area, hull and area, or off; hull and area by default).
 The hull is outlined in cyan while the wreck is up and grey once it has sunk; the area is the box of
-water a hook can reach it from, yellow while it is up and grey once sunk. Then the box colour; hiding
-those boxes while you are parked (on by default); filling the boxes (on; off draws outlines only); double spot boxes (on or off), their colour (green)
-and the colour they change to once you are parked (a faint cyan); whether to label the double spot
+water a hook can reach it from, yellow while it is up and grey once sunk. Then the box color; hiding
+those boxes while you are parked (on by default); filling the boxes (on; off draws outlines only); double spot boxes (on or off), their color (green)
+and the color they change to once you are parked (a faint cyan); whether to label the double spot
 boxes; how long after the boat stops they go (20 s; 0 never); and whether "Parked in double spot"
 stays once they have gone (on by default). The outlines, boxes and wreck timers only show on your own
 boat, and only when it has a salvaging hook, so a boat set up for something else keeps a clear view.
@@ -271,11 +271,11 @@ everywhere); the alch threshold; keep instead when the GE price beats the alch v
 (off by default); the shift-right-click AFK Shipwrecks menu, shown only on your own boat; whether kept items get a box at all (off by default);
 highlight where salvage goes (Automatic by default, or only the station, only the cargo hold, or
 off); point to a hook (a free one, or else your weakest crewmate's; free hooks only; or off); boxing
-the salvage inside the open hold so it is easy to find and click (on by default); and the four colours.
+the salvage inside the open hold so it is easy to find and click (on by default); and the four colors.
 
-**Colours**: only the ones you notice are settings: the banners, the boxes on the water and the
+**Colors**: only the ones you notice are settings: the banners, the boxes on the water and the
 four sorting boxes, each in its own section. The overlay text, the counter's shading, the wreck
-outlines, the sidebar and the chat lines use fixed colours, to keep the settings short.
+outlines, the sidebar and the chat lines use fixed colors, to keep the settings short.
 
 Favourites, the dropdown choices, which sidebar blocks are folded
 and the Auto spot are kept per character, filed against the id Jagex gives the account rather than
@@ -322,8 +322,8 @@ overlap, a hook parked in the overlap works both wrecks: that overlap is the gre
 "Double spot" (with how many of your hooks are in it, or "Parked"). The game measures reach from the hook rather than the boat (a game update
 changed it to that), so the boxes are about where a hook has to sit, not the whole boat. Your own
 hooks are known, so when every hook on the boat is inside a green box, both on a sloop, the box
-changes to the parked colour and says "Parked"; with only one of two in, the label says so and the
-colour stays. Nudge the boat until it changes. Once parked, the yellow boxes go, to clear the view (a
+changes to the parked color and says "Parked"; with only one of two in, the label says so and the
+color stays. Nudge the boat until it changes. Once parked, the yellow boxes go, to clear the view (a
 setting, on by default). The honest caveat: the reach is taken as 8 tiles from other plugins'
 observations and has not been confirmed from the game's own code, so a box edge may be a tile off.
 If your hook sits in a box and only one wreck is being worked, tell me and I will fix the number.
