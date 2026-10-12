@@ -223,6 +223,27 @@ public class AfkSessionTest
 	}
 
 	@Test
+	public void fullHoldRepeatsWaitWhileTheBoatSails()
+	{
+		// Owner, 2026-10-12: a full hold on the way to the bank needs no nagging; repeats resume once it stops.
+		session.settings().repeatFullMillis = 10_000;
+		session.holdCount(240, tick);
+		ticks(6);
+		assertEquals(1, count(Notice.HOLD_FULL));
+		for (int i = 1; i <= 50; i++)
+		{
+			boatPoint = new WorldPoint(BOAT.getX() + i, BOAT.getY(), 0);
+			tick();
+		}
+		assertEquals("no repeat in 30 s under way", 1, count(Notice.HOLD_FULL));
+		// Ties up: the first repeat comes a whole interval after the boat stopped moving.
+		ticks(AfkSession.PARKED_TICKS + 10);
+		assertEquals(1, count(Notice.HOLD_FULL));
+		ticks(10);
+		assertEquals(2, count(Notice.HOLD_FULL));
+	}
+
+	@Test
 	public void salvageAlreadyInAHoldReadIsNotCountedAgain()
 	{
 		// In game (2026-10-10): a crewmate's salvage at tick 150 was counted at tick 153, after the hold

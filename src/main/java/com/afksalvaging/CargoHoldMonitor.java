@@ -258,6 +258,17 @@ public final class CargoHoldMonitor
 	 */
 	public Level poll(long now, int warnSlots, long repeatMillis)
 	{
+		return poll(now, warnSlots, repeatMillis, false);
+	}
+
+	/**
+	 * Like {@link #poll(long, int, long)}, with the repeats held back while {@code repeatsPaused}: the boat is
+	 * under way, most likely to port with a full hold, which needs no nagging (owner, 2026-10-12). A rise in
+	 * level (nearly full to full) still alerts. The repeat clock restarts while paused, so the first repeat
+	 * after the boat stops comes one whole interval later, not the moment it ties up at the dock.
+	 */
+	public Level poll(long now, int warnSlots, long repeatMillis, boolean repeatsPaused)
+	{
 		Level current = level(warnSlots);
 		if (current == Level.OK)
 		{
@@ -273,6 +284,11 @@ public final class CargoHoldMonitor
 		if (current.compareTo(alerted) < 0)
 		{
 			alerted = current;
+			return null;
+		}
+		if (repeatsPaused)
+		{
+			lastAlertAt = now;
 			return null;
 		}
 		if (repeatMillis > 0 && now - lastAlertAt >= repeatMillis)

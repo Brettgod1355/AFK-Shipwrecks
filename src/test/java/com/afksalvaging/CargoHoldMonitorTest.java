@@ -104,6 +104,31 @@ public class CargoHoldMonitorTest
 	}
 
 	@Test
+	public void repeatsWaitWhilePausedAndRestartTheirClock()
+	{
+		long every = 10_000;
+		monitor.setCapacity(40);
+		monitor.setUsed(40);
+		assertEquals(Level.FULL, monitor.poll(0, 0, every, false));
+		// Under way for 25 s: no repeats at all.
+		assertNull(monitor.poll(10_000, 0, every, true));
+		assertNull(monitor.poll(25_000, 0, every, true));
+		// Stopped: the next repeat is a whole interval after the last paused poll, not at once.
+		assertNull(monitor.poll(26_000, 0, every, false));
+		assertEquals(Level.FULL, monitor.poll(35_000, 0, every, false));
+	}
+
+	@Test
+	public void aRiseInLevelStillAlertsWhilePaused()
+	{
+		monitor.setCapacity(40);
+		monitor.setUsed(37);
+		assertEquals(Level.NEARLY_FULL, monitor.poll(0, 3, 10_000, true));
+		monitor.setUsed(40);
+		assertEquals(Level.FULL, monitor.poll(600, 3, 10_000, true));
+	}
+
+	@Test
 	public void gameMessageCountsAsFullUntilTheNextCount()
 	{
 		monitor.markFullByGame();

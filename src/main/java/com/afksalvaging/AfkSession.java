@@ -1042,7 +1042,9 @@ public final class AfkSession
 		lastTickNow = now;
 
 		// Alerts.
-		CargoHoldMonitor.Level alert = monitor.poll(now, settings.warnSlotsRemaining, settings.repeatFullMillis);
+		// Under way on the own boat: the full-hold repeats wait until it stands still again (owner, 2026-10-12).
+		boolean underWay = aboard && !parked;
+		CargoHoldMonitor.Level alert = monitor.poll(now, settings.warnSlotsRemaining, settings.repeatFullMillis, underWay);
 		if (alert == CargoHoldMonitor.Level.FULL)
 		{
 			notices.add(Notice.HOLD_FULL);
