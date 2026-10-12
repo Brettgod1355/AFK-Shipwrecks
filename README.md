@@ -149,6 +149,15 @@ marked.
   dropped, alched or moved for you, and the menu entries they add send nothing to the game. While
   the cargo hold is open only the Deposit boxes show, in the inventory panel beside it, so what to
   deposit stands out right where you deposit it and nothing else gets in the way.
+- **Lights up your next stop on deck.** Carrying salvage, the salvaging station gets an amber outline
+  (the cargo hold, if your boat has no station yet), and it gets brighter once your inventory is full
+  off the hook. After sorting, drop your Drop items and alch your Alch items first; then the cargo hold
+  lights up in the Deposit colour for anything to deposit, or when there is more salvage in it to sort.
+  With nothing left to do and a wreck in reach, a hook lights up green as well, so you can pick: go
+  again from the hold, or get on a hook yourself. It picks a free hook, or else the one your weakest
+  crewmate is on (clicking a hook a crewmate is working sends them off to rest). Open the hold and
+  close it without taking anything, and only the hook stays lit. All of it is just outlines; you do
+  every click.
 - **Says when it was updated.** The first time you log in after the Plugin Hub has updated the
   plugin, one line in chat says what the new version brings. A setting turns it off.
 
@@ -205,7 +214,8 @@ aside while a game interface fills the middle of the screen (the cargo hold, a s
 journal, a diary, the collection log, the settings, the world map) and come back when it closes.
 
 **Full hold**: the full-hold notification and how often it repeats, then the early warning (slots
-left, 5 by default, 0 for none; and whether it plays a sound).
+left, 5 by default, 0 for none; and whether it plays a sound). The repeats wait while your boat is
+moving, so sailing a full hold to the bank is quiet; they pick up again a full interval after you stop.
 
 **Banner**: show it, flash it, its size (150% by default), how long it stays, and colours for the
 full, nearly-full and reminder banners.
@@ -259,8 +269,9 @@ route when boarding (the spot itself is marked in the sidebar).
 **Inventory sorting**: box inventory items; where (on my boat at a salvaging spot, whenever aboard,
 everywhere); the alch threshold; keep instead when the GE price beats the alch value by a margin
 (off by default); the shift-right-click AFK Shipwrecks menu, shown only on your own boat; whether kept items get a box at all (off by default);
-highlighting the cargo hold itself in the Deposit colour (off by default); boxing the salvage
-inside the open hold so it is easy to find and click (on by default); and the four colours.
+highlight where salvage goes (Automatic by default, or only the station, only the cargo hold, or
+off); point to a hook (a free one, or else your weakest crewmate's; free hooks only; or off); boxing
+the salvage inside the open hold so it is easy to find and click (on by default); and the four colours.
 
 **Colours**: only the ones you notice are settings: the banners, the boxes on the water and the
 four sorting boxes, each in its own section. The overlay text, the counter's shading, the wreck
@@ -329,8 +340,8 @@ Here is the honest version, because a countdown invites more trust than a counte
    salvage!"*, one for each Sailing XP drop that matches a crewmate's share (a crewmate earns you
    10% of the wreck's XP per point of deckhandiness, so the size of the drop says who earned it;
    this is how Cabin Boy Jenkins, who only says "Wooo", is counted), and your own deposits and
-   withdrawals from your inventory changing. The tally is remembered per boat. Opening the hold
-   resyncs it instantly.
+   withdrawals from your inventory changing. The tally is remembered per boat, and so is the hold's
+   size, so the counter has its total as soon as you log in. Opening the hold resyncs it instantly.
 2. **The rate.** It starts from the wiki's success tables for your wreck, hook and Sailing level
    and learns a correction from what actually arrives, remembered per wreck between sessions.
    Expect the first countdown to be within about 20%; it tightens over the next quarter hour.

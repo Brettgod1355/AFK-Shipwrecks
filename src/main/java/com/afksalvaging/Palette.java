@@ -42,6 +42,10 @@ final class Palette
 
 	/** The empty-hook guide's flashing boxes: bright neon green (owner, 2026-10-07). */
 	static final Color HOOK_GUIDE = new Color(57, 255, 20);
+	/** The salvage highlight on the salvaging station: where carried salvage gets sorted (owner, 2026-10-12). */
+	static final Color GUIDE_STATION = new Color(255, 170, 40);
+	/** The salvage highlight on a hook: the same green as the empty-hook guide, since both mean "a hook". */
+	static final Color GUIDE_HOOK = HOOK_GUIDE;
 	/** The chat lines' colour on the parchment chatbox, as a {@code <col=>} tag value (30, 90, 168). */
 	static final String CHAT_TIP = "1e5aa8";
 	/** The chat lines' colour on the transparent chatbox, where the dark blue is hard to read (128, 192, 255). */

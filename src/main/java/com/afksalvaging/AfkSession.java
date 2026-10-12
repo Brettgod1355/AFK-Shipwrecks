@@ -298,6 +298,8 @@ public final class AfkSession
 	private boolean boostRunningOutNotified;
 	/** The boat's hit points last tick, and whether the player was poisoned then. */
 	private int lastBoatHp = -1;
+	/** The kind of salvage the crew last put into the hold, until the plugin has taken note of it. */
+	private ShipwreckType crewSalvageType;
 	private boolean lastPoisoned;
 	/** Until when the last danger is shown, what it was, and when the last danger notification went out. */
 	private long dangerUntil = -1;
@@ -437,6 +439,18 @@ public final class AfkSession
 	}
 
 	/** The ghost crewmate wailed. */
+	/**
+	 * The kind of salvage the crew have put into the hold since the last call, or null for none; the call
+	 * clears it. The hold's contents are only read while it is open, so this is how the plugin knows there is
+	 * salvage waiting in it in between.
+	 */
+	public ShipwreckType takeCrewSalvage()
+	{
+		ShipwreckType taken = crewSalvageType;
+		crewSalvageType = null;
+		return taken;
+	}
+
 	public void ghostLine(int tick)
 	{
 		if (aboard)
@@ -749,6 +763,7 @@ public final class AfkSession
 		sortingFinishTick = -1;
 		lastActivity = PlayerActivity.IDLE;
 		lastBoatPoint = null;
+		crewSalvageType = null;
 		stillTicks = 0;
 		hazardous = false;
 		hazardAt = null;
@@ -921,6 +936,12 @@ public final class AfkSession
 				// The player's own salvage goes to their inventory; salvage hooked before the game said
 				// "full" was already in the hold when it said so.
 				continue;
+			}
+			// The crew's salvage goes into the hold: the salvage highlight can send the player there for it.
+			ShipwreckType hooked = type != null ? type : rateWreck;
+			if (hooked != null)
+			{
+				crewSalvageType = hooked;
 			}
 			if (monitor.isFullByEstimate())
 			{

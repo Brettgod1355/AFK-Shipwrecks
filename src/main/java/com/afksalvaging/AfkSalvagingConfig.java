@@ -1020,16 +1020,32 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "highlightCargoHold",
-		name = "Highlight the cargo hold",
-		description = "Outline the cargo hold on your boat in the Deposit colour, so where the cyan-boxed items go is marked "
-			+ "the same way.",
+		keyName = "salvageGuide",
+		name = "Highlight where salvage goes",
+		description = "On your boat, outline the next stop for your salvage. Automatic: the salvaging station while you "
+			+ "carry salvage (the cargo hold if your boat has no station), brighter once your inventory is full; after "
+			+ "sorting, drop the Drop items and alch the Alch items first, then the cargo hold lights up for Deposit "
+			+ "items, or for more salvage. Salvaging station or Cargo hold light only that one.",
 		section = SORTING,
 		position = 10
 	)
-	default boolean highlightCargoHold()
+	default GuideTarget salvageGuide()
 	{
-		return false;
+		return GuideTarget.AUTOMATIC;
+	}
+
+	@ConfigItem(
+		keyName = "guideHook",
+		name = "Point to a hook",
+		description = "When there is nothing left to sort or deposit and a wreck is in reach, also outline a hook you could "
+			+ "hook from yourself: a free one, or else the one with your weakest crewmate (clicking it sends them to "
+			+ "rest). Opening the cargo hold and taking nothing out leaves only the hook lit.",
+		section = SORTING,
+		position = 11
+	)
+	default GuideHook guideHook()
+	{
+		return GuideHook.WEAKEST_CREW;
 	}
 
 	@ConfigItem(
@@ -1038,7 +1054,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "While the cargo hold is open, box the salvage inside it so it is easy to see and click among the "
 			+ "cannonballs and kits. Nothing else in the hold is boxed.",
 		section = SORTING,
-		position = 11
+		position = 12
 	)
 	default boolean boxHoldSalvage()
 	{
@@ -1071,6 +1087,16 @@ public interface AfkSalvagingConfig extends Config
 	default Color dropColor()
 	{
 		return new Color(240, 80, 80, 220);
+	}
+
+	/**
+	 * 2.1's "Highlight the cargo hold" (off by default), folded into "Highlight where salvage goes" in 2.2, which
+	 * lights the hold whenever Deposit items are carried. Kept hidden and unread so the key is never reused.
+	 */
+	@ConfigItem(keyName = "highlightCargoHold", name = "", description = "", hidden = true)
+	default boolean highlightCargoHold()
+	{
+		return false;
 	}
 
 	/** Item ids the game has said the cargo hold accepts, learned while it is open. */

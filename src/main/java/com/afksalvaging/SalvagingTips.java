@@ -86,7 +86,11 @@ public final class SalvagingTips
 				+ "items\" is on). Anything else gets none.",
 			"Shift-right-click an item to mark it, or type its name in the Sorting tab. \"Add suggested drops\" marks "
 				+ "74 common junk items, after asking. Nothing is ever dropped or alched for you.",
-			"With the hold open only the deposit boxes show, and the salvage in the hold gets an amber box.")
+			"With the hold open only the deposit boxes show, and the salvage in the hold gets an amber box.",
+			"Your next stop lights up on deck: the station (amber) while you carry salvage, then, once drop and alch "
+				+ "items are gone, the hold for deposits or more salvage, and a hook (green) you could take yourself.",
+			"Open the hold and take nothing out, and only the hook stays lit. \"Point to a hook\" picks a free one, or "
+				+ "the weakest crewmate's: clicking a crewed hook sends them to rest.")
 	));
 
 	private SalvagingTips()

@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -258,7 +259,7 @@ public class AfkSalvagingPlugin extends Plugin
 	private SalvageBoxOverlay boxOverlay;
 
 	@Inject
-	private CargoHoldOverlay holdOverlay;
+	private SalvageGuideOverlay holdOverlay;
 
 	@Inject
 	private SalvagingWorldOverlay worldOverlay;
@@ -331,6 +332,14 @@ public class AfkSalvagingPlugin extends Plugin
 	private final int[] capacityFromInterface = new int[CargoHoldContainers.BOAT_SLOTS + 1];
 	/** Hook objects on the followed boat, by object hash. */
 	private final Map<Long, GameObject> hookObjects = new HashMap<>();
+	/** Salvaging station objects on the followed boat, by object hash, for the salvage highlight. */
+	private final Map<Long, GameObject> stationObjects = new HashMap<>();
+	/** What the salvage highlight points at this tick (owner, 2026-10-12). */
+	private SalvageGuide.Result guide = SalvageGuide.Result.NONE;
+	/** Whether the hold window was open last tick. */
+	private boolean holdWindowWasOpen;
+	/** The hold was opened and closed with nothing taken: the highlight points at a hook only. */
+	private boolean holdTurnedDown;
 	private final Map<Integer, Crewmate> crewCache = new HashMap<>();
 	/** Boat slot the monitor currently describes, or 0 when unknown. */
 	private int monitoredSlot;
@@ -578,6 +587,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			// Object hashes carry no world view, so the same hook on another boat must not evict ours.
 			hookObjects.remove(object.getHash());
+			stationObjects.remove(object.getHash());
 		}
 		if (object.getWorldView().isTopLevel())
 		{
@@ -607,6 +617,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			session.boat().clear();
 			hookObjects.clear();
+			stationObjects.clear();
 		}
 	}
 
@@ -638,6 +649,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			session.boat().clear();
 			hookObjects.clear();
+			stationObjects.clear();
 		}
 	}
 
@@ -981,6 +993,11 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			give(notice, now);
 		}
+		ShipwreckType crewSalvage = session.takeCrewSalvage();
+		if (crewSalvage != null && holdItemIds.add(crewSalvage.getSalvageItemId()))
+		{
+			saveHoldItems();
+		}
 		if (updateMessage != null)
 		{
 			if (config.updateMessage())
@@ -1003,6 +1020,7 @@ public class AfkSalvagingPlugin extends Plugin
 			sortCache.clear();
 		}
 		sortActive = decideSortActive();
+		updateGuide(in, boatEntity);
 		if (spotsPanel != null && tick % SIDEBAR_REFRESH_TICKS == 0)
 		{
 			spotsPanel.setPosition(in.playerPoint);
@@ -1271,6 +1289,148 @@ public class AfkSalvagingPlugin extends Plugin
 				AfkSession.View view = session.view();
 				return isOwnBoat() && (view.wrecksUp > 0 || view.higherWrecksUp > 0 || !session.wrecks().presentSites().isEmpty());
 		}
+	}
+
+	/** What the salvage highlight points at this tick. Client thread. */
+	public SalvageGuide.Result guide()
+	{
+		return guide;
+	}
+
+	/** The salvaging station objects on the player's boat. Client thread. */
+	public Collection<GameObject> stationObjects()
+	{
+		return stationObjects.values();
+	}
+
+	/** A hook object on the player's boat by its hash, or null. Client thread. */
+	public GameObject hookObject(long hash)
+	{
+		return hookObjects.get(hash);
+	}
+
+	/**
+	 * Works out the salvage highlight once a tick (owner, 2026-10-12), so the overlay only draws: the inventory's
+	 * salvage and sort boxes, whether the hold was just turned down, and who works each hook.
+	 */
+	private void updateGuide(AfkSession.TickInputs in, WorldEntity boat)
+	{
+		ItemContainer inventory = client.getItemContainer(InventoryID.INV);
+		Item[] items = inventory == null ? null : inventory.getItems();
+		SalvageGuide.Inputs g = new SalvageGuide.Inputs();
+		int occupied = 0;
+		if (items != null)
+		{
+			for (Item item : items)
+			{
+				if (item == null || item.getId() <= -1 || item.getQuantity() <= 0)
+				{
+					continue;
+				}
+				occupied++;
+				if (ShipwreckType.fromSalvageItemId(item.getId()) != null)
+				{
+					g.inventorySalvage += item.getQuantity();
+					continue;
+				}
+				// The boxes only count while they show: an item the player cannot see boxed holds nothing back.
+				SortRule rule = sortActive ? sortRule(item.getId()) : null;
+				if (rule == SortRule.DROP)
+				{
+					g.dropBoxed++;
+				}
+				else if (rule == SortRule.ALCH)
+				{
+					g.alchBoxed++;
+				}
+				else if (rule == SortRule.HOLD)
+				{
+					g.depositBoxed++;
+				}
+			}
+		}
+		boolean open = in.cargoInterfaceOpen;
+		if (!open && holdWindowWasOpen)
+		{
+			// Closed with no salvage carried: nothing taken out, the hold turned down for now.
+			holdTurnedDown = g.inventorySalvage == 0;
+		}
+		holdWindowWasOpen = open;
+		PlayerActivity activity = session.view().activity;
+		boolean atHook = activity != null && activity.isAtHook();
+		if (open || atHook || g.inventorySalvage > 0 || !in.sailing || !in.ownBoat)
+		{
+			holdTurnedDown = false;
+		}
+
+		g.mode = config.salvageGuide();
+		g.hookChoice = config.guideHook();
+		g.ownBoat = in.sailing && in.ownBoat;
+		g.hasStation = session.boat().hasStation();
+		g.inventoryFull = occupied >= AfkSession.INVENTORY_SLOTS;
+		g.holdHasSalvage = holdHasSalvage();
+		g.holdTurnedDown = holdTurnedDown;
+		g.playerAtHook = atHook;
+		g.wreckInReach = session.view().wrecksUp > 0;
+		g.hooks = boat == null ? Collections.emptyList() : guideHooks(in.tick);
+		// The overlays step aside while a game interface fills the middle of the screen, this one too.
+		guide = g.ownBoat && !mainInterfaceOpen() ? SalvageGuide.decide(g) : SalvageGuide.Result.NONE;
+	}
+
+	/** Whether the hold is known to hold salvage: read when it was open, or put there since. */
+	private boolean holdHasSalvage()
+	{
+		for (int id : holdItemIds)
+		{
+			if (ShipwreckType.fromSalvageItemId(id) != null)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Each hook on the boat with the deckhandiness of the crewmate working it, and how far the player is. */
+	private List<SalvageGuide.HookFacts> guideHooks(int tick)
+	{
+		List<BoatFacilities.Hook> hooks = session.boat().hooks();
+		CrewRoster roster = session.roster();
+		Player me = client.getLocalPlayer();
+		LocalPoint mine = me == null ? null : me.getLocalLocation();
+		List<SalvageGuide.HookFacts> facts = new ArrayList<>();
+		for (BoatFacilities.Hook hook : hooks)
+		{
+			int crew = -1;
+			for (int slot = 0; slot < CrewRoster.SLOTS; slot++)
+			{
+				int position = roster.getPosition(slot);
+				if (roster.isOnHook(slot, tick) && CrewAssignment.isHook(position) && worksHook(position, hook, hooks.size()))
+				{
+					Crewmate crewmate = roster.getCrewmate(slot);
+					crew = crewmate == null ? 0 : crewmate.effectiveDeckhandiness();
+				}
+			}
+			GameObject object = hookObjects.get(hook.getHash());
+			LocalPoint at = object == null ? null : object.getLocalLocation();
+			int distance = at == null || mine == null ? Integer.MAX_VALUE : at.distanceTo(mine);
+			facts.add(new SalvageGuide.HookFacts(hook.getHash(), hook.getTier(), crew, distance));
+		}
+		return facts;
+	}
+
+	/** Whether a crewmate on this hook position works this hook: a sloop's two positions are its two hooks. */
+	static boolean worksHook(int position, BoatFacilities.Hook hook, int hookCount)
+	{
+		if (position == CrewAssignment.HOOK_SLOOP_1)
+		{
+			return !hook.isSecond();
+		}
+		if (position == CrewAssignment.HOOK_SLOOP_2)
+		{
+			return hook.isSecond();
+		}
+		// A skiff's one hook.
+		return position == CrewAssignment.HOOK_SKIFF && hookCount == 1;
 	}
 
 	/** The box for an item, or null for one the boxes never apply to. Client thread. */
@@ -2152,7 +2312,11 @@ public class AfkSalvagingPlugin extends Plugin
 		cargoHoldObjects.clear();
 		wreckObjects.clear();
 		Arrays.fill(capacityFromInterface, CargoHoldCapacity.UNKNOWN);
+		guide = SalvageGuide.Result.NONE;
+		holdWindowWasOpen = false;
+		holdTurnedDown = false;
 		hookObjects.clear();
+		stationObjects.clear();
 		monitoredSlot = 0;
 		alertShownAt = 0;
 		reminderShownAt = 0;
@@ -2173,6 +2337,7 @@ public class AfkSalvagingPlugin extends Plugin
 		cargoHoldObjects.clear();
 		session.boat().clear();
 		hookObjects.clear();
+		stationObjects.clear();
 	}
 
 	/**
@@ -2274,6 +2439,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			session.boat().follow(view.getId());
 			hookObjects.clear();
+			stationObjects.clear();
 		}
 		scanBoat(view);
 	}
@@ -2369,12 +2535,22 @@ public class AfkSalvagingPlugin extends Plugin
 			{
 				hookObjects.put(object.getHash(), object);
 			}
+			else if (BoatFacilities.isBoatStation(id))
+			{
+				stationObjects.put(object.getHash(), object);
+			}
 		}
 		else if (worldViewId == session.boat().getWorldViewId() && SalvagingHookTier.fromObjectId(resolved) != null)
 		{
 			// A hook shown through a multi-state object: take the variant on display.
 			session.boat().add(worldViewId, object.getHash(), resolved);
 			hookObjects.put(object.getHash(), object);
+		}
+		else if (worldViewId == session.boat().getWorldViewId() && BoatFacilities.isBoatStation(resolved))
+		{
+			// The same for a station shown through a multi-state object.
+			session.boat().add(worldViewId, object.getHash(), resolved);
+			stationObjects.put(object.getHash(), object);
 		}
 	}
 
@@ -2416,7 +2592,9 @@ public class AfkSalvagingPlugin extends Plugin
 			boolean learned = false;
 			for (int id : HoldItems.gone(lastInventory, counts))
 			{
-				if (!HoldWhitelist.TAKES_NO_SPACE.contains(id) && client.getItemDefinition(id).isStackable())
+				// Salvage too, so the salvage highlight knows the hold holds some (owner, 2026-10-12).
+				boolean salvageItem = ShipwreckType.fromSalvageItemId(id) != null;
+				if (!HoldWhitelist.TAKES_NO_SPACE.contains(id) && (salvageItem || client.getItemDefinition(id).isStackable()))
 				{
 					learned |= holdItemIds.add(id);
 				}

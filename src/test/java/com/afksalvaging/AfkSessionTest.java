@@ -430,6 +430,37 @@ public class AfkSessionTest
 	}
 
 	@Test
+	public void takingOverACrewedHookRaisesNoReminderUntilThePlayerLeavesIt()
+	{
+		// Owner, 2026-10-12: clicking a hook a crewmate is on dismisses them and they go idle. That is the
+		// player on the hook, not a hook gone empty or the player's hook standing idle.
+		twoCrewOnHooks();
+		session.settings().graceMillis = 3_000;
+		ticks(5);
+		session.roster().setPosition(1, CrewAssignment.NONE);
+		animation = SALVAGING;
+		for (int i = 0; i < 100; i++)
+		{
+			if (i % 10 == 0)
+			{
+				session.crewLine("Cabin Boy Jenkins", tick);
+			}
+			tick();
+		}
+		assertTrue(session.view().playerAtHook);
+		assertEquals(0, session.view().emptyHooks);
+		assertEquals(0, count(Notice.HOOK_EMPTY));
+		assertEquals(0, count(Notice.HOOK_IDLE));
+		assertEquals(0, count(Notice.BETTER_CREW));
+
+		// The player steps off: now the hook is empty and the idle crewmate can go back on it.
+		animation = -1;
+		ticks(PlayerActivity.Detector.HOLD_TICKS + 8);
+		assertEquals(1, count(Notice.HOOK_EMPTY));
+		assertEquals(HookWatch.Reason.SPARE_CREW, session.view().reminder);
+	}
+
+	@Test
 	public void aCrewmateWhoCannotUseTheHookIsNotOffered()
 	{
 		session.roster().setCrewmate(0, JENKINS);
