@@ -31,6 +31,27 @@ public class WreckTrackerTest
 	private final WreckTracker tracker = new WreckTracker();
 
 	@Test
+	public void theWrecksInViewAreBuiltOnceAndRebuiltWhenOneComesOrGoes()
+	{
+		// Several overlays ask every frame; the list is only rebuilt when a wreck appears or goes.
+		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);
+		List<WreckTracker.Site> first = tracker.presentSites();
+		assertEquals(1, first.size());
+		assertTrue(first == tracker.presentSites());
+		tracker.observe(FAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 600);
+		assertEquals(2, tracker.presentSites().size());
+		tracker.despawn(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 1200);
+		assertEquals(1, tracker.presentSites().size());
+		assertEquals(FAR, tracker.presentSites().get(0).getPoint());
+		tracker.markAllAbsent(1800);
+		assertTrue(tracker.presentSites().isEmpty());
+		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 2400);
+		assertEquals(1, tracker.presentSites().size());
+		tracker.clear();
+		assertTrue(tracker.presentSites().isEmpty());
+	}
+
+	@Test
 	public void findsWrecksInRangeOfAnyHookOnTheSamePlane()
 	{
 		tracker.observe(NEAR, ObjectID.SAILING_MERCHANT_SHIPWRECK, 0);

@@ -216,6 +216,8 @@ public final class WreckTracker
 		}
 	}
 
+	/** The sites in view, built on first use after a change; null until then. */
+	private List<Site> presentCache;
 	private final Map<WorldPoint, Site> sites = new HashMap<>();
 	private final DecayingSum uptime = new DecayingSum(AVAILABILITY_TAU_MILLIS);
 	private final DecayingSum elapsed = new DecayingSum(AVAILABILITY_TAU_MILLIS);
@@ -264,6 +266,7 @@ public final class WreckTracker
 		site.active = activeNow;
 		site.present = true;
 		site.lastSeenAt = now;
+		presentCache = null;
 		return true;
 	}
 
@@ -278,12 +281,14 @@ public final class WreckTracker
 		{
 			site.present = false;
 			site.lastSeenAt = now;
+			presentCache = null;
 		}
 	}
 
 	/** The scene is being reloaded: nothing is in view until it is seen again. */
 	public void markAllAbsent(long now)
 	{
+		presentCache = null;
 		for (Site site : sites.values())
 		{
 			if (site.present)
@@ -538,21 +543,29 @@ public final class WreckTracker
 	/** The sites in view right now, wrecks up or sunk, in no particular order. */
 	public List<Site> presentSites()
 	{
-		List<Site> list = new ArrayList<>();
-		for (Site site : sites.values())
+		// Several overlays ask every frame; the answer only changes when a wreck appears or goes, so it is
+		// built once per change. The same list comes back until then, which also lets a caller cache what it
+		// works out from it.
+		if (presentCache == null)
 		{
-			if (site.present)
+			List<Site> list = new ArrayList<>();
+			for (Site site : sites.values())
 			{
-				list.add(site);
+				if (site.present)
+				{
+					list.add(site);
+				}
 			}
+			presentCache = Collections.unmodifiableList(list);
 		}
-		return list;
+		return presentCache;
 	}
 
 	/** Forgets all sites and history, for example after a world hop. */
 	public void clear()
 	{
 		sites.clear();
+		presentCache = null;
 		uptime.reset();
 		elapsed.reset();
 		lastSinkAt = 0;

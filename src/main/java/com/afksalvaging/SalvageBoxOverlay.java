@@ -45,6 +45,10 @@ public class SalvageBoxOverlay extends Overlay
 	private final AfkSalvagingPlugin plugin;
 	private final AfkSalvagingConfig config;
 
+	/** The double spots last found, and the wreck list they were found from. */
+	private List<WreckTracker.Site> doublesFor;
+	private List<DoubleSpot> cachedDoubles;
+
 	@Inject
 	SalvageBoxOverlay(Client client, AfkSalvagingPlugin plugin, AfkSalvagingConfig config)
 	{
@@ -77,8 +81,14 @@ public class SalvageBoxOverlay extends Overlay
 		}
 		int reach = AfkSession.HOOK_RANGE;
 		List<WorldPoint> hooks = plugin.hookPoints();
-		// Found whether or not the green boxes are drawn: parked is parked either way.
-		List<DoubleSpot> doubles = DoubleSpot.find(sites, reach);
+		// Found whether or not the green boxes are drawn: parked is parked either way. Worked out again only
+		// when the wrecks in view change: the tracker hands back the same list until then.
+		if (sites != doublesFor)
+		{
+			doublesFor = sites;
+			cachedDoubles = DoubleSpot.find(sites, reach);
+		}
+		List<DoubleSpot> doubles = cachedDoubles;
 		int[] hooksInside = new int[doubles.size()];
 		boolean parkedSomewhere = false;
 		for (int i = 0; i < doubles.size(); i++)

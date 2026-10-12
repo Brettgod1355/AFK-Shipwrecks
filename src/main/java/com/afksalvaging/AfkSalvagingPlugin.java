@@ -336,6 +336,9 @@ public class AfkSalvagingPlugin extends Plugin
 	private final Map<Long, GameObject> stationObjects = new HashMap<>();
 	/** What the salvage highlight points at this tick (owner, 2026-10-12). */
 	private SalvageGuide.Result guide = SalvageGuide.Result.NONE;
+	/** The client cycle {@link #mainInterfaceOpen()} was last worked out in, and its answer then. */
+	private int mainInterfaceCycle = Integer.MIN_VALUE;
+	private boolean mainInterfaceOpenCached;
 	/** Whether the hold window was open last tick. */
 	private boolean holdWindowWasOpen;
 	/** The hold was opened and closed with nothing taken: the highlight points at a hook only. */
@@ -2853,6 +2856,19 @@ public class AfkSalvagingPlugin extends Plugin
 	 * into other containers, so they do not count. Client thread only.
 	 */
 	public boolean mainInterfaceOpen()
+	{
+		// Three overlays ask every frame and the plugin once a tick; the component table is walked once per
+		// client cycle at most.
+		int cycle = client.getGameCycle();
+		if (cycle != mainInterfaceCycle)
+		{
+			mainInterfaceCycle = cycle;
+			mainInterfaceOpenCached = readMainInterfaceOpen();
+		}
+		return mainInterfaceOpenCached;
+	}
+
+	private boolean readMainInterfaceOpen()
 	{
 		for (WidgetNode open : client.getComponentTable())
 		{
