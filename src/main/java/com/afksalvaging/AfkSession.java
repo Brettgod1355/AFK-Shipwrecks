@@ -261,6 +261,11 @@ public final class AfkSession
 	/** The last tick the cargo hold interface was open; crew XP right after it is held-back pay. */
 	private int holdOpenTick = Integer.MIN_VALUE / 2;
 	private static final int HELD_BACK_XP_TICKS = 2;
+	/**
+	 * Salvage the hold's reads showed arriving while it was open (not a deposit): the only salvage whose XP the
+	 * game can hold back. With none, XP just after closing is a new salvage (in game, 2026-10-13, 16:21).
+	 */
+	private int landedWhileOpen;
 	/** Salvage a hold read showed before its event was counted, and the tick of that read. */
 	private int heldAhead;
 	/** More than this between reads is not salvage landing early (a login, a deposit). */
@@ -480,7 +485,7 @@ public final class AfkSession
 		{
 			return;
 		}
-		if (tick - holdOpenTick <= HELD_BACK_XP_TICKS)
+		if (tick - holdOpenTick <= HELD_BACK_XP_TICKS && landedWhileOpen > 0)
 		{
 			// The game holds the crew's XP back while the hold is open and pays it all on closing ("You gain
 			// some experience by watching your crew work."). It is for salvage the hold reads already counted
@@ -489,6 +494,7 @@ public final class AfkSession
 			stats.sailingXp += delta;
 			// What the open hold's reads and lines were still owed is in this pay too.
 			heldAhead = 0;
+			landedWhileOpen = 0;
 			events.heldBackXpPaid();
 			return;
 		}
@@ -629,6 +635,11 @@ public final class AfkSession
 			heldAhead += ahead;
 			heldAheadTick = tick;
 		}
+		if (monitor.hasCount() && ahead > 0 && !depositPending)
+		{
+			// The hold is read only while its window is open: this salvage's XP may be held back until it closes.
+			landedWhileOpen += ahead;
+		}
 		monitor.setUsed(used);
 		lastContainerTick = tick;
 		if (showsPending)
@@ -748,6 +759,7 @@ public final class AfkSession
 		aboard = false;
 		lastContainerTick = Integer.MIN_VALUE;
 		holdOpenTick = Integer.MIN_VALUE / 2;
+		landedWhileOpen = 0;
 		heldAhead = 0;
 		heldAheadTick = Integer.MIN_VALUE;
 		fullLineTick = Integer.MIN_VALUE;
@@ -809,6 +821,11 @@ public final class AfkSession
 		if (in.cargoInterfaceOpen)
 		{
 			holdOpenTick = in.tick;
+		}
+		else if (in.tick - holdOpenTick > HELD_BACK_XP_TICKS)
+		{
+			// Any held-back pay has come by now; the next opening starts afresh.
+			landedWhileOpen = 0;
 		}
 
 		resolvePendingHoldAction();

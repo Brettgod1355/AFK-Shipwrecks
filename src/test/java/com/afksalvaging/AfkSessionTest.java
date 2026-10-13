@@ -290,6 +290,29 @@ public class AfkSessionTest
 	}
 
 	@Test
+	public void xpJustAfterClosingIsNewSalvageWhenNoneLandedWhileOpen()
+	{
+		// In game (2026-10-13, 16:21, Air Marshal): the hold opened at 18, 8 were taken out (10), the hold
+		// closed, and two ticks later a crew salvage paid its XP. Nothing had landed while the hold was open, so
+		// nothing was held back, but the XP was taken for held-back pay and the count ran one low (11 counted,
+		// 12 in the hold at the next opening).
+		twoCrewOnHooks();
+		ticks(10);
+		session.holdCount(18, tick);
+		interfaceOpen = true;
+		ticks(1);
+		session.holdCount(18, tick);
+		ticks(1);
+		session.holdCount(10, tick);
+		ticks(1);
+		interfaceOpen = false;
+		ticks(2);
+		session.sailingXp(80, tick);
+		ticks(4);
+		assertEquals(11, session.monitor().getUsed());
+	}
+
+	@Test
 	public void salvageAReadShowedEarlyIsNotCountedWhenItsEventComesLate()
 	{
 		// In game (2026-10-10, 21:26): a salvage with no crew line showed in a hold read, and its XP came a
