@@ -7,3 +7,6 @@ out/
 .env*
 *.log
 .DS_Store
+
+# Black Box recordings for the local replay test; never committed (owner, 2026-10-13)
+/recordings/
