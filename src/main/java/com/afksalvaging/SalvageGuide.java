@@ -125,6 +125,15 @@ public final class SalvageGuide
 		{
 			return targets.isEmpty();
 		}
+
+		/**
+		 * The station alone, or nothing: what shows while the cargo hold window is open, since the station can be
+		 * clicked to sort straight from it (owner, 2026-10-13). The hold and hook wait until the window closes.
+		 */
+		public Result stationOnly()
+		{
+			return shows(Target.STATION) ? new Result(Collections.singletonList(Target.STATION), 0, strong) : NONE;
+		}
 	}
 
 	private SalvageGuide()

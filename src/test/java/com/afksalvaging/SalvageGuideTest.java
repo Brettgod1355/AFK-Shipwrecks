@@ -49,6 +49,26 @@ public class SalvageGuideTest
 	}
 
 	@Test
+	public void withTheHoldOpenOnlyTheStationShows()
+	{
+		in.inventorySalvage = 28;
+		in.inventoryFull = true;
+		Result r = SalvageGuide.decide(in).stationOnly();
+		assertEquals(Collections.singletonList(Target.STATION), r.getTargets());
+		assertTrue(r.isStrong());
+
+		in.inventorySalvage = 0;
+		in.inventoryFull = false;
+		in.holdHasSalvage = true;
+		assertFalse(SalvageGuide.decide(in).isEmpty());
+		assertTrue(SalvageGuide.decide(in).stationOnly().isEmpty());
+
+		in.inventorySalvage = 5;
+		in.mode = GuideTarget.HOLD;
+		assertTrue(SalvageGuide.decide(in).stationOnly().isEmpty());
+	}
+
+	@Test
 	public void aFullInventoryOfSalvageIsTheStrongLook()
 	{
 		in.inventorySalvage = 28;

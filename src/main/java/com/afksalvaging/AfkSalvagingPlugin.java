@@ -1377,8 +1377,21 @@ public class AfkSalvagingPlugin extends Plugin
 		g.playerAtHook = atHook;
 		g.wreckInReach = session.view().wrecksUp > 0;
 		g.hooks = boat == null ? Collections.emptyList() : guideHooks(in.tick);
-		// The overlays step aside while a game interface fills the middle of the screen, this one too.
-		guide = g.ownBoat && !mainInterfaceOpen() ? SalvageGuide.decide(g) : SalvageGuide.Result.NONE;
+		// The overlays step aside while a game interface fills the middle of the screen, this one too, except
+		// for the station while the cargo hold window is open: salvage just taken out is sorted by clicking the
+		// station straight from that window (owner, 2026-10-13).
+		if (!g.ownBoat)
+		{
+			guide = SalvageGuide.Result.NONE;
+		}
+		else if (open)
+		{
+			guide = SalvageGuide.decide(g).stationOnly();
+		}
+		else
+		{
+			guide = mainInterfaceOpen() ? SalvageGuide.Result.NONE : SalvageGuide.decide(g);
+		}
 	}
 
 	/** Whether the hold is known to hold salvage: read when it was open, or put there since. */

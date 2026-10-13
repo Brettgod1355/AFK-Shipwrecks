@@ -156,8 +156,9 @@ marked.
   With nothing left to do and a wreck in reach, a hook lights up green as well, so you can pick: go
   again from the hold, or get on a hook yourself. It picks a free hook, or else the one your weakest
   crewmate is on (clicking a hook a crewmate is working sends them off to rest). Open the hold and
-  close it without taking anything, and only the hook stays lit. All of it is just outlines; you do
-  every click.
+  close it without taking anything, and only the hook stays lit. While the hold is open, only the
+  station shows, as soon as you take salvage out, so you can click it to sort without closing the
+  hold first. All of it is just outlines; you do every click.
 - **Says when it was updated.** The first time you log in after the Plugin Hub has updated the
   plugin, one line in chat says what the new version brings. A setting turns it off.
 
