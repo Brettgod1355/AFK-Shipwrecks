@@ -1,12 +1,27 @@
 # AFK Shipwrecks
 
-A RuneLite plugin for Sailing. Park at a shipwreck, put your crew on the hooks, and it tells you
-how long until the cargo hold is full, then tells you loudly when it is.
+An all-in-one plugin for salvaging in Sailing, whether you're fully AFK or working the hooks
+yourself. Park at a shipwreck, put your crew on the hooks, and it tells you how long until the
+cargo hold is full, then tells you loudly when it is. Along the way it shows where to park, which
+hook has gone empty, what to do with your inventory and where to click next on deck.
 
-It grew out of Cargo Hold Alert, and everything that plugin did is still here: the full-hold
-alert, the banner, the early warning and the cargo counter. What is new is the timer and the
-things an AFK salvager actually needs to hear about: a hook standing empty, the crew having
-stopped, and the fact that your own hook does not restart itself.
+It started life as Cargo Hold Alert, and everything that plugin did is still here.
+
+**At a glance**
+
+- Timers for a full hold, each wreck sinking, the next wreck rising and the game's idle logout,
+  built from the wiki's figures and tuned by what your crew actually bring in.
+- A full-hold alert with a banner and an early warning, and repeats that wait while you sail to
+  the bank.
+- Reminders when a hook goes empty, your own hook stops, the crew stop, or a better crewmate is
+  sitting idle.
+- Boxes on the water showing where a hook reaches a wreck, and where it reaches two at once.
+- Inventory boxes for Keep, Deposit, Alch and Drop, and your next stop on deck lit up: the
+  station, the hold or a hook.
+- A sidebar with every salvaging spot, the nearest docks, and routes through Shortest Path.
+- A nudge toward the salvaging worlds when you've waited too long for a wreck.
+
+It never clicks anything for you and sends nothing anywhere.
 
 ## See it in action
 
@@ -43,48 +58,32 @@ marked.
 
 ## What it does
 
+### The timers
+
 - **Countdown to a full hold.** "Hold full in about 52 min", with the clock time if you like. It is
   built from the game's published salvage chances for your wreck, hooks and level, then corrected
   by what your crew actually bring in, so it shows a number from the first tick and gets better
   as it goes. Under ten minutes it counts in seconds.
+- **Counts the hold, nothing else.** The clock only counts what is in the hold. Salvage you hook
+  yourself counts once you deposit it, and never if you sort it at the station. Salvage you
+  withdraw to sort is never counted, and sorting shows its own little countdown.
 - **Knows about wrecks sinking.** A wreck lasts about a fixed time once anyone starts salvaging
   it (the wiki's figures, from one minute for a small wreck to four for a merchant). The plugin
   tracks the wrecks in reach of your hooks, shows the longest one has left at most, and when none
   is up the timer pauses and says so rather than lying.
-- **Knows about salvaging worlds.** On the official salvaging worlds (596 and 597, and any you
-  add) every wreck site is being worked, so a sunk wreck near you is replaced quickly. Elsewhere
-  your crew can sit idle for a long time. The plugin measures how much of the time a wreck has
-  been up and folds that into the estimate. If you have been waiting a while on an ordinary
-  world it mentions the salvaging worlds once in chat, and a flashing notice sits in the middle of
-  the screen until a wreck is up or you hop (a setting, on by default). While you wait it also
-  says when the next wreck can rise at your spot: the wrecks of an area share one pool and one
-  rises the moment another sinks, and a wreck's timer starts when someone begins on it. The plugin
-  starts a wreck's clock when it first sees a boat beside it (or when your own hook rolls on it),
-  so the earliest sink among the others is the latest you will wait. "Next wreck here in ≤ 3:20"
-  means exactly that; "likely" is added when another empty site in the area could take the rise
-  instead. Lifetimes are the wiki's averages, so a wreck can outlive its clock: the line then says
-  "any moment", and a minute past the clock the plugin drops it until the wreck is seen worked
-  again. Where nobody is working the other wrecks there is nothing to go by and no line.
-- **Counts the hold, nothing else.** The clock only counts what is in the hold. Salvage you hook
-  yourself counts once you deposit it, and never if you sort it at the station. Salvage you
-  withdraw to sort is never counted, and sorting shows its own little countdown.
-- **Hook reminders.** Step off your hook to sort and forget to hand it over, and after a short
-  grace period it reminds you: "A salvaging hook is empty. Assign a crewmate to it." Flashing green
-  boxes then show you where to click: the Sailing tab, Facilities, the hook's Assign button and the
-  best free crewmate for it. The clicks are all yours. (Only at a
-  salvaging spot, with a wreck site, up or sunk, within reach of your hooks; an empty hook on the
-  way there, or at a dock beside the spots, is your business.) If nobody
-  aboard can take the hook (a crewmate needs enough deckhandiness for it) and a wreck is up, it
-  asks you to click the hook instead, because unlike your crew you do not restart by yourself.
-  And if a crewmate with more deckhandiness is sitting idle while a weaker one works a hook, it
-  says who to swap, once the pair has stood ten seconds, and a flashing "SWAP CREW" notice sits in
-  the middle of the screen (and a Swap line on the overlay) until you do. That one only speaks
-  when every hook is manned; an empty hook comes first.
-- **Crew stopped.** Crew salvage on your level, boosted or not. If it drops below what the wreck
-  needs they stop; the plugin says so.
-- **Full-hold alert.** Sound, tray popup, screen flash, focus, whatever you set up in RuneLite,
-  plus a big red banner, an early warning at 5 slots left (your number; 0 turns it off) and a
-  repeat.
+- **Knows about salvaging worlds and the next wreck.** On the official salvaging worlds (596 and
+  597, and any you add) every wreck site is being worked, so a sunk wreck near you is replaced
+  quickly; elsewhere your crew can sit idle for a long time. The plugin measures how much of the
+  time a wreck has been up and folds that into the estimate. If you have been waiting a while on an
+  ordinary world it mentions the salvaging worlds once in chat, and a flashing notice sits in the
+  middle of the screen until a wreck is up or you hop (a setting, on by default). While you wait it
+  also says when the next wreck can rise at your spot, such as "Next wreck here in ≤ 3:20": the
+  wrecks of an area share one pool, one rises the moment another sinks, and the plugin starts a
+  wreck's clock when it first sees a boat beside it (or your own hook rolls on it). "likely" is
+  added when another empty site could take the rise instead. Lifetimes are the wiki's averages, so
+  a wreck can outlive its clock: the line then says "any moment", and a minute later the plugin
+  drops it until the wreck is seen worked again. Where nobody is working the other wrecks there is
+  nothing to go by and no line.
 - **Idle logout.** If the hold will take longer to fill than you have left before the game logs
   you out for idling, it shows that too, and a minute before the logout (your choice how long) it
   sends a notification while you are on your own boat, once per idle stretch. It cannot press a
@@ -92,11 +91,80 @@ marked.
 - **A countdown infobox.** Optionally, the time to a full hold as one of RuneLite's small
   infoboxes, AFK written above the time and the detail on hover, so it stays in view with the
   overlay hidden.
-- **A sidebar with four tabs.** Spots (the tools, the nearest docks and the session line, each under a
-  heading you can fold away, then the list), Sorting (each inventory sorting list with what you added, and
-  the default cannonballs under Deposit), Tips, which starts with Find a setting: type a word and it
-  lists the matching settings and which section each one is in, and Feedback, with big buttons to the
-  GitHub issues (readable without an account; opening a new one needs a free GitHub account) or the Discord. They only open your browser; the plugin itself sends nothing.
+
+### Alerts and reminders
+
+- **Full-hold alert.** Sound, tray popup, screen flash, focus, whatever you set up in RuneLite,
+  plus a big red banner, an early warning at 5 slots left (your number; 0 turns it off) and a
+  repeat. The repeats wait while your boat is moving, so sailing a full hold to the bank is quiet.
+- **Hook reminders.** Step off your hook to sort and forget to hand it over, and after a short
+  grace period it reminds you: "A salvaging hook is empty. Assign a crewmate to it." Flashing green
+  boxes then show you where to click: the Sailing tab, Facilities, the hook's Assign button and the
+  best free crewmate for it. The clicks are all yours. This only happens at a salvaging spot, with
+  a wreck site, up or sunk, within reach of your hooks; an empty hook on the way there, or at a dock
+  beside the spots, is your business. If nobody aboard can take the hook (a crewmate needs enough
+  deckhandiness for it) and a wreck is up, it asks you to click the hook instead, because unlike
+  your crew you do not restart by yourself.
+- **Crew swaps.** If a crewmate with more deckhandiness is sitting idle while a weaker one works a
+  hook, it says who to swap once the pair has stood ten seconds, and a flashing "SWAP CREW" notice
+  sits in the middle of the screen (and a Swap line on the overlay) until you do. It only speaks
+  when every hook is manned; an empty hook comes first.
+- **Crew stopped.** Crew salvage on your level, boosted or not. If it drops below what the wreck
+  needs they stop; the plugin says so.
+
+### Parking
+
+- **Boxes on the water that say where to park.** A yellow box around each wreck for where a hook
+  can reach it, and a green box where a hook reaches two wrecks at once. Park so every hook on your
+  boat sits in the green box and it changes color and says "Parked". Each has its own switch and
+  color, and the parked color is its own setting too. The green boxes go 20 seconds after the boat
+  stops, at login too, and come back the moment it moves (a setting; 0 keeps them). While you stay
+  parked, the words "Parked in double spot" stay in the middle of your boat (a setting, on by
+  default), with the box's own words about your hooks. Wrecks that are up and within your level get
+  a soft cyan outline round the hull, like the game's own hover outline, so the one to work stands
+  out without another box (a setting, on by default). Read
+  [Salvage spots and double spots](#salvage-spots-and-double-spots) before trusting them to the tile.
+
+### Sorting and your next stop
+
+- **Sorts your inventory for you to act on.** On your boat at a salvaging spot, inventory items get
+  a colored box: cyan deposit (into the cargo hold), green alch, red drop, and sage keep (an outline
+  only, and off unless you switch it on, since what stays needs nothing doing). With nothing marked,
+  only two kinds get a box: the plain bronze to dragon cannonballs are Deposit (never noted ones,
+  which the hold refuses; each is listed in the Sorting tab with an × that takes it out of the
+  defaults, and marking it Deposit again brings it back), and items whose alch value is at or above
+  a threshold you set (1,000 by default) are Alch. Everything else gets no box, and nothing is ever
+  Drop until you mark it. Repair kits, fish and the other things the hold takes are never called an
+  alch either; the plugin knows them from the wiki's list and learns the game's own answer every
+  time you open the hold.
+- **Marking items.** Shift-right-click an item and its AFK Shipwrecks entry opens to Keep, Deposit,
+  Alch, Drop and Unmark; pick one to mark it, or add it by name in the Sorting tab, and take it off
+  again there. To start a Drop list quickly, the Sorting tab's "Add suggested drops" button adds 74
+  items most players drop (logs, planks, nails, bars, low runes, raw fish, fishing gear, seeds,
+  uncut gems, seaweed, rings and the like; none alchs for 1,000 gp or more) as your own marks, after
+  asking; anything you already put in a list is left alone, and each one gets an × like any other
+  mark. The boxes are only ever boxes: nothing is dropped, alched or moved for you, and the menu
+  entries they add send nothing to the game. While the cargo hold is open only the Deposit boxes
+  show, in the inventory panel beside it, so what to deposit stands out right where you deposit it.
+- **Lights up your next stop on deck.** Carrying salvage, the salvaging station gets an amber outline
+  (the cargo hold, if your boat has no station yet), and it gets brighter once your inventory is full
+  off the hook. After sorting, drop your Drop items and alch your Alch items first; then the cargo hold
+  lights up in the Deposit color for anything to deposit, or when there is more salvage in it to sort.
+  With nothing left to do and a wreck in reach, a hook lights up green as well, so you can pick: go
+  again from the hold, or get on a hook yourself. It picks a free hook, or else the one your weakest
+  crewmate is on (clicking a hook a crewmate is working sends them off to rest). Open the hold and
+  close it without taking anything, and only the hook stays lit. While the hold is open, only the
+  station shows, as soon as you take salvage out, so you can click it to sort without closing the
+  hold first. All of it is just outlines; you do every click.
+
+### The sidebar
+
+- **Four tabs.** Spots (the tools, the nearest docks and the session line, each under a heading you
+  can fold away, then the list), Sorting (each inventory sorting list with what you added, and the
+  default cannonballs under Deposit), Tips, which starts with Find a setting: type a word and it
+  lists the matching settings and which section each one is in, and Feedback, with big buttons to
+  the GitHub issues (readable without an account; opening a new one needs a free GitHub account) or
+  the Discord. They only open your browser; the plugin itself sends nothing.
 - **Knows where the wrecks are.** The Spots tab lists all 29 salvaging hotspots, filtered by
   wreck, down to the ones your level allows, or to your favorites, sorted by wreck or nearest to
   you first, with the Sailing level each needs, where it sits from the nearest port and how far it
@@ -119,46 +187,9 @@ marked.
   full-hold notification and banner so you can check your set-up; and Forget rates, which
   throws away what the timer has learned about your crew's speed. The Tips tab explains the boxes,
   the buttons and the rest of this README in short.
-- **Boxes on the water that say where to park.** A yellow box around each wreck for where a hook
-  can reach it, and a green box where a hook reaches two wrecks at once. Park so every hook on your
-  boat sits in the green box and it changes color and says "Parked". Each has its own switch and
-  color, and the parked color is its own setting too. The green boxes go 20 seconds after the boat stops, at
-  login too, and come back the moment it moves (a setting; 0 keeps them). While you stay parked,
-  the words "Parked in double spot" stay in the middle of your boat (a setting, on by default). The
-  box's own words about your hooks sit there too. Wrecks that are up and within
-  your level get a soft cyan outline round the hull, like the game's own hover outline, so the one to
-  work stands out without another box (a setting, on by default).
-  Read the section below before trusting them to the tile.
 
-- **Sorts your inventory for you to act on.** On your boat at a salvaging spot, inventory items
-  get a colored box: sage keep (an outline only, and off unless you switch it on, since what stays
-  needs nothing doing), cyan deposit
-  (into the cargo hold), green alch, red drop. With
-  nothing marked, only two kinds get a box: the plain bronze to dragon cannonballs are Deposit (never noted ones, which
-  the hold refuses; each is listed in the Sorting tab with an × that takes it out of the defaults,
-  and marking it Deposit again brings it back), and items whose alch value is at or above a
-  threshold you set (1,000 by default) are Alch. Everything else gets no box, and nothing is ever Drop until you mark it.
-  To start a Drop list quickly, the Sorting tab's "Add suggested drops" button adds 74 items most
-  players drop (logs, planks, nails, bars, low runes, raw fish, fishing gear, seeds, uncut gems,
-  seaweed, rings and the like; none alchs for 1,000 gp or more) as your own marks, after asking; anything you already put in a list is left alone, and each
-  one gets an × like any other mark.
-  Repair kits, fish and the other things the hold takes are never called an alch either; the
-  plugin knows them from the wiki's list and learns the game's own answer every time you open the
-  hold. Shift-right-click an item and its AFK Shipwrecks entry opens to Keep, Deposit, Alch, Drop and Unmark; pick one
-  to mark it, or add it by name in the Sorting tab, and take it off again there. The boxes are only ever boxes: nothing is
-  dropped, alched or moved for you, and the menu entries they add send nothing to the game. While
-  the cargo hold is open only the Deposit boxes show, in the inventory panel beside it, so what to
-  deposit stands out right where you deposit it and nothing else gets in the way.
-- **Lights up your next stop on deck.** Carrying salvage, the salvaging station gets an amber outline
-  (the cargo hold, if your boat has no station yet), and it gets brighter once your inventory is full
-  off the hook. After sorting, drop your Drop items and alch your Alch items first; then the cargo hold
-  lights up in the Deposit color for anything to deposit, or when there is more salvage in it to sort.
-  With nothing left to do and a wreck in reach, a hook lights up green as well, so you can pick: go
-  again from the hold, or get on a hook yourself. It picks a free hook, or else the one your weakest
-  crewmate is on (clicking a hook a crewmate is working sends them off to rest). Open the hold and
-  close it without taking anything, and only the hook stays lit. While the hold is open, only the
-  station shows, as soon as you take salvage out, so you can click it to sort without closing the
-  hold first. All of it is just outlines; you do every click.
+### And
+
 - **Says when it was updated.** The first time you log in after the Plugin Hub has updated the
   plugin, one line in chat says what the new version brings. A setting turns it off.
 
