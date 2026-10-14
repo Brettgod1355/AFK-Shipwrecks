@@ -1,8 +1,9 @@
 # AFK Shipwrecks
 
-An all-in-one plugin for salvaging, whether you're fully AFK or working the hooks yourself. Park at a shipwreck, put your crew on the hooks, and it tells you how long until the
-cargo hold is full, then tells you loudly when it is. Along the way it shows where to park, which
-hook has gone empty, what to do with your inventory and where to click next on deck.
+An all-in-one plugin for salvaging, whether you're fully AFK or working the hooks yourself. Park at
+a shipwreck, put your crew on the hooks, and it tells you how long until the cargo hold is full,
+then tells you loudly when it is. Along the way it shows where to park, which hook has gone empty,
+what to do with your inventory and where to click next on deck.
 
 It started life as Cargo Hold Alert, and everything that plugin did is still here.
 
