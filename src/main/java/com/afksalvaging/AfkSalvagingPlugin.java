@@ -327,7 +327,7 @@ public class AfkSalvagingPlugin extends Plugin
 	private final Map<Integer, Integer> cargoHoldByWorldView = new HashMap<>();
 	/** The cargo hold object itself, by world view, for the highlight. */
 	private final Map<Integer, GameObject> cargoHoldObjects = new HashMap<>();
-	/** The wreck objects in view by tile, for the hull outline; cleared whenever the scene reloads. */
+	/** The wreck objects in view by tile, for the tile box or hull outline; cleared whenever the scene reloads. */
 	private final Map<WorldPoint, GameObject> wreckObjects = new HashMap<>();
 	/** Capacity read from the cargo hold interface, indexed by boat slot 1 to 5. */
 	private final int[] capacityFromInterface = new int[CargoHoldContainers.BOAT_SLOTS + 1];
@@ -386,6 +386,7 @@ public class AfkSalvagingPlugin extends Plugin
 		clearState();
 		noteVersion();
 		carryWreckMarking();
+		carryWreckTile();
 		try
 		{
 			seaMap = SeaMap.load();
@@ -1122,7 +1123,7 @@ public class AfkSalvagingPlugin extends Plugin
 	}
 
 	/**
-	 * Whether the wreck overlays (reach and double spot boxes, hull outlines, timers) have a reason to show:
+	 * Whether the wreck overlays (reach and double spot boxes, tile boxes or hull outlines, timers) have a reason to show:
 	 * the player is on their own boat and it carries at least one salvaging hook (owner, 2026-10-11: "when
 	 * there is no salvaging hook on the boat, it doesn't highlight any overlays over the salvaging spots").
 	 */
@@ -1266,6 +1267,25 @@ public class AfkSalvagingPlugin extends Plugin
 		WreckMarking carried = WreckMarking.of(config.outlineWrecks(), config.wreckReachBoxes());
 		configManager.setConfiguration(AfkSalvagingConfig.GROUP, "wreckMarking", carried);
 		configManager.setConfiguration(AfkSalvagingConfig.GROUP, "wreckMarkingCarried", true);
+	}
+
+	/**
+	 * 2.2 made a tile box under each wreck the default in place of the hull outline (owner, 2026-10-14).
+	 * RuneLite saves a default as a value, so the first start on 2.2 moves the old default, Hull and area,
+	 * to Tile and area, once; any other choice is kept, and the hull stays a choice.
+	 */
+	private void carryWreckTile()
+	{
+		if (config.wreckTileCarried())
+		{
+			return;
+		}
+		WreckMarking moved = WreckMarking.tileDefault(config.wreckMarking());
+		if (moved != config.wreckMarking())
+		{
+			configManager.setConfiguration(AfkSalvagingConfig.GROUP, "wreckMarking", moved);
+		}
+		configManager.setConfiguration(AfkSalvagingConfig.GROUP, "wreckTileCarried", true);
 	}
 
 	// ---- Inventory sorting: boxes round items, marks, the sidebar lists ----

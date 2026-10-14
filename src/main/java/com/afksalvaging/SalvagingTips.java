@@ -50,8 +50,8 @@ public final class SalvagingTips
 				+ "averages, so past the clock it says \"any moment\".",
 			"While you wait, \"Next wreck here in ≤\" is the earliest another wreck in the area can sink: one rises "
 				+ "here the moment another sinks.",
-			"Wrecks within your level get an outline round the hull, cyan while up and gray once sunk. \"Mark "
-				+ "wrecks\" picks the hull, the area, both or neither.",
+			"Wrecks within your level get a box on the tiles they stand on, cyan while up and gray once sunk. \"Mark "
+				+ "wrecks\" picks the tile or the hull outline, the area, both or neither.",
 			"The plugin only knows the wrecks in the area the game has loaded, a square of about 104 tiles that "
 				+ "moves as you sail. \"Show what the plugin sees\" draws it; sail toward wrecks outside it."),
 		new Group("Crew and hook",

@@ -720,16 +720,17 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "wreckMarking",
 		name = "Mark wrecks",
-		description = "How each wreck in view is marked. Hull outlines the wreck itself, the way the game outlines one "
-			+ "under the mouse. Area boxes the water round it where a hook can reach it. Wrecks that are up are drawn in "
-			+ "color (the hull only when your Sailing level lets you salvage it); sunk wrecks are drawn in gray, since "
-			+ "the next wreck rises on the same tile.",
+		description = "How each wreck in view is marked. Tile boxes the tiles the wreck stands on; Hull outlines the "
+			+ "wreck itself, the way the game outlines one under the mouse. Area boxes the water round it where a hook can "
+			+ "reach it. Wrecks that are up are drawn in color (the tile or hull only when your Sailing level lets you "
+			+ "salvage it); sunk wrecks are drawn in gray, since the next wreck rises on the same tile.",
 		section = SPOTS,
 		position = 0
 	)
 	default WreckMarking wreckMarking()
 	{
-		return WreckMarking.BOTH;
+		// A small tile box rather than the hull outline (owner, 2026-10-14).
+		return WreckMarking.TILE_AND_AREA;
 	}
 
 	@ConfigItem(
@@ -1141,6 +1142,13 @@ public interface AfkSalvagingConfig extends Config
 
 	@ConfigItem(keyName = "wreckMarkingCarried", name = "", description = "", hidden = true)
 	default boolean wreckMarkingCarried()
+	{
+		return false;
+	}
+
+	/** Set once 2.2 has moved the old default, Hull and area, to Tile and area. */
+	@ConfigItem(keyName = "wreckTileCarried", name = "", description = "", hidden = true)
+	default boolean wreckTileCarried()
 	{
 		return false;
 	}

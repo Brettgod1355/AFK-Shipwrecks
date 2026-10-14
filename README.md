@@ -120,9 +120,10 @@ marked.
   color, and the parked color is its own setting too. The green boxes go 20 seconds after the boat
   stops, at login too, and come back the moment it moves (a setting; 0 keeps them). While you stay
   parked, the words "Parked in double spot" stay in the middle of your boat (a setting, on by
-  default), with the box's own words about your hooks. Wrecks that are up and within your level get
-  a soft cyan outline round the hull, like the game's own hover outline, so the one to work stands
-  out without another box (a setting, on by default). Read
+  default), with the box's own words about your hooks. Wrecks within your level get a small box on
+  the tiles they stand on, cyan while up and gray once sunk, so with the timer written above it you can
+  tell at a glance which ones are worth staying for (or the hull outlined instead, like the game's own
+  hover outline; a setting). Read
   [Salvage spots and double spots](#salvage-spots-and-double-spots) before trusting them to the tile.
 
 ### Sorting and your next stop
@@ -275,8 +276,9 @@ warn (60 s; 0 never). Then:
   button, then the free crewmate with the most deckhandiness for that hook (and the scrollbar or
   Back when that is what's in the way). Boxes only; every click is yours.
 
-**Wrecks and parking**: Mark wrecks (hull, area, hull and area, or off; hull and area by default).
-The hull is outlined in cyan while the wreck is up and gray once it has sunk; the area is the box of
+**Wrecks and parking**: Mark wrecks (tile and area by default, or tile, hull and area, hull, area, or
+off). The tile box, or the hull outline, is cyan while the wreck is up and gray once it has sunk; the
+tile box is far lighter to draw than the hull outline. The area is the box of
 water a hook can reach it from, yellow while it is up and gray once sunk. Then the box color; hiding
 those boxes while you are parked (on by default); filling the boxes (on; off draws outlines only); double spot boxes (on or off), their color (green)
 and the color they change to once you are parked (a faint cyan); whether to label the double spot
