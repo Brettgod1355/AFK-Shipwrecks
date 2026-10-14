@@ -120,7 +120,7 @@ import org.slf4j.LoggerFactory;
 	name = "AFK Shipwrecks",
 	// 1.0 was CargoFullPlugin: keep its on/off switch, so a player who turned it off stays off (review, 2026-10-04).
 	configName = "CargoFullPlugin",
-	description = "Countdown to a full cargo hold while your crew salvage, with alerts for a full hold, an empty hook and stopped crew",
+	description = "All-in-one salvaging plugin, AFK or active: alerts, timers, overlays, highlights, crew reminders and more, designed to make salvaging simple",
 	tags = {
 		"sailing", "sail", "sailor", "boat", "ship", "raft", "skiff", "sloop", "sea", "ocean", "voyage",
 		"cargo", "cargo hold", "hold", "capacity", "full", "salvage", "salvaging", "shipwreck", "wreck",
