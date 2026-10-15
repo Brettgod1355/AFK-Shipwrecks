@@ -1023,7 +1023,7 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "salvageGuide",
 		name = "Highlight where salvage goes",
-		description = "On your boat, outline the next stop for your salvage. Automatic: the salvaging station while you "
+		description = "On your boat, outline the next step for your salvage. Automatic: the salvaging station while you "
 			+ "carry salvage (the cargo hold if your boat has no station), brighter once your inventory is full; after "
 			+ "sorting, drop the Drop items and alch the Alch items first, then the cargo hold lights up for Deposit "
 			+ "items, or for more salvage. Salvaging station or Cargo hold light only that one.",

@@ -24,8 +24,8 @@ public final class WhatsNew
 	 * One line on what this version brings, no links; a full stop is added when it is said. Leave
 	 * it empty for a release not worth a line (a fix, a wording change) and nothing is said.
 	 */
-	public static final String NOTE = "your next stop lights up on deck (station, hold or hook), a small tile under each wreck "
-		+ "instead of the hull outline, no full-hold repeats while you sail, and the hold's size remembered at login";
+	public static final String NOTE = "your next step lights up on deck (station, hold or hook), a small tile under each wreck "
+		+ "instead of the hull outline, no full-hold repeats while you sail, and your hold's size is remembered at login";
 
 	/**
 	 * What the rename to AFK Shipwrecks brought, said to a Cargo Hold Alert 1.0 player whatever version

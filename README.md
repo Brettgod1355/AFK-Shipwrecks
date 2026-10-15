@@ -16,7 +16,7 @@ It started life as Cargo Hold Alert, and everything that plugin did is still her
 - Reminders when a hook goes empty, your own hook stops, the crew stop, or a better crewmate is
   sitting idle.
 - Boxes on the water showing where a hook reaches a wreck, and where it reaches two at once.
-- Inventory boxes for Keep, Deposit, Alch and Drop, and your next stop on deck lit up: the
+- Inventory boxes for Keep, Deposit, Alch and Drop, and your next step on deck lit up: the
   station, the hold or a hook.
 - A sidebar with every salvaging spot, the nearest docks, and routes through Shortest Path.
 - A nudge toward the salvaging worlds when you've waited too long for a wreck.
@@ -126,7 +126,7 @@ marked.
   hover outline; a setting). Read
   [Salvage spots and double spots](#salvage-spots-and-double-spots) before trusting them to the tile.
 
-### Sorting and your next stop
+### Sorting and your next step
 
 - **Sorts your inventory for you to act on.** On your boat at a salvaging spot, inventory items get
   a colored box: cyan deposit (into the cargo hold), green alch, red drop, and sage keep (an outline
@@ -147,7 +147,7 @@ marked.
   mark. The boxes are only ever boxes: nothing is dropped, alched or moved for you, and the menu
   entries they add send nothing to the game. While the cargo hold is open only the Deposit boxes
   show, in the inventory panel beside it, so what to deposit stands out right where you deposit it.
-- **Lights up your next stop on deck.** Carrying salvage, the salvaging station gets an amber outline
+- **Lights up your next step on deck.** Carrying salvage, the salvaging station gets an amber outline
   (the cargo hold, if your boat has no station yet), and it gets brighter once your inventory is full
   off the hook. After sorting, drop your Drop items and alch your Alch items first; then the cargo hold
   lights up in the Deposit color for anything to deposit, or when there is more salvage in it to sort.
