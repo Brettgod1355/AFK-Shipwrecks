@@ -31,6 +31,7 @@ public class HoldCountReplayTest
 {
 	private static final Path RECORDINGS = Paths.get("recordings");
 	private static final Path REPORT = Paths.get("build", "replay", "hold-reads.txt");
+	private static final Path CHANGES = Paths.get("build", "replay", "count-changes.txt");
 
 	@Test
 	public void theCountMatchesTheHoldEveryTimeItIsOpened() throws IOException
@@ -38,6 +39,7 @@ public class HoldCountReplayTest
 		Assume.assumeTrue("no recordings on this machine", Files.isDirectory(RECORDINGS));
 		List<String> problems = new ArrayList<>();
 		List<String> report = new ArrayList<>();
+		List<String> changes = new ArrayList<>();
 		int played = 0;
 		for (Path character : list(RECORDINGS))
 		{
@@ -58,6 +60,7 @@ public class HoldCountReplayTest
 			}
 			played += recordings.size();
 			HoldCountReplay.Result result = new HoldCountReplay().play(recordings, names);
+			changes.addAll(result.countChanges);
 			for (HoldCountReplay.Check check : result.checks)
 			{
 				report.add((check.drift() ? "DRIFT " : "      ") + check);
@@ -74,6 +77,7 @@ public class HoldCountReplayTest
 		Assume.assumeTrue("no recordings in " + RECORDINGS, played > 0);
 		Files.createDirectories(REPORT.getParent());
 		Files.write(REPORT, report, StandardCharsets.UTF_8);
+		Files.write(CHANGES, changes, StandardCharsets.UTF_8);
 		assertTrue(played + " recordings replayed:\n" + String.join("\n", problems), problems.isEmpty());
 	}
 

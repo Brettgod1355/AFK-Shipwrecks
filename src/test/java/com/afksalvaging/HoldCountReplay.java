@@ -80,31 +80,45 @@ final class HoldCountReplay
 		final int countBefore;
 		/** The first read after the hold window opened: a difference here is drift, not a click or a landing. */
 		final boolean opening;
+		/**
+		 * Crew salvage that had landed but still waited on its line or XP when the hold was read. The read takes
+		 * it in and it is not counted again, so a hold that many higher is timing, not drift (in game, 2026-10-15
+		 * and 2026-10-17: a line or XP in the very tick, or two, before the hold opened).
+		 */
+		final int inFlight;
 
-		Check(String recording, int tick, int hold, int countBefore, boolean opening)
+		Check(String recording, int tick, int hold, int countBefore, boolean opening, int inFlight)
 		{
 			this.recording = recording;
 			this.tick = tick;
 			this.hold = hold;
 			this.countBefore = countBefore;
 			this.opening = opening;
+			this.inFlight = inFlight;
 		}
 
 		boolean drift()
 		{
-			return opening && countBefore != CargoHoldCapacity.UNKNOWN && countBefore != hold;
+			if (!opening || countBefore == CargoHoldCapacity.UNKNOWN || countBefore == hold)
+			{
+				return false;
+			}
+			return !(hold > countBefore && hold - countBefore <= inFlight);
 		}
 
 		@Override
 		public String toString()
 		{
-			return recording + " tick " + tick + ": hold " + hold + ", count " + countBefore + (opening ? " (opening)" : "");
+			return recording + " tick " + tick + ": hold " + hold + ", count " + countBefore + (opening ? " (opening)" : "")
+				+ (inFlight > 0 ? ", " + inFlight + " in flight" : "");
 		}
 	}
 
 	static final class Result
 	{
 		final List<Check> checks = new ArrayList<>();
+		/** Every change of the count, "recording tick N: count", to line up against the game's "Tally" log lines. */
+		final List<String> countChanges = new ArrayList<>();
 		final Set<Integer> unknownCrew = new HashSet<>();
 
 		List<Check> drift()
@@ -126,6 +140,8 @@ final class HoldCountReplay
 	private final Set<Integer> stackable = new HashSet<>();
 	/** The count carried between recordings, per boat slot, as the plugin saves it. */
 	private final Map<Integer, Integer> savedUsed = new HashMap<>();
+	/** The hold's item types carried between recordings, per boat slot, as the plugin saves them. */
+	private final Map<Integer, Set<Integer>> savedHoldItems = new HashMap<>();
 
 	// Per recording, as the plugin clears it at the login screen.
 	private AfkSession session;
@@ -146,6 +162,7 @@ final class HoldCountReplay
 	private Map<Integer, Integer> lastInventory = new HashMap<>();
 	private Item[] lastInventoryItems = new Item[0];
 	private int holdCapacity;
+	private int lastCount = Integer.MIN_VALUE;
 
 	/** Plays one character's recordings, oldest first. */
 	Result play(List<Recording> recordings, List<String> names)
@@ -262,6 +279,12 @@ final class HoldCountReplay
 		{
 			savedUsed.put(slot, session.monitor().getUsed());
 		}
+		if (slot != 0)
+		{
+			// The plugin saves the hold's item types per boat and loads them on boarding: a deposit that joins a
+			// stack already there takes no room (in game, 2026-10-17, Original RS2 tick 18 after login).
+			savedHoldItems.put(slot, new HashSet<>(holdItemIds));
+		}
 	}
 
 	private long now(Recording.Line line)
@@ -316,6 +339,7 @@ final class HoldCountReplay
 		{
 			session.monitor().reset();
 			holdItemIds.clear();
+			holdItemIds.addAll(savedHoldItems.getOrDefault(slot, Collections.emptySet()));
 			monitoredSlot = slot;
 			session.monitor().setCapacity(holdCapacity);
 		}
@@ -438,7 +462,7 @@ final class HoldCountReplay
 		boolean opening = openingReadDue;
 		openingReadDue = false;
 		int before = session.monitor().hasCount() ? session.monitor().getUsed() : CargoHoldCapacity.UNKNOWN;
-		result.checks.add(new Check(name, line.tick(), used, before, opening));
+		result.checks.add(new Check(name, line.tick(), used, before, opening, session.pendingCrewSalvage()));
 		session.holdCount(used, line.tick());
 	}
 
@@ -567,6 +591,10 @@ final class HoldCountReplay
 		{
 			session.depositLine();
 		}
+		else if (CrewSpeech.reportsHeldBackCrewXp(text))
+		{
+			session.heldBackXpLine(line.tick());
+		}
 	}
 
 	private void tick(Recording.Line line)
@@ -597,6 +625,12 @@ final class HoldCountReplay
 		in.playerPoint = line.has("topX") ? point(line, "topX", "topY", "topPlane") : point(line, "x", "y", "plane");
 		in.cargoInterfaceOpen = holdOpen;
 		session.tick(in);
+		int count = session.monitor().hasCount() ? session.monitor().getUsed() : CargoHoldCapacity.UNKNOWN;
+		if (count != lastCount)
+		{
+			result.countChanges.add(name + " tick " + line.tick() + ": " + count);
+			lastCount = count;
+		}
 	}
 
 	private static WorldPoint point(Recording.Line line, String x, String y, String plane)
