@@ -63,6 +63,7 @@ import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.OverheadTextChanged;
 import net.runelite.api.events.ResizeableChanged;
 import net.runelite.api.events.ScriptCallbackEvent;
+import net.runelite.api.events.SoundEffectPlayed;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetLoaded;
@@ -137,6 +138,8 @@ public class AfkSalvagingPlugin extends Plugin
 	private static final Logger log = LoggerFactory.getLogger(AfkSalvagingPlugin.class);
 
 
+	/** The drop sound; the game sends it only when sound effects are on (in game, 2026-10-17). */
+	private static final int DROP_SOUND = 2739;
 	/** RuneScape-profile config key prefix for the remembered count of each boat slot. */
 	private static final String USED_KEY_PREFIX = "used.";
 	/** Per character and boat slot: the item types in that boat's hold, so stacks are known after a restart. */
@@ -769,6 +772,13 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			session.stats().alched++;
 		}
+		// A slot about to empty that is not a deposit, whichever way the menu was opened (a shift-click
+		// Drop is CC_OP_LOW_PRIORITY; in game, 2026-10-17). Only an item that takes hold space matters.
+		if ((option.equals("drop") || option.equals("eat") || (option.startsWith("cast") && target.contains("alchemy")))
+			&& event.getItemId() > 0 && takesHoldSpace(event.getItemId()))
+		{
+			session.itemRemovalClicked(client.getTickCount(), event.getParam0());
+		}
 		boolean objectOp = action == MenuAction.GAME_OBJECT_FIRST_OPTION || action == MenuAction.GAME_OBJECT_SECOND_OPTION
 			|| action == MenuAction.GAME_OBJECT_THIRD_OPTION || action == MenuAction.GAME_OBJECT_FOURTH_OPTION
 			|| action == MenuAction.GAME_OBJECT_FIFTH_OPTION;
@@ -796,11 +806,49 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			// Quick deposits on the hold itself never open the interface, so the container is not
 			// resent. The session watches the inventory instead and applies the difference to the hold.
-			session.holdActionClicked(option.startsWith("withdraw"), isCargoInterfaceOpen());
+			// Beside the hold there is no walk, so the game acts on the click at once and a click straight
+			// after cannot call it off (in game, 2026-10-17).
+			session.holdActionClicked(option.startsWith("withdraw"), isCargoInterfaceOpen() || besideCargoHold(),
+				client.getTickCount());
 			return;
 		}
-		// Anything else the player does means they are not walking to the hold any more.
-		session.holdActionCanceled();
+		// A click that only works the interface (a tab, a side panel, choosing an item to use) does not stop
+		// the walk to the hold (in game, 2026-10-17, tick 1909: Use on a salvage mid-walk, the 21 landed two
+		// ticks on; the Sailing plugin's #219 says the same of tabs). An action on an item does: Drop stopped
+		// it for good, every time.
+		if (interfaceOnly(action, event.getItemId()))
+		{
+			return;
+		}
+		// Anything else the player does means they are not walking to the hold any more, unless they
+		// reached it just as they clicked.
+		session.holdActionCanceled(client.getTickCount());
+	}
+
+	/** Whether a click works the interface alone, with nothing in the game world and no item acted on. */
+	static boolean interfaceOnly(MenuAction action, int itemId)
+	{
+		return ((action == MenuAction.CC_OP || action == MenuAction.CC_OP_LOW_PRIORITY) && itemId <= 0)
+			|| action == MenuAction.WIDGET_TARGET;
+	}
+
+	/**
+	 * Passes the drop sound to the session, and logs the sounds played while a hold click is being
+	 * followed: 10905 for a deposit, 2266 for a withdrawal (in game, 2026-10-17). Only fires with sound
+	 * effects on.
+	 */
+	@Subscribe
+	public void onSoundEffectPlayed(SoundEffectPlayed event)
+	{
+		if (event.getSoundId() == DROP_SOUND)
+		{
+			session.dropSoundPlayed(client.getTickCount());
+		}
+		if (session.holdDepositPending() || session.holdWithdrawPending())
+		{
+			log.debug("Sound {} at tick {} while a hold {} is pending", event.getSoundId(), client.getTickCount(),
+				session.holdWithdrawPending() ? "withdraw" : "deposit");
+		}
 	}
 
 	@Subscribe
@@ -1147,6 +1195,36 @@ public class AfkSalvagingPlugin extends Plugin
 		Player me = client.getLocalPlayer();
 		WorldView view = me == null ? null : me.getWorldView();
 		return view == null ? null : cargoHoldObjects.get(view.getId());
+	}
+
+	/** Whether the player stands on a tile next to a side of the cargo hold, where it is used without a walk. */
+	private boolean besideCargoHold()
+	{
+		Player me = client.getLocalPlayer();
+		GameObject hold = cargoHoldObject();
+		LocalPoint mine = me == null ? null : me.getLocalLocation();
+		if (hold == null || mine == null)
+		{
+			return false;
+		}
+		net.runelite.api.Point min = hold.getSceneMinLocation();
+		return min != null && besideFootprint(mine.getSceneX(), mine.getSceneY(), min.getX(), min.getY(),
+			hold.sizeX(), hold.sizeY());
+	}
+
+	/**
+	 * Whether a tile touches a side of an object's footprint: next to it straight on, not on a corner
+	 * diagonal (an object is used from a side) and not under it.
+	 */
+	static boolean besideFootprint(int x, int y, int minX, int minY, int sizeX, int sizeY)
+	{
+		int maxX = minX + sizeX - 1;
+		int maxY = minY + sizeY - 1;
+		boolean besideX = x >= minX - 1 && x <= maxX + 1;
+		boolean besideY = y >= minY - 1 && y <= maxY + 1;
+		boolean overX = x >= minX && x <= maxX;
+		boolean overY = y >= minY && y <= maxY;
+		return besideX && besideY && (overX != overY);
 	}
 
 	/** Where our own boat's hooks are in the top-level world right now; empty ashore or on another boat. */

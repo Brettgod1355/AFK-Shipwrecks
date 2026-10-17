@@ -81,9 +81,10 @@ final class HoldCountReplay
 		/** The first read after the hold window opened: a difference here is drift, not a click or a landing. */
 		final boolean opening;
 		/**
-		 * Crew salvage that had landed but still waited on its line or XP when the hold was read. The read takes
-		 * it in and it is not counted again, so a hold that many higher is timing, not drift (in game, 2026-10-15
-		 * and 2026-10-17: a line or XP in the very tick, or two, before the hold opened).
+		 * Crew salvage that had landed but still waited on its line or XP, or on this tick's drain, when the hold
+		 * was read. The read takes it in and it is not counted again, so a hold that many higher is timing, not
+		 * drift (in game, 2026-10-15 and 2026-10-17: a line or XP in the very tick, or two, before the hold opened;
+		 * 2026-10-17 tick 422: both in the tick of the read itself).
 		 */
 		final int inFlight;
 
@@ -151,6 +152,8 @@ final class HoldCountReplay
 	private int monitoredSlot;
 	private boolean holdOpen;
 	private boolean openingReadDue;
+	private int lastHoldReadTick = Integer.MIN_VALUE;
+	private int lastCloseTick = Integer.MIN_VALUE;
 	private int lastSailingXp;
 	private int boostedLevel;
 	private int realLevel;
@@ -183,9 +186,45 @@ final class HoldCountReplay
 		}
 		for (int i = 0; i < recordings.size(); i++)
 		{
+			if (i > 0 && !continuous(recordings.get(i - 1), recordings.get(i)))
+			{
+				// Play between the recordings, or a client that died, re-seeded the plugin's count from hold reads
+				// nobody recorded: start this one as the plugin did, from its first read (Original RS2,
+				// 2026-10-17: a crash at 07:29 and 8 h 44 min of unrecorded play before the 16:14 recording).
+				savedUsed.clear();
+			}
 			playOne(recordings.get(i), names.get(i));
 		}
 		return result;
+	}
+
+	/** A logout no longer than this before the next recording starts carries the count over, as a relog does. */
+	private static final long CARRY_GAP_MS = 5 * 60 * 1000L;
+
+	/** Whether the earlier recording ended with a logout and the later one began soon after. */
+	static boolean continuous(Recording earlier, Recording later)
+	{
+		List<Recording.Line> lines = earlier.lines();
+		Recording.Line last = lines.isEmpty() ? null : lines.get(lines.size() - 1);
+		if (last == null || !last.kind().equals("end") || !"logged out".equals(last.has("why") ? last.text("why") : ""))
+		{
+			return false;
+		}
+		long earlierStart = startedMillis(earlier);
+		long laterStart = startedMillis(later);
+		return earlierStart >= 0 && laterStart >= 0 && laterStart - (earlierStart + last.ms()) <= CARRY_GAP_MS;
+	}
+
+	private static long startedMillis(Recording recording)
+	{
+		for (Recording.Line line : recording.lines())
+		{
+			if (line.kind().equals("session"))
+			{
+				return LocalDateTime.parse(line.text("started"), STARTED).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+			}
+		}
+		return -1;
 	}
 
 	private void playOne(Recording recording, String recordingName)
@@ -217,6 +256,8 @@ final class HoldCountReplay
 		monitoredSlot = 0;
 		holdOpen = false;
 		openingReadDue = false;
+		lastHoldReadTick = Integer.MIN_VALUE;
+		lastCloseTick = Integer.MIN_VALUE;
 		lastSailingXp = -1;
 		boostedLevel = 1;
 		realLevel = 1;
@@ -254,6 +295,23 @@ final class HoldCountReplay
 					{
 						holdOpen = line.kind().equals("open");
 						openingReadDue = holdOpen;
+						if (!holdOpen)
+						{
+							lastCloseTick = line.tick();
+						}
+						else if (lastHoldReadTick == line.tick() && lastCloseTick != line.tick() && !result.checks.isEmpty())
+						{
+							// The contents can land a few ms before the window's own open line (2026-10-17
+							// 18:21, tick 77: contents at ms 46658, open at 46677): that read was this opening's.
+							// A read after a close in the same tick is the last withdrawal's, and stays as it is.
+							int last = result.checks.size() - 1;
+							Check read = result.checks.get(last);
+							if (!read.opening)
+							{
+								result.checks.set(last, new Check(read.recording, read.tick, read.hold, read.countBefore, true, read.inFlight));
+								openingReadDue = false;
+							}
+						}
 					}
 					break;
 				case "items":
@@ -461,6 +519,7 @@ final class HoldCountReplay
 		int used = CargoHoldMonitor.countUsed(items);
 		boolean opening = openingReadDue;
 		openingReadDue = false;
+		lastHoldReadTick = line.tick();
 		int before = session.monitor().hasCount() ? session.monitor().getUsed() : CargoHoldCapacity.UNKNOWN;
 		result.checks.add(new Check(name, line.tick(), used, before, opening, session.pendingCrewSalvage()));
 		session.holdCount(used, line.tick());
@@ -543,13 +602,24 @@ final class HoldCountReplay
 			holdItemIds.clear();
 			return;
 		}
+		int itemId = line.number("itemId", -1);
+		if ((option.equals("drop") || option.equals("eat") || (option.startsWith("cast") && target.contains("alchemy")))
+			&& itemId > 0 && !HoldWhitelist.TAKES_NO_SPACE.contains(itemId) && !(holdItemIds.contains(itemId) && stackable.contains(itemId)))
+		{
+			session.itemRemovalClicked(line.tick(), line.number("param0", -1));
+		}
 		boolean holdAction = option.contains("deposit") || option.startsWith("withdraw");
 		if (holdAction && (target.contains("cargo hold") || holdOpen))
 		{
-			session.holdActionClicked(option.startsWith("withdraw"), holdOpen);
+			// Recordings carry no player position, so a click beside the hold looks like one from afar.
+			session.holdActionClicked(option.startsWith("withdraw"), holdOpen, line.tick());
 			return;
 		}
-		session.holdActionCanceled();
+		if (AfkSalvagingPlugin.interfaceOnly(action, itemId))
+		{
+			return;
+		}
+		session.holdActionCanceled(line.tick());
 	}
 
 	/** The plugin's onOverheadTextChanged: only NPCs aboard the player's own world view count. */

@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.AnimationID;
 import net.runelite.api.gameval.ObjectID;
@@ -1114,10 +1115,11 @@ public class AfkSessionTest
 		ticks(AfkSession.HOLD_ACTION_TICKS + 1);
 		assertEquals(200, session.monitor().getUsed());
 
-		// A deposit click the player walked away from changes nothing either.
+		// A deposit click the player walked away from changes nothing either, once a tick has passed.
 		session.inventoryChanged(5, 5, Collections.singleton(ShipwreckType.MERCHANT), tick);
 		session.holdActionClicked(false);
-		session.holdActionCanceled();
+		session.holdActionCanceled(tick);
+		ticks(2);
 		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
 		ticks(2);
 		assertEquals(200, session.monitor().getUsed());
@@ -1129,6 +1131,260 @@ public class AfkSessionTest
 		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
 		ticks(1);
 		assertEquals(205, session.monitor().getUsed());
+
+		// Deposit-all beside the hold, then another click in the same tick: the game already has the
+		// deposit, so it still counts (in game, 2026-10-17).
+		session.inventoryChanged(5, 5, Collections.singleton(ShipwreckType.MERCHANT), tick);
+		session.holdActionClicked(false, true);
+		session.holdActionCanceled(tick);
+		ticks(3);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(210, session.monitor().getUsed());
+	}
+
+	@Test
+	public void aClickJustAsTheDepositLandsDoesNotCallItOff()
+	{
+		twoCrewOnHooks();
+		ticks(6);
+		session.monitor().setCapacity(300);
+		Set<ShipwreckType> merchant = Collections.singleton(ShipwreckType.MERCHANT);
+
+		// Deposit-all from afar, then Walk here the tick the player reaches the hold: the 22 go in
+		// (in game, 2026-10-17, ticks 960-961).
+		session.inventoryChanged(22, 22, merchant, tick);
+		session.holdActionClicked(false);
+		ticks(1);
+		session.holdActionCanceled(tick);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(222, session.monitor().getUsed());
+
+		// Deposit-all, then Drop a tick later, and the drop goes through: one slot on the floor, no deposit
+		// (ticks 380-381).
+		session.inventoryChanged(22, 22, merchant, tick);
+		session.holdActionClicked(false);
+		ticks(1);
+		session.itemRemovalClicked(tick);
+		session.holdActionCanceled(tick);
+		session.inventoryChanged(21, 21, merchant, tick);
+		ticks(AfkSession.HOLD_ACTION_TICKS);
+		assertEquals(222, session.monitor().getUsed());
+
+		// Deposit-all, then Drop as the player reaches the hold: the deposit wins and the drop finds
+		// nothing (ticks 344-345).
+		session.holdActionClicked(false);
+		ticks(1);
+		session.itemRemovalClicked(tick);
+		session.holdActionCanceled(tick);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(243, session.monitor().getUsed());
+	}
+
+	@Test
+	public void aDropJustBeforeTheDepositIsNotTheDeposit()
+	{
+		twoCrewOnHooks();
+		ticks(6);
+		session.monitor().setCapacity(400);
+		Set<ShipwreckType> merchant = Collections.singleton(ShipwreckType.MERCHANT);
+		session.inventoryChanged(20, 20, merchant, tick);
+		ticks(1);
+
+		// Drop, then Deposit-all in the same tick: the drop lands first, the 19 a tick later (ticks 872-873).
+		session.itemRemovalClicked(tick);
+		session.holdActionClicked(false);
+		session.inventoryChanged(19, 19, merchant, tick);
+		ticks(1);
+		assertEquals(200, session.monitor().getUsed());
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(219, session.monitor().getUsed());
+
+		// Both in one change, with the drop sound: one of the 22 went to the floor (ticks 571, 580, 607).
+		session.inventoryChanged(22, 22, merchant, tick);
+		ticks(1);
+		session.itemRemovalClicked(tick);
+		session.holdActionClicked(false);
+		session.dropSoundPlayed(tick);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(240, session.monitor().getUsed());
+
+		// The same with sound off: the drop was clicked ahead of the deposit, so it went through (ticks
+		// 547, 635, 664, 890; 848 and 893 with the game muted).
+		session.inventoryChanged(22, 22, merchant, tick);
+		ticks(1);
+		session.itemRemovalClicked(tick);
+		session.holdActionClicked(false);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(261, session.monitor().getUsed());
+
+		// Drop a tick earlier that landed on its own, then Deposit-all: nothing to take off (ticks 617-618).
+		session.inventoryChanged(22, 22, merchant, tick);
+		ticks(1);
+		session.itemRemovalClicked(tick);
+		session.inventoryChanged(21, 21, merchant, tick);
+		ticks(1);
+		session.holdActionClicked(false);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(282, session.monitor().getUsed());
+
+		// Drop clicked AFTER Deposit-all beside the hold, finding nothing: the full 22 count, and the
+		// stale drop click is not charged to a deposit made later (ticks 344-345, then 370).
+		session.inventoryChanged(22, 22, merchant, tick);
+		ticks(1);
+		session.holdActionClicked(false, true);
+		session.itemRemovalClicked(tick);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(304, session.monitor().getUsed());
+		session.inventoryChanged(22, 22, merchant, tick);
+		ticks(20);
+		session.holdActionClicked(false, true);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(326, session.monitor().getUsed());
+	}
+
+	@Test
+	public void aSecondHoldClickInTheTickTheFirstLandsKeepsTheFirst()
+	{
+		// In game (2026-10-17, ticks 148-149): Deposit-all from the station; next tick a Drop, the 21 landing,
+		// and Deposit-all clicked again before the tick counted the first. The second click must not wipe it.
+		twoCrewOnHooks();
+		ticks(6);
+		session.monitor().setCapacity(300);
+		Set<ShipwreckType> merchant = Collections.singleton(ShipwreckType.MERCHANT);
+		session.inventoryChanged(21, 21, merchant, tick);
+		ticks(1);
+		session.holdActionClicked(false);
+		ticks(1);
+		session.itemRemovalClicked(tick);
+		session.holdActionCanceled(tick);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		session.holdActionClicked(false);
+		ticks(1);
+		assertEquals(221, session.monitor().getUsed());
+
+		// That Drop found nothing, so a deposit a tick later gets its full count.
+		session.inventoryChanged(22, 22, merchant, tick);
+		session.holdActionClicked(false, true);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(243, session.monitor().getUsed());
+	}
+
+	@Test
+	public void twoDropsAroundADepositFromAfarAreNotADeposit()
+	{
+		// In game (2026-10-17, ticks 103-104): Drop, Deposit-all from afar, Drop again; both drops landed in one
+		// change (21 -> 19) and the deposit never happened. Then (tick 114) Drop and Deposit-all beside the hold:
+		// the drop inside the change, 18 in.
+		twoCrewOnHooks();
+		ticks(6);
+		session.monitor().setCapacity(300);
+		Set<ShipwreckType> merchant = Collections.singleton(ShipwreckType.MERCHANT);
+		session.inventoryChanged(21, 21, merchant, tick);
+		ticks(1);
+		session.itemRemovalClicked(tick);
+		session.holdActionClicked(false);
+		ticks(1);
+		session.itemRemovalClicked(tick);
+		session.holdActionCanceled(tick);
+		session.inventoryChanged(19, 19, merchant, tick);
+		ticks(AfkSession.HOLD_ACTION_TICKS);
+		assertEquals(200, session.monitor().getUsed());
+
+		session.itemRemovalClicked(tick);
+		session.holdActionClicked(false, true);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(218, session.monitor().getUsed());
+	}
+
+	@Test
+	public void aRepeatDropClickOnTheSameSlotIsNotAnotherDrop()
+	{
+		// In game (2026-10-17, ticks 2351-2355): Drop spam-clicked, slot 23 twice; nine items left, then
+		// Deposit-all took the 12 that were left. The repeat click found nothing and must not cut the deposit.
+		twoCrewOnHooks();
+		ticks(6);
+		session.monitor().setCapacity(300);
+		Set<ShipwreckType> merchant = Collections.singleton(ShipwreckType.MERCHANT);
+		session.inventoryChanged(14, 14, merchant, tick);
+		ticks(1);
+		session.itemRemovalClicked(tick, 23);
+		session.itemRemovalClicked(tick, 23);
+		session.itemRemovalClicked(tick, 22);
+		session.inventoryChanged(13, 13, merchant, tick);
+		ticks(1);
+		session.itemRemovalClicked(tick, 15);
+		session.holdActionClicked(false);
+		session.inventoryChanged(11, 11, merchant, tick);
+		ticks(1);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(211, session.monitor().getUsed());
+	}
+
+	@Test
+	public void aPickupInTheTickOfTheDepositClickGoesInToo()
+	{
+		// In game (2026-10-17, ticks 2383-2384): Take, then Deposit-all, the pickup landing after the click;
+		// the deposit took all 4.
+		twoCrewOnHooks();
+		ticks(6);
+		session.monitor().setCapacity(300);
+		Set<ShipwreckType> merchant = Collections.singleton(ShipwreckType.MERCHANT);
+		session.inventoryChanged(3, 3, merchant, tick);
+		ticks(1);
+		session.holdActionClicked(false);
+		session.inventoryChanged(4, 4, merchant, tick);
+		ticks(1);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(204, session.monitor().getUsed());
+	}
+
+	@Test
+	public void aSecondDropAfterTheFirstLandedDoesNotCutTheDeposit()
+	{
+		// Drop (lands alone), Deposit-all, then another Drop a moment after the deposit: the first drop is
+		// spent, so the whole deposit counts; the second drop finds nothing once the deposit has landed.
+		twoCrewOnHooks();
+		ticks(6);
+		session.monitor().setCapacity(300);
+		Set<ShipwreckType> merchant = Collections.singleton(ShipwreckType.MERCHANT);
+		session.inventoryChanged(22, 22, merchant, tick);
+		ticks(1);
+		session.itemRemovalClicked(tick);
+		session.holdActionClicked(false);
+		session.inventoryChanged(21, 21, merchant, tick);
+		session.itemRemovalClicked(tick);
+		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
+		ticks(1);
+		assertEquals(221, session.monitor().getUsed());
+	}
+
+	@Test
+	public void besideTheHoldMeansNextToASideOfIt()
+	{
+		// A 2x1 hold at scene (10, 20).
+		assertTrue(AfkSalvagingPlugin.besideFootprint(9, 20, 10, 20, 2, 1));
+		assertTrue(AfkSalvagingPlugin.besideFootprint(12, 20, 10, 20, 2, 1));
+		assertTrue(AfkSalvagingPlugin.besideFootprint(11, 21, 10, 20, 2, 1));
+		assertTrue(AfkSalvagingPlugin.besideFootprint(10, 19, 10, 20, 2, 1));
+		// Corners, under it and further off are not.
+		assertFalse(AfkSalvagingPlugin.besideFootprint(9, 21, 10, 20, 2, 1));
+		assertFalse(AfkSalvagingPlugin.besideFootprint(12, 19, 10, 20, 2, 1));
+		assertFalse(AfkSalvagingPlugin.besideFootprint(10, 20, 10, 20, 2, 1));
+		assertFalse(AfkSalvagingPlugin.besideFootprint(8, 20, 10, 20, 2, 1));
+		assertFalse(AfkSalvagingPlugin.besideFootprint(11, 22, 10, 20, 2, 1));
 	}
 
 	@Test
@@ -1187,8 +1443,8 @@ public class AfkSessionTest
 		session.inventoryChanged(0, 0, Collections.emptySet(), tick);
 		ticks(1);
 		session.holdActionClicked(true, true);
-		session.holdActionCanceled();
-		ticks(1);
+		session.holdActionCanceled(tick);
+		ticks(3);
 		session.inventoryChanged(21, 21, Collections.singleton(ShipwreckType.MERCHANT), tick);
 		ticks(1);
 		assertEquals(179, session.monitor().getUsed());

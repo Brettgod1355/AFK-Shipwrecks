@@ -292,6 +292,42 @@ public final class AfkSession
 	private boolean pendingInInterface;
 	private int inventoryBefore;
 	private boolean inventoryChanged;
+	/**
+	 * The tick another click was made while a hold click was pending, or NONE. The game may already be
+	 * carrying out the hold click when that click arrives, so it is called off only once a tick has passed
+	 * with no change (in game, 2026-10-17: Deposit-all, then Walk here, Drop, Command or Open just as the
+	 * player reached the hold, eight times, the deposit landing every time).
+	 */
+	private static final int NONE = Integer.MIN_VALUE;
+	private int cancelClickTick = NONE;
+	/**
+	 * Ticks of the Drop, eat and alchemy clicks on items that take hold space whose items have not left the
+	 * inventory yet, oldest first. A click older than a tick that never showed found nothing (a Drop after a
+	 * deposit that emptied the inventory) and is forgotten.
+	 */
+	private final List<RemovalClick> removalClicks = new ArrayList<>();
+
+	/** A Drop, eat or alchemy click: when, and on which inventory slot (-1 when unknown). */
+	private static final class RemovalClick
+	{
+		final int tick;
+		final int slot;
+
+		RemovalClick(int tick, int slot)
+		{
+			this.tick = tick;
+			this.slot = slot;
+		}
+	}
+	/**
+	 * How many of those were clicked ahead of the pending deposit click: each goes through whatever the
+	 * deposit does, in the same inventory change when the player is beside the hold.
+	 */
+	private int removalsBeforeHold;
+	/** The tick the game last played the drop sound. */
+	private int dropSoundTick = NONE;
+	/** The tick of the pending hold click. */
+	private int holdClickTick = NONE;
 	private int sortingFinishTick = -1;
 	private PlayerActivity lastActivity = PlayerActivity.IDLE;
 	private WorldPoint lastBoatPoint;
@@ -572,14 +608,42 @@ public final class AfkSession
 	{
 		if (inventoryKnown)
 		{
+			int fall = inventoryBefore - holdSpace;
+			forgetStaleRemovals(tick);
 			if (pendingHoldTicks > 0)
 			{
-				// Only a change in the direction the click implies can be that click's doing.
-				boolean matches = pendingWithdraw ? holdSpace > inventoryBefore : holdSpace < inventoryBefore;
-				if (matches)
+				if (!pendingWithdraw && fall > 0 && fall <= removalClicks.size())
 				{
-					inventoryChanged = true;
+					// No more slots gone than the player just dropped, ate or alched: those items, not the
+					// deposit, which may still land (in game, 2026-10-17: Drop then Deposit-all in one tick,
+					// the drop landing first and the 19 deposited a tick later; two Drops around a Deposit-all
+					// from afar, both landing, no deposit).
+					removalsLanded(fall);
+					inventoryBefore = holdSpace;
 				}
+				else
+				{
+					// Only a change in the direction the click implies can be that click's doing.
+					boolean matches = pendingWithdraw ? holdSpace > inventoryBefore : holdSpace < inventoryBefore;
+					if (matches)
+					{
+						inventoryChanged = true;
+					}
+					else if (holdSpace != inventoryBefore)
+					{
+						// The other way: a pickup ahead of the deposit, or a drop ahead of the withdrawal,
+						// which the hold click then moves too, so the baseline follows it (in game,
+						// 2026-10-17, tick 2383: a salvage picked up in the tick of the Deposit-all click
+						// landed after it; 4 went in, 3 were counted).
+						inventoryBefore = holdSpace;
+					}
+				}
+			}
+			else if (holdSpace < occupiedInventorySlots)
+			{
+				// The dropped items left on their own, before any hold click: a deposit clicked straight after
+				// gets all of its slots (in game, 2026-10-17: Drop at tick 617, Deposit-all at 618, 21 in).
+				removalsLanded(occupiedInventorySlots - holdSpace);
 			}
 			int gained = salvage - inventorySalvage;
 			boolean withdrawing = pendingHoldTicks > 0 && pendingWithdraw;
@@ -604,18 +668,99 @@ public final class AfkSession
 	/**
 	 * The player clicked Deposit or Withdraw on the hold, so the inventory is about to change.
 	 *
-	 * @param inInterface clicked inside the open hold: the game already has the order, so a click
-	 *                    elsewhere straight after cannot call it off (in game, 2026-10-10: Withdraw-All,
-	 *                    Esc and a quick click on, and 21 salvage left the hold uncounted)
+	 * @param inInterface clicked inside the open hold, or on the hold while standing beside it: the game
+	 *                    already has the order, so a click elsewhere straight after cannot call it off (in
+	 *                    game, 2026-10-10: Withdraw-All, Esc and a quick click on, and 21 salvage left the
+	 *                    hold uncounted; 2026-10-17: Deposit-all beside the hold, then Command or Walk here in
+	 *                    the same tick, four times, 22 salvage each left uncounted)
 	 */
 	public void holdActionClicked(boolean withdraw, boolean inInterface)
 	{
+		holdActionClicked(withdraw, inInterface, currentTick);
+	}
+
+	/**
+	 * The player clicked Deposit or Withdraw on the hold, so the inventory is about to change.
+	 *
+	 * @param tick the tick of the click; a Drop, eat or alchemy click in this tick or the one before
+	 *             that no change has shown yet went to the game first, so it goes through whatever the
+	 *             deposit does, and may land in the same inventory change as the deposit (in game,
+	 *             2026-10-17: eight times, the hold one short of the tally each time)
+	 */
+	public void holdActionClicked(boolean withdraw, boolean inInterface, int tick)
+	{
+		if (pendingHoldTicks > 0 && inventoryChanged)
+		{
+			// The last click's change has landed but the tick has not come round to count it: a second
+			// click in the same tick must not wipe it (in game, 2026-10-17: Deposit-all, then Deposit-all
+			// again in the tick the first landed, 21 left uncounted).
+			applyPendingChange();
+		}
 		pendingHoldTicks = HOLD_ACTION_TICKS;
 		pendingWithdraw = withdraw;
 		pendingInInterface = inInterface;
+		holdClickTick = tick;
 		inventoryBefore = occupiedInventorySlots;
 		inventoryChanged = false;
+		cancelClickTick = NONE;
+		forgetStaleRemovals(tick);
+		removalsBeforeHold = withdraw ? 0 : removalClicks.size();
 		hookWatch.noteHoldUse();
+	}
+
+	/**
+	 * The player clicked Drop, eat or an alchemy spell on an inventory item that takes hold space: a
+	 * slot about to empty that is not a deposit.
+	 */
+	public void itemRemovalClicked(int tick)
+	{
+		itemRemovalClicked(tick, -1);
+	}
+
+	/**
+	 * The player clicked Drop, eat or an alchemy spell on an inventory item that takes hold space: a
+	 * slot about to empty that is not a deposit.
+	 *
+	 * @param slot the inventory slot clicked, or -1 if unknown; a second click on a slot whose first has
+	 *             not shown yet finds nothing (in game, 2026-10-17, tick 2351: ten Drop clicks in four
+	 *             ticks, nine items gone, slot 23 clicked twice)
+	 */
+	public void itemRemovalClicked(int tick, int slot)
+	{
+		if (slot >= 0)
+		{
+			for (RemovalClick click : removalClicks)
+			{
+				if (click.slot == slot)
+				{
+					return;
+				}
+			}
+		}
+		removalClicks.add(new RemovalClick(tick, slot));
+	}
+
+	/** The game played the sound of an item being dropped. */
+	public void dropSoundPlayed(int tick)
+	{
+		dropSoundTick = tick;
+	}
+
+	/** Removal clicks older than a tick whose items never left found nothing to remove. */
+	private void forgetStaleRemovals(int tick)
+	{
+		while (!removalClicks.isEmpty() && tick - removalClicks.get(0).tick > 1)
+		{
+			removalsLanded(1);
+		}
+	}
+
+	/** The oldest removal clicks are accounted for: their items have left the inventory, or never will. */
+	private void removalsLanded(int count)
+	{
+		int n = Math.min(count, removalClicks.size());
+		removalClicks.subList(0, n).clear();
+		removalsBeforeHold = Math.max(0, removalsBeforeHold - n);
 	}
 
 	/** The game said there is no more salvage to sort; the notice follows after a grace, unless sorting starts again. */
@@ -633,15 +778,18 @@ public final class AfkSession
 		sortingDoneAt = -1;
 	}
 
-	/** The player clicked something else before reaching the hold, so the deposit or withdrawal is off. */
-	public void holdActionCanceled()
+	/**
+	 * The player clicked something else, so the deposit or withdrawal is off unless the game was already
+	 * carrying it out: a change in the inventory by the end of the next tick still counts (see
+	 * {@link #cancelClickTick}).
+	 */
+	public void holdActionCanceled(int tick)
 	{
-		if (pendingInInterface)
+		if (pendingInInterface || pendingHoldTicks <= 0 || cancelClickTick != NONE)
 		{
 			return;
 		}
-		pendingHoldTicks = 0;
-		inventoryChanged = false;
+		cancelClickTick = tick;
 	}
 
 	/**
@@ -676,6 +824,8 @@ public final class AfkSession
 		{
 			pendingHoldTicks = 0;
 			inventoryChanged = false;
+			cancelClickTick = NONE;
+			removalsBeforeHold = 0;
 		}
 	}
 
@@ -726,6 +876,8 @@ public final class AfkSession
 	{
 		pendingHoldTicks = 0;
 		inventoryChanged = false;
+		cancelClickTick = NONE;
+		removalsBeforeHold = 0;
 		monitor.setEstimatedUsed(0);
 	}
 
@@ -808,6 +960,11 @@ public final class AfkSession
 		pendingWithdraw = false;
 		pendingInInterface = false;
 		inventoryChanged = false;
+		cancelClickTick = NONE;
+		removalClicks.clear();
+		dropSoundTick = NONE;
+		holdClickTick = NONE;
+		removalsBeforeHold = 0;
 		sortingFinishTick = -1;
 		lastActivity = PlayerActivity.IDLE;
 		lastBoatPoint = null;
@@ -1430,20 +1587,52 @@ public final class AfkSession
 		}
 		if (inventoryChanged)
 		{
-			int delta = inventoryBefore - occupiedInventorySlots;
+			applyPendingChange();
+		}
+		else if (cancelClickTick != NONE && currentTick > cancelClickTick + 1)
+		{
+			log.debug("Hold {} click called off by a click at tick {}", pendingWithdraw ? "withdraw" : "deposit", cancelClickTick);
 			pendingHoldTicks = 0;
-			inventoryChanged = false;
-			holdActionResolvedTick = currentTick;
-			if (delta != 0)
-			{
-				monitor.adjust(delta);
-				log.debug("Tally {} from a hold {} click at tick {}: {}", delta, pendingWithdraw ? "withdraw" : "deposit",
-					currentTick, monitor.getUsed());
-			}
+			cancelClickTick = NONE;
+			removalsBeforeHold = 0;
 		}
 		else
 		{
 			pendingHoldTicks--;
+		}
+	}
+
+	/** The pending hold click's inventory change has arrived: count it and end the click. */
+	private void applyPendingChange()
+	{
+		int delta = inventoryBefore - occupiedInventorySlots;
+		if (!pendingWithdraw && delta > 0)
+		{
+			forgetStaleRemovals(currentTick);
+			// Drops clicked ahead of the deposit always go through, so they are inside this change (in game,
+			// 2026-10-17: eight times, the hold one short of the tally each time); the drop sound, when
+			// sound is on, says the same for a drop the clicks did not place first.
+			int inside = Math.min(removalsBeforeHold, delta - 1);
+			if (inside == 0 && delta > 1 && !removalClicks.isEmpty() && dropSoundTick != NONE && currentTick - dropSoundTick <= 1)
+			{
+				inside = 1;
+			}
+			delta -= inside;
+			// Any drop clicked after the deposit found nothing once the deposit landed (never both), so
+			// none of them can be charged to the next deposit.
+			removalClicks.clear();
+			removalsBeforeHold = 0;
+		}
+		pendingHoldTicks = 0;
+		inventoryChanged = false;
+		cancelClickTick = NONE;
+		removalsBeforeHold = 0;
+		holdActionResolvedTick = currentTick;
+		if (delta != 0)
+		{
+			monitor.adjust(delta);
+			log.debug("Tally {} from a hold {} click at tick {}: {}", delta, pendingWithdraw ? "withdraw" : "deposit",
+				currentTick, monitor.getUsed());
 		}
 	}
 
