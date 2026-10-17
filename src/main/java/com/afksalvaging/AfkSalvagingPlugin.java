@@ -2838,6 +2838,8 @@ public class AfkSalvagingPlugin extends Plugin
 			// What this boat's hold held when last seen, until it is opened again.
 			loadHoldItems(slot);
 			holdSalvage.restore(loadSavedHoldSalvage(slot));
+			// With --debug, what the hold-or-hook choice starts from on boarding.
+			log.debug("Boat {}: hold salvage remembered as {}", slot, holdSalvage.get());
 			if (capacityFromInterface[slot] == CargoHoldCapacity.UNKNOWN)
 			{
 				// Its size as the hold window last showed it, so the counter has a total before the hold is seen.
