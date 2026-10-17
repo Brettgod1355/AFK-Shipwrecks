@@ -305,6 +305,8 @@ public final class AfkSession
 	private int lastBoatHp = -1;
 	/** The kind of salvage the crew last put into the hold, until the plugin has taken note of it. */
 	private ShipwreckType crewSalvageType;
+	/** Crew salvage the tally counted with the hold shut, until the plugin has taken note of it. */
+	private int crewSalvageCounted;
 	private boolean lastPoisoned;
 	/** Until when the last danger is shown, what it was, and when the last danger notification went out. */
 	private long dangerUntil = -1;
@@ -453,6 +455,17 @@ public final class AfkSession
 	{
 		ShipwreckType taken = crewSalvageType;
 		crewSalvageType = null;
+		return taken;
+	}
+
+	/**
+	 * How many crew salvages the tally counted since the last call, with the hold shut; the call clears it.
+	 * Salvage the hold's reads already held is not in it, so the plugin can add it to the hold's salvage count.
+	 */
+	public int takeCrewSalvageCounted()
+	{
+		int taken = crewSalvageCounted;
+		crewSalvageCounted = 0;
 		return taken;
 	}
 
@@ -670,6 +683,12 @@ public final class AfkSession
 		return pendingHoldTicks > 0 && !pendingWithdraw;
 	}
 
+	/** Whether a withdraw click on the hold is being followed through the inventory right now. */
+	public boolean holdWithdrawPending()
+	{
+		return pendingHoldTicks > 0 && pendingWithdraw;
+	}
+
 	/**
 	 * The inventory's hold-space count, worked out again because what the hold holds became known: a
 	 * cannonball the hold turns out to have no longer counts as a slot to deposit.
@@ -776,6 +795,7 @@ public final class AfkSession
 		lastActivity = PlayerActivity.IDLE;
 		lastBoatPoint = null;
 		crewSalvageType = null;
+		crewSalvageCounted = 0;
 		stillTicks = 0;
 		hazardous = false;
 		hazardAt = null;
@@ -983,6 +1003,7 @@ public final class AfkSession
 			else
 			{
 				monitor.adjust(1);
+				crewSalvageCounted++;
 				log.debug("Tally +1 from crew salvage (deckhandiness {}, event tick {}) at tick {}: {}",
 					event.getDeckhandiness(), event.getTick(), tick, monitor.getUsed());
 			}

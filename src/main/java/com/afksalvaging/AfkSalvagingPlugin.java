@@ -289,6 +289,10 @@ public class AfkSalvagingPlugin extends Plugin
 
 	/** The item ids in the current boat's hold when it was last read, to tell a new stack from an added-to one. */
 	private final Set<Integer> holdItemIds = new HashSet<>();
+	/** How many salvage the current boat's hold holds, for the hold-or-hook choice of the salvage highlight. */
+	private final HoldSalvageCount holdSalvage = new HoldSalvageCount();
+	/** The salvage in the inventory at its last change, or -1 before the first. */
+	private int lastInventorySalvage = -1;
 	/** The inventory's items at the last change, id to quantity, to see which types a deposit took. */
 	private Map<Integer, Integer> lastInventory = new HashMap<>();
 
@@ -705,13 +709,19 @@ public class AfkSalvagingPlugin extends Plugin
 			return;
 		}
 		holdItemIds.clear();
+		int salvageInHold = 0;
 		for (Item item : event.getItemContainer().getItems())
 		{
 			if (item != null && item.getId() > -1 && item.getQuantity() > 0)
 			{
 				holdItemIds.add(item.getId());
+				if (ShipwreckType.fromSalvageItemId(item.getId()) != null)
+				{
+					salvageInHold += item.getQuantity();
+				}
 			}
 		}
+		holdSalvage.read(salvageInHold, client.getTickCount());
 		saveHoldItems();
 		// The hold is known now: what the inventory would add to it may have changed.
 		session.holdSpaceRecounted(holdSpace(client.getItemContainer(InventoryID.INV)));
@@ -771,6 +781,7 @@ public class AfkSalvagingPlugin extends Plugin
 			session.holdBanked();
 			saveUsed();
 			holdItemIds.clear();
+			holdSalvage.banked();
 			saveHoldItems();
 			return;
 		}
@@ -1004,6 +1015,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			saveHoldItems();
 		}
+		holdSalvage.crewSalvage(session.takeCrewSalvageCounted());
 		if (updateMessage != null)
 		{
 			if (config.updateMessage())
@@ -1393,7 +1405,10 @@ public class AfkSalvagingPlugin extends Plugin
 		g.ownBoat = in.sailing && in.ownBoat;
 		g.hasStation = session.boat().hasStation();
 		g.inventoryFull = occupied >= AfkSession.INVENTORY_SLOTS;
-		g.holdHasSalvage = holdHasSalvage();
+		g.freeSlots = items == null ? -1 : Math.max(0, AfkSession.INVENTORY_SLOTS - occupied);
+		g.holdSalvage = holdSalvage.get();
+		// Once counted, the count decides; before that, whether the hold was seen with salvage in it.
+		g.holdHasSalvage = g.holdSalvage == HoldSalvageCount.UNKNOWN ? holdHasSalvage() : g.holdSalvage > 0;
 		g.holdTurnedDown = holdTurnedDown;
 		g.playerAtHook = atHook;
 		g.wreckInReach = session.view().wrecksUp > 0;
@@ -2381,6 +2396,8 @@ public class AfkSalvagingPlugin extends Plugin
 		hookObjects.clear();
 		stationObjects.clear();
 		monitoredSlot = 0;
+		holdSalvage.forget();
+		lastInventorySalvage = -1;
 		alertShownAt = 0;
 		reminderShownAt = 0;
 		readInterfaceNextTick = false;
@@ -2648,6 +2665,12 @@ public class AfkSalvagingPlugin extends Plugin
 			}
 		}
 		session.inventoryChanged(occupied, holdSpace, salvage, types, client.getTickCount());
+		if (lastInventorySalvage >= 0)
+		{
+			holdSalvage.inventorySalvageChanged(salvage - lastInventorySalvage, client.getTickCount(), isCargoInterfaceOpen(),
+				session.holdWithdrawPending(), session.holdDepositPending());
+		}
+		lastInventorySalvage = salvage;
 		// A deposit on the hold: any stackable type that left the inventory now has a stack there, so the
 		// next deposit of it adds nothing (owner, 2026-10-08).
 		if (session.holdDepositPending())
@@ -2797,6 +2820,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			session.monitor().reset();
 			holdItemIds.clear();
+			holdSalvage.forget();
 			monitoredSlot = slot;
 		}
 		if (slot == 0)

@@ -120,6 +120,51 @@ public class SalvageGuideTest
 	}
 
 	@Test
+	public void theHoldWhenItHasAFullInventorysWorthOtherwiseTheHook()
+	{
+		// Owner, 2026-10-17: "perfect if it can just know how much salvage is in the hold and know how much free
+		// inventory you have".
+		in.holdHasSalvage = true;
+		in.freeSlots = 20;
+		in.holdSalvage = 20;
+		assertEquals("a full withdraw waiting: the hold", Collections.singletonList(Target.HOLD), SalvageGuide.decide(in).getTargets());
+		in.holdSalvage = 45;
+		assertEquals(Collections.singletonList(Target.HOLD), SalvageGuide.decide(in).getTargets());
+		in.holdSalvage = 19;
+		Result r = SalvageGuide.decide(in);
+		assertEquals("less than a full withdraw: hook it yourself", Collections.singletonList(Target.HOOK), r.getTargets());
+		assertEquals(ADA.hash, r.getHookHash());
+	}
+
+	@Test
+	public void bothStayLitWhenTheCountOrTheSpaceIsNotKnown()
+	{
+		in.holdHasSalvage = true;
+		in.freeSlots = 20;
+		assertEquals("count unknown", Arrays.asList(Target.HOLD, Target.HOOK), SalvageGuide.decide(in).getTargets());
+		in.holdSalvage = 5;
+		in.freeSlots = 0;
+		assertEquals("no room to take any out", Arrays.asList(Target.HOLD, Target.HOOK), SalvageGuide.decide(in).getTargets());
+	}
+
+	@Test
+	public void theCountOnlyChoosesWhenBothCouldLight()
+	{
+		in.holdHasSalvage = true;
+		in.freeSlots = 20;
+		in.holdSalvage = 3;
+		in.wreckInReach = false;
+		assertEquals("no wreck to hook: the hold, however little", Collections.singletonList(Target.HOLD), SalvageGuide.decide(in).getTargets());
+		in.wreckInReach = true;
+		in.hookChoice = GuideHook.OFF;
+		assertEquals("no hook pointed at: the hold", Collections.singletonList(Target.HOLD), SalvageGuide.decide(in).getTargets());
+		in.hookChoice = GuideHook.WEAKEST_CREW;
+		in.holdSalvage = 50;
+		in.holdTurnedDown = true;
+		assertEquals("the hold just turned down: the hook, however much", Collections.singletonList(Target.HOOK), SalvageGuide.decide(in).getTargets());
+	}
+
+	@Test
 	public void anEmptyHoldLeavesOnlyTheHook()
 	{
 		Result r = SalvageGuide.decide(in);

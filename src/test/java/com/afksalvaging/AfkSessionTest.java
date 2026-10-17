@@ -290,6 +290,24 @@ public class AfkSessionTest
 	}
 
 	@Test
+	public void crewSalvageCountedWithTheHoldShutIsHandedOnOnce()
+	{
+		// For the hold's salvage count (owner, 2026-10-17): only salvage the tally counted, never what a read held.
+		twoCrewOnHooks();
+		ticks(10);
+		session.crewLine("Jolly Jim", tick);
+		ticks(4);
+		assertEquals(201, session.monitor().getUsed());
+		assertEquals(1, session.takeCrewSalvageCounted());
+		assertEquals("taken once", 0, session.takeCrewSalvageCounted());
+		interfaceOpen = true;
+		ticks(1);
+		session.crewLine("Jolly Jim", tick);
+		ticks(4);
+		assertEquals("with the hold open the read counts it", 0, session.takeCrewSalvageCounted());
+	}
+
+	@Test
 	public void xpJustAfterClosingIsNewSalvageWhenNoneLandedWhileOpen()
 	{
 		// In game (2026-10-13, 16:21, Air Marshal): the hold opened at 18, 8 were taken out (10), the hold

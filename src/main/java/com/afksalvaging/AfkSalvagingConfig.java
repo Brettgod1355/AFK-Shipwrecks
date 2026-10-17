@@ -1038,9 +1038,10 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "guideHook",
 		name = "Point to a hook",
-		description = "When there is nothing left to sort or deposit and a wreck is in reach, also outline a hook you could "
+		description = "When there is nothing left to sort or deposit and a wreck is in reach, outline a hook you could "
 			+ "hook from yourself: a free one, or else the one with your weakest crewmate (clicking it sends them to "
-			+ "rest). Opening the cargo hold and taking nothing out leaves only the hook lit.",
+			+ "rest). If the cargo hold holds enough salvage to fill your free inventory, the hold lights instead. "
+			+ "Opening the cargo hold and taking nothing out leaves only the hook lit.",
 		section = SORTING,
 		position = 11
 	)

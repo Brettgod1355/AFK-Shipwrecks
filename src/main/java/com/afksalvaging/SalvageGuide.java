@@ -74,6 +74,10 @@ public final class SalvageGuide
 		public int depositBoxed;
 		/** Whether the hold is known to hold salvage. */
 		public boolean holdHasSalvage;
+		/** How many salvage the hold holds, or {@link HoldSalvageCount#UNKNOWN}. */
+		public int holdSalvage = HoldSalvageCount.UNKNOWN;
+		/** Free inventory slots, or -1 when unknown. */
+		public int freeSlots = -1;
 		/** The hold was opened and closed with nothing taken and no salvage in the inventory. */
 		public boolean holdTurnedDown;
 		/** The player is at a hook: hooking, or standing at one. */
@@ -165,12 +169,20 @@ public final class SalvageGuide
 		{
 			return allowed(in.mode, Target.HOLD) ? only(Target.HOLD, false) : Result.NONE;
 		}
+		boolean hold = in.holdHasSalvage && !in.holdTurnedDown && allowed(in.mode, Target.HOLD);
+		HookFacts hook = in.playerAtHook || !in.wreckInReach ? null : pickHook(in.hooks, in.hookChoice);
+		if (hold && hook != null && in.holdSalvage != HoldSalvageCount.UNKNOWN && in.freeSlots > 0)
+		{
+			// Both would do: the hold once it has a full inventory's worth to take out, else the hook (owner,
+			// 2026-10-17). Unknown counts keep both lit, as before.
+			return in.holdSalvage >= in.freeSlots ? only(Target.HOLD, false)
+				: new Result(Collections.singletonList(Target.HOOK), hook.hash, false);
+		}
 		List<Target> targets = new ArrayList<>();
-		if (in.holdHasSalvage && !in.holdTurnedDown && allowed(in.mode, Target.HOLD))
+		if (hold)
 		{
 			targets.add(Target.HOLD);
 		}
-		HookFacts hook = in.playerAtHook || !in.wreckInReach ? null : pickHook(in.hooks, in.hookChoice);
 		if (hook != null)
 		{
 			targets.add(Target.HOOK);

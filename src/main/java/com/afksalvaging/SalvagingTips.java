@@ -88,7 +88,8 @@ public final class SalvagingTips
 				+ "74 common junk items, after asking. Nothing is ever dropped or alched for you.",
 			"With the hold open only the deposit boxes show, and the salvage in the hold gets an amber box.",
 			"Your next step lights up on deck: the station (amber) while you carry salvage, then, once drop and alch "
-				+ "items are gone, the hold for deposits or more salvage, and a hook (green) you could take yourself.",
+				+ "items are gone, the hold for deposits. After that, the hold if it holds enough salvage to fill your "
+				+ "free inventory, otherwise a hook (green) you could take yourself.",
 			"Open the hold and take nothing out, and only the hook stays lit. \"Point to a hook\" picks a free one, or "
 				+ "the weakest crewmate's: clicking a crewed hook sends them to rest.")
 	));
