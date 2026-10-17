@@ -83,8 +83,7 @@ public class HookGuideOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		if (!config.hookGuide() || !plugin.isOwnBoat()
-			|| plugin.getSession().view().reminder != HookWatch.Reason.SPARE_CREW)
+		if (!config.hookGuide() || !plugin.isOwnBoat() || !plugin.getSession().view().assignGuide)
 		{
 			return null;
 		}

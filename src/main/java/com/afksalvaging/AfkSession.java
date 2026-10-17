@@ -202,6 +202,8 @@ public final class AfkSession
 		public int spareCrew;
 		public boolean spareCrewCannotUseHook;
 		public HookWatch.Reason reminder;
+		/** Whether to flash the guide to assign a crewmate to the empty hook (before the reminder once sorting). */
+		public boolean assignGuide;
 		/** A swap already suggested and still worth making, or null. */
 		public CrewSwapWatch.Suggestion betterCrew;
 		/** How long the boat has stood on one tile, 0 while it moves or when not sailing. */
@@ -1301,6 +1303,7 @@ public final class AfkSession
 		view.spareCrew = spare;
 		view.spareCrewCannotUseHook = spare == 0 && !roster.idle(tick).isEmpty();
 		view.reminder = hookWatch.getReason();
+		view.assignGuide = hookWatch.showAssignGuide();
 		view.betterCrew = crewSwap.standing();
 		view.boatStillMillis = stillTicks * 600L;
 		view.atSpot = atSpot;

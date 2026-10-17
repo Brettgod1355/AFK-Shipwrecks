@@ -62,7 +62,8 @@ public final class HookWatch
 	private long emptySince = -1;
 	private long lastRemindedAt = -1;
 	private long extraGrace;
-	private boolean shortGrace;
+	/** The player started sorting while a hook stood empty: the assign guide may show before the reminder. */
+	private boolean sortingWhileEmpty;
 	private boolean reminded;
 	private Reason reason;
 
@@ -87,7 +88,9 @@ public final class HookWatch
 		}
 		if (!reminded)
 		{
-			long grace = shortGrace ? Math.min(graceMillis, SHORT_GRACE_MILLIS) : graceMillis + extraGrace;
+			// Always the player's grace (owner, 2026-10-17: "make it follow the grace period"); sorting no longer
+			// cuts it short, it only brings the assign guide forward (see showAssignGuide).
+			long grace = graceMillis + extraGrace;
 			if (now - emptySince >= Math.max(0, grace))
 			{
 				reminded = true;
@@ -106,8 +109,6 @@ public final class HookWatch
 
 	/** Grace granted when the player is clearly only depositing or withdrawing. */
 	public static final long DEPOSIT_GRACE_MILLIS = 10_000;
-	/** Grace left once the player has started sorting, which takes a while. */
-	public static final long SHORT_GRACE_MILLIS = 3_000;
 
 	/** The player clicked the hold: give them longer to come back before reminding. */
 	public void noteHoldUse()
@@ -118,10 +119,23 @@ public final class HookWatch
 		}
 	}
 
-	/** The player has settled in to sort, so they are not coming back soon: remind sooner. */
+	/**
+	 * The player has settled in to sort, so they are not coming back to the hook soon: the guide to assign a
+	 * crewmate may show at once, while the reminder itself still waits the grace (owner, 2026-10-17: "an overlay
+	 * isnt as annoying as an alert imo but the alert is still nice incase we forget").
+	 */
 	public void noteSortingStarted()
 	{
-		shortGrace = true;
+		sortingWhileEmpty = true;
+	}
+
+	/**
+	 * Whether to show the guide to assign a crewmate to the empty hook: once the reminder is up, or earlier when the
+	 * player started sorting with the hook empty. Only when a crewmate aboard could take it.
+	 */
+	public boolean showAssignGuide()
+	{
+		return reason == Reason.SPARE_CREW && (reminded || sortingWhileEmpty);
 	}
 
 	/** Why the standing reminder was raised, or null when none is standing. */
@@ -170,7 +184,7 @@ public final class HookWatch
 		emptySince = -1;
 		lastRemindedAt = -1;
 		extraGrace = 0;
-		shortGrace = false;
+		sortingWhileEmpty = false;
 		reminded = false;
 		reason = null;
 	}

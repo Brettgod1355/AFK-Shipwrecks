@@ -287,7 +287,8 @@ public interface AfkSalvagingConfig extends Config
 		keyName = "hookGuide",
 		name = "Show where to click for an empty hook",
 		description = "While a hook is empty and a crewmate could take it, flash a green box on the next click: the Sailing "
-			+ "tab, the empty hook's Assign button, then the free crewmate with the most deckhandiness for that hook.",
+			+ "tab, the empty hook's Assign button, then the free crewmate with the most deckhandiness for that hook. "
+			+ "It starts with the reminder, or as soon as you start sorting after leaving the hook.",
 		section = REMINDERS,
 		position = 17
 	)
@@ -325,8 +326,8 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "reminderGraceSeconds",
 		name = "Grace period",
-		description = "How long a hook may stand empty before the first reminder. Using the cargo hold buys a "
-			+ "little extra; settling in to sort shortens it.",
+		description = "How long a hook may stand empty before the first reminder, sorting or not. Using the cargo "
+			+ "hold buys a little extra.",
 		section = REMINDERS,
 		position = 7
 	)

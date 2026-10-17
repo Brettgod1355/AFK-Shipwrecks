@@ -457,15 +457,21 @@ public class AfkSessionTest
 		ticks(PlayerActivity.Detector.HOLD_TICKS + 1);
 		assertEquals(1, session.view().emptyHooks);
 		assertEquals(PlayerActivity.SORTING, session.view().activity);
-		// Sorting cuts the grace to three seconds.
+		// Sorting brings the assign guide forward at once, but the reminder waits the whole grace (owner, 2026-10-17).
+		assertTrue("the guide as soon as sorting starts", session.view().assignGuide);
 		ticks(6);
-		assertEquals(1, count(Notice.HOOK_EMPTY));
+		assertEquals("no reminder 3 s in", 0, count(Notice.HOOK_EMPTY));
+		assertNull(session.view().reminder);
+		ticks(20);
+		assertEquals("the reminder after the 15 s grace", 1, count(Notice.HOOK_EMPTY));
 		assertEquals(HookWatch.Reason.SPARE_CREW, session.view().reminder);
+		assertTrue(session.view().assignGuide);
 
 		// Jolly Jim is put on the hook.
 		session.roster().setPosition(1, CrewAssignment.HOOK_SLOOP_2);
 		ticks(2);
 		assertNull(session.view().reminder);
+		assertFalse("the guide goes with the reminder", session.view().assignGuide);
 		assertEquals(0, session.view().emptyHooks);
 		assertEquals(1, count(Notice.HOOK_EMPTY));
 	}

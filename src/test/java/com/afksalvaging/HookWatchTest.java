@@ -74,14 +74,52 @@ public class HookWatchTest
 	}
 
 	@Test
-	public void settlingInToSortCutsTheGraceShort()
+	public void sortingWaitsTheFullGrace()
 	{
+		// In game (2026-10-17, Original RS2, 15 s grace): every round where sorting started was reminded about 4 s
+		// after leaving the hook; the owner: "make it follow the grace period".
 		watch.update(0, playerLeft(), GRACE, NO_REPEAT);
 		Situation sorting = playerLeft();
 		sorting.playerSorting = true;
 		watch.noteSortingStarted();
-		assertEquals(Signal.NONE, watch.update(2_999, sorting, GRACE, NO_REPEAT));
-		assertEquals(Signal.REMIND, watch.update(3_000, sorting, GRACE, NO_REPEAT));
+		assertEquals(Signal.NONE, watch.update(3_000, sorting, GRACE, NO_REPEAT));
+		assertEquals(Signal.NONE, watch.update(GRACE - 1, sorting, GRACE, NO_REPEAT));
+		assertEquals(Signal.REMIND, watch.update(GRACE, sorting, GRACE, NO_REPEAT));
+	}
+
+	@Test
+	public void sortingBringsTheAssignGuideForward()
+	{
+		// Owner, 2026-10-17: the guide as soon as they are off the hook and sorting; the alert still after the grace.
+		watch.update(0, playerLeft(), GRACE, NO_REPEAT);
+		assertFalse("off the hook, not sorting: no guide yet", watch.showAssignGuide());
+		Situation sorting = playerLeft();
+		sorting.playerSorting = true;
+		watch.noteSortingStarted();
+		watch.update(1_200, sorting, GRACE, NO_REPEAT);
+		assertTrue("sorting with a crewmate free: the guide at once", watch.showAssignGuide());
+		assertFalse("but no reminder yet", watch.isReminding());
+
+		Situation back = playerLeft();
+		back.playerAtHook = true;
+		watch.update(2_000, back, GRACE, NO_REPEAT);
+		assertFalse("back on the hook: gone", watch.showAssignGuide());
+		watch.update(3_000, playerLeft(), GRACE, NO_REPEAT);
+		assertFalse("off again without sorting: not early", watch.showAssignGuide());
+		watch.update(3_000 + GRACE, playerLeft(), GRACE, NO_REPEAT);
+		assertTrue("once reminded, the guide shows as before", watch.showAssignGuide());
+	}
+
+	@Test
+	public void noAssignGuideWhenNoCrewmateCanTakeTheHook()
+	{
+		Situation sorting = playerLeft();
+		sorting.spareCrew = 0;
+		sorting.playerSorting = true;
+		watch.update(0, sorting, GRACE, NO_REPEAT);
+		watch.noteSortingStarted();
+		watch.update(600, sorting, GRACE, NO_REPEAT);
+		assertFalse(watch.showAssignGuide());
 	}
 
 	@Test
