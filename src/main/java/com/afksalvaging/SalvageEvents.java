@@ -364,10 +364,21 @@ public final class SalvageEvents
 		return out;
 	}
 
-	/** Crew lines and XP waiting for their counterpart: salvage that has landed but is not counted yet. */
+	/**
+	 * Crew salvage that has landed but is not counted yet: lines and XP waiting for their counterpart, and
+	 * pairs already matched that wait for this tick's drain (a hold read in the same tick comes first).
+	 */
 	int pending()
 	{
-		return lines.size() + xpTerms.size();
+		int matched = 0;
+		for (Event event : ready)
+		{
+			if (event.source == Source.CREW)
+			{
+				matched++;
+			}
+		}
+		return lines.size() + xpTerms.size() + matched;
 	}
 
 	/** The XP held back while the hold was open was paid and set aside: no line still waits for its pay. */
