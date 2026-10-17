@@ -53,5 +53,7 @@ public class LinkIconTest
 		assertEquals(java.awt.Cursor.HAND_CURSOR, link.getCursor().getType());
 		long clickers = java.util.Arrays.stream(link.getMouseListeners()).filter(l -> !(l instanceof javax.swing.ToolTipManager)).count();
 		assertEquals("one listener opens the link (the tooltip brings its own)", 1, clickers);
+		assertEquals("the regular font, larger than the tips' small one",
+			net.runelite.client.ui.FontManager.getRunescapeFont(), link.getFont());
 	}
 }

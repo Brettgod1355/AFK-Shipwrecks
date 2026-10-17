@@ -412,7 +412,8 @@ public class SalvagingSpotPanel extends PluginPanel
 	static JLabel wikiLink()
 	{
 		JLabel link = new JLabel("<html><u>" + WIKI_LINK_TEXT + "</u></html>");
-		link.setFont(FontManager.getRunescapeSmallFont());
+		// The regular font, the size of the headings, so it stands out (owner, 2026-10-17: "larger text").
+		link.setFont(FontManager.getRunescapeFont());
 		link.setForeground(Palette.SIDEBAR_LINK);
 		link.setAlignmentX(LEFT_ALIGNMENT);
 		link.setToolTipText("Opens the AFK Shipwrecks wiki on GitHub in your browser: every feature and setting explained");
