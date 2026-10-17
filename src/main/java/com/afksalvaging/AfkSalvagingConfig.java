@@ -274,8 +274,9 @@ public interface AfkSalvagingConfig extends Config
 		keyName = "hideCrewOrders",
 		name = "Hide all crew text",
 		description = "Hide the text over every crewmate's head, on your boat and on others' (\"Managed to hook some "
-			+ "salvage! I'll put it in the cargo hold.\", \"Wooo wooo.\"), and at a salvaging spot your own chat lines putting "
-			+ "a crewmate on a hook or to rest. The hold count still reads every line.",
+			+ "salvage! I'll put it in the cargo hold.\", \"Wooo wooo.\"), and players' orders to their crew over their "
+			+ "heads (\"Jenkins, take a rest!\"). At a salvaging spot your own orders also stay out of the chat box. The hold "
+			+ "count still reads every line.",
 		section = REMINDERS,
 		position = 16
 	)

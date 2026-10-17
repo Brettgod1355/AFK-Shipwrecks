@@ -34,6 +34,8 @@ public final class CrewSpeech
 	 * the starboard side rune salvaging hook!" and "Ex-Captain Siad, take a rest!".
 	 */
 	private static final Pattern CREW_ORDER = Pattern.compile("^.+, (?:take control of the .*salvaging hook|take a rest)!?$");
+	/** Any order to a crewmate, hook or not, such as one to steer the ship (seen over other players, 2026-10-17). */
+	private static final Pattern ANY_CREW_ORDER = Pattern.compile("^[^,]+, (?:take control of the .+|take a rest)!?$");
 	/** The ghostly cabin boy only ever says variations of "Wooo wooo." */
 	private static final Pattern GHOST_SPEECH = Pattern.compile("(?i)^(?:w+o+[ ,]*)+[.!]*$");
 
@@ -106,6 +108,12 @@ public final class CrewSpeech
 	public static boolean isCrewOrder(String text)
 	{
 		return CREW_ORDER.matcher(plain(text)).matches();
+	}
+
+	/** Whether a player's line orders a crewmate to any job or to rest, so it can be hidden over their head. */
+	public static boolean isAnyCrewOrder(String text)
+	{
+		return ANY_CREW_ORDER.matcher(plain(text)).matches();
 	}
 
 	private static String plain(String text)

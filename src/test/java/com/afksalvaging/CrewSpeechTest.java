@@ -63,4 +63,19 @@ public class CrewSpeechTest
 		assertFalse(CrewSpeech.reportsPlayerDeposit("Your crew pack the cargo they were holding into the cargo hold."));
 		assertFalse(CrewSpeech.reportsPlayerDeposit(null));
 	}
+
+	@Test
+	public void anyOrderToACrewmateIsCrewText()
+	{
+		// Owner, 2026-10-17: another player's order to steer still showed over their head.
+		assertTrue(CrewSpeech.isAnyCrewOrder("Ex-Captain Siad, take control of the helm!"));
+		assertTrue(CrewSpeech.isAnyCrewOrder("Jenkins, take control of the sails!"));
+		assertTrue(CrewSpeech.isAnyCrewOrder("Ex-Captain Siad, take control of the starboard side rune salvaging hook!"));
+		assertTrue(CrewSpeech.isAnyCrewOrder("<col=ffff00>Jenkins, take a rest!</col>"));
+		// Ordinary chat stays, even with a comma or the same words.
+		assertFalse(CrewSpeech.isAnyCrewOrder("Can someone take control of the helm?"));
+		assertFalse(CrewSpeech.isAnyCrewOrder("Well, I could take a rest! Then, take control of the sails!"));
+		assertFalse(CrewSpeech.isAnyCrewOrder("hi, how are you"));
+		assertFalse(CrewSpeech.isAnyCrewOrder(null));
+	}
 }

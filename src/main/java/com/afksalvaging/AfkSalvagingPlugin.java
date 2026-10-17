@@ -834,7 +834,21 @@ public class AfkSalvagingPlugin extends Plugin
 		Actor actor = event.getActor();
 		WorldView theirs = actor.getWorldView();
 		String text = event.getOverheadText();
-		if (!(actor instanceof NPC) || theirs == null || text == null || text.isEmpty())
+		if (theirs == null || text == null || text.isEmpty())
+		{
+			return;
+		}
+		if (actor instanceof Player)
+		{
+			// Players' orders to their crew ("Ex-Captain Siad, take control of the ..."), the player's own included,
+			// count as crew text too; anything else a player says stays.
+			if (config.hideCrewOrders() && CrewSpeech.isAnyCrewOrder(text))
+			{
+				actor.setOverheadText("");
+			}
+			return;
+		}
+		if (!(actor instanceof NPC))
 		{
 			return;
 		}
