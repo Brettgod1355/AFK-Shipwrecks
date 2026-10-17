@@ -7,6 +7,10 @@ what to do with your inventory and where to click next on deck.
 
 It started life as Cargo Hold Alert, and everything that plugin did is still here.
 
+New to it? [Getting started](https://github.com/Brettgod1355/AFK-Shipwrecks/wiki/Getting-started) walks you
+through a first trip, and the [wiki](https://github.com/Brettgod1355/AFK-Shipwrecks/wiki) covers every feature
+and setting.
+
 **At a glance**
 
 - Timers for a full hold, each wreck sinking, the next wreck rising and the game's idle logout,

@@ -123,6 +123,9 @@ public class SalvagingSpotPanel extends PluginPanel
 	 * list instead"). The new-issue form itself sends a signed-out visitor straight to GitHub's login.
 	 */
 	static final String GITHUB_ISSUES_URL = GITHUB_URL + "/issues";
+	/** The repository's wiki, linked from the top of the Tips tab (owner, 2026-10-17). */
+	static final String WIKI_URL = GITHUB_URL + "/wiki";
+	static final String WIKI_LINK_TEXT = "Full guide on the wiki";
 	/** The Feedback tab's words (owner's draft, 2026-10-08, lightly reworded). */
 	static final String FEEDBACK_TEXT = "Help make AFK Shipwrecks better. Got an idea, or found something that is not "
 		+ "working right? Open an issue on GitHub, or tell me about it on Discord.";
@@ -405,12 +408,35 @@ public class SalvagingSpotPanel extends PluginPanel
 		return button;
 	}
 
-	/** "Find a setting" and the tips, in their own tab. */
+	/** The wiki link at the top of the Tips tab: opens the wiki in the browser, like the Feedback tab's buttons. */
+	static JLabel wikiLink()
+	{
+		JLabel link = new JLabel("<html><u>" + WIKI_LINK_TEXT + "</u></html>");
+		link.setFont(FontManager.getRunescapeSmallFont());
+		link.setForeground(Palette.SIDEBAR_LINK);
+		link.setAlignmentX(LEFT_ALIGNMENT);
+		link.setToolTipText("Opens the AFK Shipwrecks wiki on GitHub in your browser: every feature and setting explained");
+		link.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		link.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				LinkBrowser.browse(WIKI_URL);
+			}
+		});
+		return link;
+	}
+
+	/** The wiki link, "Find a setting" and the tips, in their own tab. */
 	private JPanel tipsBlock()
 	{
 		JPanel block = new JPanel();
 		block.setLayout(new BoxLayout(block, BoxLayout.Y_AXIS));
 		block.setBackground(ColorScheme.DARK_GRAY_COLOR);
+
+		block.add(wikiLink());
+		block.add(Box.createVerticalStrut(10));
 
 		JLabel heading = new JLabel("Find a setting");
 		heading.setFont(FontManager.getRunescapeBoldFont());

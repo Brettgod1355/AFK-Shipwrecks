@@ -39,6 +39,8 @@ final class Palette
 	static final Color SIDEBAR_IN_LEVEL = new Color(70, 200, 110);
 	static final Color SIDEBAR_BELOW_LEVEL = new Color(200, 110, 110);
 	static final Color SIDEBAR_MARKED = new Color(255, 200, 60);
+	/** The Tips tab's wiki link: the chat lines' blue on the transparent chatbox, readable on the dark sidebar. */
+	static final Color SIDEBAR_LINK = new Color(0x80, 0xC0, 0xFF);
 
 	/** The empty-hook guide's flashing boxes: bright neon green (owner, 2026-10-07). */
 	static final Color HOOK_GUIDE = new Color(57, 255, 20);

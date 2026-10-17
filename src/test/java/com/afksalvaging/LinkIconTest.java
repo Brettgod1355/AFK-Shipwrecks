@@ -43,4 +43,15 @@ public class LinkIconTest
 		assertTrue(SalvagingSpotPanel.FEEDBACK_ICON_SIZE > SalvagingSpotPanel.LINK_ICON_SIZE);
 		assertEquals("https://github.com/Brettgod1355/AFK-Shipwrecks/issues", SalvagingSpotPanel.GITHUB_ISSUES_URL);
 	}
+
+	@Test
+	public void theTipsTabLinksToTheWiki()
+	{
+		assertEquals("https://github.com/Brettgod1355/AFK-Shipwrecks/wiki", SalvagingSpotPanel.WIKI_URL);
+		javax.swing.JLabel link = SalvagingSpotPanel.wikiLink();
+		assertTrue(link.getText(), link.getText().contains(SalvagingSpotPanel.WIKI_LINK_TEXT));
+		assertEquals(java.awt.Cursor.HAND_CURSOR, link.getCursor().getType());
+		long clickers = java.util.Arrays.stream(link.getMouseListeners()).filter(l -> !(l instanceof javax.swing.ToolTipManager)).count();
+		assertEquals("one listener opens the link (the tooltip brings its own)", 1, clickers);
+	}
 }
