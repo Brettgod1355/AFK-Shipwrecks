@@ -269,29 +269,17 @@ public interface AfkSalvagingConfig extends Config
 		return true;
 	}
 
+	// The key is still "hideCrewOrders" from when it only hid the orders, so a player's choice carries over (2.3).
 	@ConfigItem(
 		keyName = "hideCrewOrders",
-		name = "Hide crew orders in chat",
-		description = "At a salvaging spot, hide your own chat lines putting a crewmate on a hook or to rest "
-			+ "(\"Jenkins, take control of the starboard side salvaging hook!\", \"Jenkins, take a rest!\"). "
-			+ "Lines said anywhere else stay.",
+		name = "Hide all crew text",
+		description = "Hide the text over every crewmate's head, on your boat and on others' (\"Managed to hook some "
+			+ "salvage! I'll put it in the cargo hold.\", \"Wooo wooo.\"), and at a salvaging spot your own chat lines putting "
+			+ "a crewmate on a hook or to rest. The hold count still reads every line.",
 		section = REMINDERS,
 		position = 16
 	)
 	default boolean hideCrewOrders()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "hideOtherCrewText",
-		name = "Hide other boats' crew text",
-		description = "Hide the text over other players' crewmates (\"Managed to hook some salvage! I'll put it in the "
-			+ "cargo hold.\"), so a busy spot stays readable. Your own crew's lines still show.",
-		section = REMINDERS,
-		position = 17
-	)
-	default boolean hideOtherCrewText()
 	{
 		return true;
 	}
@@ -303,7 +291,7 @@ public interface AfkSalvagingConfig extends Config
 			+ "tab, the empty hook's Assign button, then the free crewmate with the most deckhandiness for that hook. "
 			+ "It starts with the reminder, or as soon as you start sorting after leaving the hook.",
 		section = REMINDERS,
-		position = 18
+		position = 17
 	)
 	default boolean hookGuide()
 	{

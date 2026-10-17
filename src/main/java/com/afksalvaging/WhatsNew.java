@@ -24,8 +24,8 @@ public final class WhatsNew
 	 * One line on what this version brings, no links; a full stop is added when it is said. Leave
 	 * it empty for a release not worth a line (a fix, a wording change) and nothing is said.
 	 */
-	public static final String NOTE = "other boats' crew text is hidden, so a busy spot stays readable (your own crew still "
-		+ "talks)";
+	public static final String NOTE = "the text over every crewmate's head is hidden, yours and other boats', so a busy spot "
+		+ "stays readable (the setting \"Hide crew orders in chat\" is now \"Hide all crew text\")";
 
 	/**
 	 * What the rename to AFK Shipwrecks brought, said to a Cargo Hold Alert 1.0 player whatever version

@@ -63,15 +63,4 @@ public class CrewSpeechTest
 		assertFalse(CrewSpeech.reportsPlayerDeposit("Your crew pack the cargo they were holding into the cargo hold."));
 		assertFalse(CrewSpeech.reportsPlayerDeposit(null));
 	}
-
-	@Test
-	public void onlyOtherBoatsCrewTextIsHidden()
-	{
-		// Owner, 2026-10-17: hide the other boats' "Managed to hook some salvage!" lines crowding a busy spot.
-		assertTrue("crew on another boat", AfkSalvagingPlugin.onAnotherBoat(7, 9, false));
-		assertFalse("our own crew, on our boat", AfkSalvagingPlugin.onAnotherBoat(7, 7, false));
-		assertFalse("an NPC on the main world, such as a dock worker", AfkSalvagingPlugin.onAnotherBoat(7, -1, true));
-		assertTrue("seen from the dock, every boat's crew is another boat's", AfkSalvagingPlugin.onAnotherBoat(-1, 9, false));
-		assertTrue("no player yet", AfkSalvagingPlugin.onAnotherBoat(null, 9, false));
-	}
 }

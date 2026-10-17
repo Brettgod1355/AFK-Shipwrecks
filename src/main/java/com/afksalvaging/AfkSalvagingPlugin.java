@@ -832,24 +832,29 @@ public class AfkSalvagingPlugin extends Plugin
 	public void onOverheadTextChanged(OverheadTextChanged event)
 	{
 		Actor actor = event.getActor();
-		if (!(actor instanceof NPC))
-		{
-			return;
-		}
-		WorldView mine = client.getLocalPlayer() == null ? null : client.getLocalPlayer().getWorldView();
 		WorldView theirs = actor.getWorldView();
-		if (config.hideOtherCrewText() && theirs != null
-			&& onAnotherBoat(mine == null ? null : mine.getId(), theirs.getId(), theirs.isTopLevel()))
-		{
-			// Another player's crewmate: blank the line over their head so a busy spot stays readable.
-			actor.setOverheadText("");
-			return;
-		}
-		if (!isSailing() || mine == null || theirs == null || mine.getId() != theirs.getId())
-		{
-			return;
-		}
 		String text = event.getOverheadText();
+		if (!(actor instanceof NPC) || theirs == null || text == null || text.isEmpty())
+		{
+			return;
+		}
+		readCrewLine(actor, theirs, text);
+		if (config.hideCrewOrders() && !theirs.isTopLevel())
+		{
+			// Every crewmate stands on a boat, and every boat is a world view of its own: once the tally has read
+			// the line, blank it, on the player's boat and on others' (owner, 2026-10-17: "hide all crew text").
+			actor.setOverheadText("");
+		}
+	}
+
+	/** Counts what the player's own crew say; other boats' crews are none of the tally's business. */
+	private void readCrewLine(Actor actor, WorldView theirs, String text)
+	{
+		WorldView mine = client.getLocalPlayer() == null ? null : client.getLocalPlayer().getWorldView();
+		if (!isSailing() || mine == null || mine.getId() != theirs.getId())
+		{
+			return;
+		}
 		int tick = client.getTickCount();
 		if (CrewSpeech.reportsFullHold(text))
 		{
@@ -931,15 +936,6 @@ public class AfkSalvagingPlugin extends Plugin
 	}
 
 	/** The player's own order putting a crewmate on a hook or to rest, said at a salvaging spot. */
-	/**
-	 * Whether an NPC stands on a boat that is not the player's: every boat is a world view of its own, so an NPC
-	 * on a world view that is neither the main world nor the player's own is another player's crew.
-	 */
-	static boolean onAnotherBoat(Integer playerWorldViewId, int npcWorldViewId, boolean npcOnMainWorld)
-	{
-		return !npcOnMainWorld && (playerWorldViewId == null || playerWorldViewId != npcWorldViewId);
-	}
-
 	private boolean isOwnCrewOrderAtSpot(ChatMessage event)
 	{
 		Player me = client.getLocalPlayer();
