@@ -23,6 +23,8 @@ public final class CrewSpeech
 	private static final String[] CREW_SALVAGE = {"hook some salvage", "put it in the cargo hold"};
 	/** Game message when the player deposits carried cargo without opening the hold. */
 	private static final String PLAYER_DEPOSIT = "you deposit some cargo into the cargo hold";
+	/** Game message when the crew's XP, held back while a window was open, is paid in one lump. */
+	private static final String HELD_BACK_XP = "you gain some experience by watching your crew work";
 	/** Game message when the salvaging station has nothing left to sort. */
 	private static final String SORTING_DONE = "no more salvage to sort";
 	/** Game message when the boat is somewhere it may not salvage. */
@@ -61,6 +63,15 @@ public final class CrewSpeech
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Whether the game says the crew's held-back XP is being paid: the Sailing XP in the same tick is for salvage
+	 * that landed while a window was open (the cargo hold, or any other, such as a level-up message).
+	 */
+	public static boolean reportsHeldBackCrewXp(String text)
+	{
+		return plain(text).contains(HELD_BACK_XP);
 	}
 
 	/** Whether the game says the player just deposited one piece of carried cargo. */

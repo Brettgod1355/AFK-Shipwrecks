@@ -909,6 +909,10 @@ public class AfkSalvagingPlugin extends Plugin
 			session.depositLine();
 			saveUsed();
 		}
+		else if (CrewSpeech.reportsHeldBackCrewXp(text))
+		{
+			session.heldBackXpLine(client.getTickCount());
+		}
 		else if (CrewSpeech.reportsHazardousWaters(text))
 		{
 			session.hazardLine(playerTopLevelPoint());

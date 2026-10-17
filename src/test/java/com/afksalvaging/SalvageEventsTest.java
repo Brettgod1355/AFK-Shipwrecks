@@ -60,6 +60,65 @@ public class SalvageEventsTest
 	}
 
 	@Test
+	public void aHeldBackLumpDoesNotCountLinesAgainHoweverLongTheWindowWasOpen()
+	{
+		// In game (2026-10-17, Original RS2): a level-up message stayed open from tick 440 to 676. Siad (level 3)
+		// said his line four times with no XP, each counted on its own. On closing, "You gain some experience by
+		// watching your crew work." and 389 XP: four level 3 shares and three of the ghost Jenkins (level 4), who
+		// says no line. All seven were counted and the hold ran 4 high (79 counted, 75 in it).
+		SalvageEvents.XpContext fremennik = new SalvageEvents.XpContext();
+		fremennik.wreck = ShipwreckType.FREMENNIK;
+		fremennik.crewDeckhandiness = new int[]{3, 4};
+		for (int lineTick : new int[]{544, 549, 619, 624})
+		{
+			events.crewLine(3, lineTick);
+			assertEquals(1, crewEvents(events.drain(lineTick + 3), 3));
+		}
+		events.heldBackXpLine(676);
+		events.sailingXp(389, 676, fremennik);
+		List<Event> lump = events.drain(680);
+		assertEquals("Siad's four shares were his lines, already counted", 0, crewEvents(lump, 3));
+		assertEquals("the ghost's three salvages are new", 3, crewEvents(lump, 4));
+
+		// Afterwards a line and its XP count once as usual.
+		events.crewLine(3, 700);
+		events.sailingXp(49, 700, fremennik);
+		assertEquals(1, crewEvents(events.drain(703), 3));
+	}
+
+	@Test
+	public void theMessageWithOrdinaryCrewXpPaysNoOldLine()
+	{
+		// In game (2026-10-13, Air Marshal hooking): the message also comes with ordinary crew XP, here a line and
+		// its 65 XP at tick 1258, two ticks after the player's own XP. An older line counted on its own is not
+		// what it pays; taking it lost a salvage (the replay ran one low).
+		SalvageEvents.XpContext fremennik = new SalvageEvents.XpContext();
+		fremennik.wreck = ShipwreckType.FREMENNIK;
+		fremennik.crewDeckhandiness = new int[]{4};
+		fremennik.playerSalvaging = true;
+		events.crewLine(4, 1100);
+		assertEquals(1, crewEvents(events.drain(1103), 4));
+		events.sailingXp(162, 1256, fremennik);
+		events.heldBackXpLine(1258);
+		events.crewLine(4, 1258);
+		events.sailingXp(65, 1258, fremennik);
+		assertEquals("the new salvage counts", 1, crewEvents(events.drain(1262), 4));
+	}
+
+	@Test
+	public void withoutTheGamesMessageALateDropIsStillNewSalvage()
+	{
+		// Only the game's message marks a lump as held-back pay: a drop long after a lone line is a new salvage.
+		SalvageEvents.XpContext fremennik = new SalvageEvents.XpContext();
+		fremennik.wreck = ShipwreckType.FREMENNIK;
+		fremennik.crewDeckhandiness = new int[]{3};
+		events.crewLine(3, 100);
+		assertEquals(1, crewEvents(events.drain(103), 3));
+		events.sailingXp(49, 300, fremennik);
+		assertEquals(1, crewEvents(events.drain(303), 3));
+	}
+
+	@Test
 	public void twoCrewSalvagingTogetherAreTwoWhenTheirXpIsOnTimeOrLate()
 	{
 		// Both say their line and the XP comes in one drop the same tick.
@@ -157,6 +216,24 @@ public class SalvageEventsTest
 		assertEquals(1, crewEvents(events.drain(11), 4));
 		events.sailingXp(7, 20, unknown);
 		assertTrue(events.drain(25).isEmpty());
+	}
+
+	@Test
+	public void aSortOnAGhostsWailIsNotHisSalvageWithNoWreckKnown()
+	{
+		// In game (2026-10-17, Air Marshal, no wreck up): sorting opulent salvage pays 95 XP every three ticks; the
+		// ghost wailed at 848 and the sort at 850 was counted as his salvage, leaving the hold one high.
+		SalvageEvents.XpContext sortingNoWreck = new SalvageEvents.XpContext();
+		sortingNoWreck.playerSorting = true;
+		sortingNoWreck.sortingXp = new double[]{95};
+		events.ghostLine(848);
+		events.sailingXp(95, 850, sortingNoWreck);
+		assertEquals(0, crewEvents(events.drain(853), 0));
+		// Not sorting, a drop on a wail with no wreck known is still his.
+		SalvageEvents.XpContext noWreck = new SalvageEvents.XpContext();
+		events.ghostLine(900);
+		events.sailingXp(80, 901, noWreck);
+		assertEquals(1, crewEvents(events.drain(901), 4));
 	}
 
 	@Test

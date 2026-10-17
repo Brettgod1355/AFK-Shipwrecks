@@ -369,6 +369,12 @@ public final class AfkSession
 		return monitor;
 	}
 
+	/** Crew salvage that has landed but waits on its line or XP to be counted; for the replay's drift check. */
+	int pendingCrewSalvage()
+	{
+		return events.pending();
+	}
+
 	public CrewRoster roster()
 	{
 		return roster;
@@ -476,6 +482,15 @@ public final class AfkSession
 		if (aboard)
 		{
 			events.ghostLine(tick);
+		}
+	}
+
+	/** The game said the crew's held-back XP is being paid; see {@link SalvageEvents#heldBackXpLine}. */
+	public void heldBackXpLine(int tick)
+	{
+		if (aboard)
+		{
+			events.heldBackXpLine(tick);
 		}
 	}
 

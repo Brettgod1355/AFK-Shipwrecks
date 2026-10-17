@@ -114,6 +114,25 @@ public final class SalvageEvents
 	private final List<Pending> lines = new ArrayList<>();
 	/** Lines counted on their own, still waiting to claim XP that arrives late. */
 	private final List<Pending> loneLines = new ArrayList<>();
+	/**
+	 * Every line counted on its own, however long ago, until a held-back XP lump pays it. A window open long
+	 * enough (a level-up message left up for minutes) holds the XP past {@link #LATE_XP_TICKS}; the lump that
+	 * comes when it closes holds these lines' shares, which must not be counted again (in game, 2026-10-17,
+	 * Original RS2: four lines counted, then a lump of seven shares; all seven were counted and the hold ran 4 high).
+	 */
+	private final List<Pending> heldLines = new ArrayList<>();
+	/** Lines older than this are let go: no window stays open that long on a salvaging trip. */
+	private static final int HELD_LINE_MAX_TICKS = 1000;
+	/** The tick the game said the crew's held-back XP was being paid. */
+	private int heldPayTick = Integer.MIN_VALUE;
+	/**
+	 * The ticks of the last Sailing XP drop and the one before it. While a window holds the XP back, none arrives
+	 * at all, so only lines counted since the drop before the lump can be what it pays: the same message also
+	 * comes with ordinary crew XP (in game, 2026-10-13, Air Marshal hooking: the message, a line and its 65 XP all
+	 * at tick 1258, two ticks after the player's own XP).
+	 */
+	private int lastXpTick = Integer.MIN_VALUE;
+	private int previousXpTick = Integer.MIN_VALUE;
 	private final List<Pending> xpTerms = new ArrayList<>();
 	private final List<Integer> ghostLines = new ArrayList<>();
 	private final List<Event> ready = new ArrayList<>();
@@ -186,6 +205,9 @@ public final class SalvageEvents
 		{
 			return;
 		}
+		// The drop before this one bounds what a held-back lump can pay (see lastXpTick).
+		int since = lastXpTick == tick ? previousXpTick : lastXpTick;
+		noteXpDrop(tick);
 		if (delta >= EXTRACTOR_XP_MIN && delta <= EXTRACTOR_XP_MAX)
 		{
 			// The crystal extractor. No mix of salvage adds up to this without a player salvage, and
@@ -194,6 +216,13 @@ public final class SalvageEvents
 		}
 		if (context == null || context.wreck == null)
 		{
+			if (context != null && context.playerSorting && explainedBySortingAlone(delta, context))
+			{
+				// Sorting, whatever the ghost says: he wails whether or not he hooks anything, and with no wreck known
+				// a sort that fell on a wail was counted as his salvage (in game: Air Marshal 2026-10-15 tick 927 and
+				// 2026-10-17 tick 850, Original RS2 2026-10-13 tick 4776; each left the hold one high).
+				return;
+			}
 			if (!ghostLines.isEmpty() && tick - ghostLines.get(0) <= WINDOW_TICKS)
 			{
 				int wail = ghostLines.remove(0);
@@ -239,6 +268,7 @@ public final class SalvageEvents
 		{
 			return;
 		}
+		boolean heldPay = heldPayTick != Integer.MIN_VALUE && tick >= heldPayTick && tick - heldPayTick <= WINDOW_TICKS;
 		for (int i = 0; i < best.length; i++)
 		{
 			int kind = kinds.get(i);
@@ -248,8 +278,29 @@ public final class SalvageEvents
 			}
 			for (int n = 0; n < best[i]; n++)
 			{
+				if (heldPay && absorbHeld(kind, tick, since))
+				{
+					continue;
+				}
 				creditCrewXp(kind, tick);
 			}
+		}
+		if (heldPay)
+		{
+			// The lump pays everything held back at once: no line counted before it still waits for pay.
+			heldLines.clear();
+			loneLines.clear();
+			heldPayTick = Integer.MIN_VALUE;
+		}
+	}
+
+	/** A Sailing XP drop arrived (any, crew or not): held-back pay only ever covers lines since the one before. */
+	private void noteXpDrop(int tick)
+	{
+		if (tick != lastXpTick)
+		{
+			previousXpTick = lastXpTick;
+			lastXpTick = tick;
 		}
 	}
 
@@ -272,11 +323,13 @@ public final class SalvageEvents
 				{
 					// Its XP may still come. A line whose XP fell in an ignored stretch has had it already.
 					loneLines.add(line);
+					heldLines.add(line);
 				}
 				it.remove();
 			}
 		}
 		loneLines.removeIf(line -> tick - line.tick > LATE_XP_TICKS);
+		heldLines.removeIf(line -> tick - line.tick > HELD_LINE_MAX_TICKS);
 		it = xpTerms.iterator();
 		while (it.hasNext())
 		{
@@ -287,6 +340,7 @@ public final class SalvageEvents
 				Pending counted = takeMatching(loneLines, term.deckhandiness, term.tick, LATE_XP_TICKS);
 				if (counted != null)
 				{
+					heldLines.remove(counted);
 					log.debug("Salvage: XP from tick {} (deckhandiness {}) is late pay for the line counted from tick {}",
 						term.tick, term.deckhandiness, counted.tick);
 					continue;
@@ -310,16 +364,77 @@ public final class SalvageEvents
 		return out;
 	}
 
+	/** Crew lines and XP waiting for their counterpart: salvage that has landed but is not counted yet. */
+	int pending()
+	{
+		return lines.size() + xpTerms.size();
+	}
+
 	/** The XP held back while the hold was open was paid and set aside: no line still waits for its pay. */
 	public void heldBackXpPaid()
 	{
 		loneLines.clear();
+		heldLines.clear();
+	}
+
+	/**
+	 * The game said "You gain some experience by watching your crew work.": the Sailing XP this tick is the lump
+	 * held back while a window was open. Its shares for lines already counted are not new salvage. The XP usually
+	 * comes just after the message in the same tick; shares that came first are settled here.
+	 */
+	public void heldBackXpLine(int tick)
+	{
+		heldPayTick = tick;
+		Iterator<Pending> it = xpTerms.iterator();
+		while (it.hasNext())
+		{
+			Pending term = it.next();
+			// The drop these terms came in is already the last one: the lump pays lines since the one before.
+			int since = lastXpTick == term.tick ? previousXpTick : lastXpTick;
+			if (Math.abs(tick - term.tick) <= WINDOW_TICKS && absorbHeld(term.deckhandiness, term.tick, since))
+			{
+				it.remove();
+			}
+		}
+	}
+
+	/**
+	 * One share of a held-back lump: pay for a line counted on its own since the XP drop before the lump, if there
+	 * is one of that kind.
+	 */
+	private boolean absorbHeld(int deckhandiness, int tick, int since)
+	{
+		Pending line = null;
+		Iterator<Pending> it = heldLines.iterator();
+		while (it.hasNext())
+		{
+			Pending p = it.next();
+			if (p.tick > since && tick - p.tick <= HELD_LINE_MAX_TICKS
+				&& (deckhandiness == 0 || p.deckhandiness == 0 || p.deckhandiness == deckhandiness))
+			{
+				it.remove();
+				line = p;
+				break;
+			}
+		}
+		if (line == null)
+		{
+			return false;
+		}
+		loneLines.remove(line);
+		log.debug("Salvage: held-back XP at tick {} (deckhandiness {}) is pay for the line counted from tick {}",
+			tick, deckhandiness, line.tick);
+		return true;
 	}
 
 	public void reset()
 	{
 		lines.clear();
 		loneLines.clear();
+		heldLines.clear();
+		heldPayTick = Integer.MIN_VALUE;
+		lastXpTick = Integer.MIN_VALUE;
+		previousXpTick = Integer.MIN_VALUE;
 		xpTerms.clear();
 		ghostLines.clear();
 		ready.clear();
