@@ -186,9 +186,16 @@ public class SalvageGuideTest
 		in.holdHasSalvage = true;
 		in.wreckInReach = false;
 		assertEquals(Collections.singletonList(Target.HOLD), SalvageGuide.decide(in).getTargets());
-		in.wreckInReach = true;
 		in.playerAtHook = true;
-		assertEquals(Collections.singletonList(Target.HOLD), SalvageGuide.decide(in).getTargets());
+		assertEquals("waiting at a hook with no wreck up: the hold", Collections.singletonList(Target.HOLD),
+			SalvageGuide.decide(in).getTargets());
+		in.wreckInReach = true;
+		// In game (2026-10-17, Original RS2, ticks 2145-2148): clicking Deploy on a hook left the hold lit until the
+		// first salvage landed. Already hooking, nothing lights, however much the hold holds.
+		assertTrue("hooking: nothing", SalvageGuide.decide(in).isEmpty());
+		in.holdSalvage = 60;
+		in.freeSlots = 18;
+		assertTrue("hooking with a full withdraw waiting: still nothing", SalvageGuide.decide(in).isEmpty());
 	}
 
 	@Test

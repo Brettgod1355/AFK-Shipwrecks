@@ -169,6 +169,12 @@ public final class SalvageGuide
 		{
 			return allowed(in.mode, Target.HOLD) ? only(Target.HOLD, false) : Result.NONE;
 		}
+		if (in.playerAtHook && in.wreckInReach)
+		{
+			// Already hooking: the hold is not the next step, and lighting it until the first catch lands was
+			// a flash of the wrong thing (owner, 2026-10-17). Waiting at a hook with no wreck up, the hold stays.
+			return Result.NONE;
+		}
 		boolean hold = in.holdHasSalvage && !in.holdTurnedDown && allowed(in.mode, Target.HOLD);
 		HookFacts hook = in.playerAtHook || !in.wreckInReach ? null : pickHook(in.hooks, in.hookChoice);
 		if (hold && hook != null && in.holdSalvage != HoldSalvageCount.UNKNOWN && in.freeSlots > 0)
