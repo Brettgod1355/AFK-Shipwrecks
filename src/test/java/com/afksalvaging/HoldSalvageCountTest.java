@@ -77,6 +77,22 @@ public class HoldSalvageCountTest
 	}
 
 	@Test
+	public void theCountRememberedAtLogoutStandsUntilTheNextRead()
+	{
+		hold.restore(37);
+		assertEquals(37, hold.get());
+		hold.crewSalvage(2);
+		assertEquals("followed like a read count", 39, hold.get());
+		hold.restore(10);
+		assertEquals("a known count is never overwritten", 39, hold.get());
+		hold.read(41, 5);
+		assertEquals(41, hold.get());
+		hold.forget();
+		hold.restore(-1);
+		assertEquals("nothing saved: still unknown", HoldSalvageCount.UNKNOWN, hold.get());
+	}
+
+	@Test
 	public void bankingEmptiesItAndAnotherBoatForgetsIt()
 	{
 		hold.read(40, 1);

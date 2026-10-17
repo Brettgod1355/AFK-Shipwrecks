@@ -143,6 +143,8 @@ public class AfkSalvagingPlugin extends Plugin
 	private static final String HOLD_ITEMS_KEY_PREFIX = "holdItems.";
 	/** Per character and boat slot: the hold size the hold window last showed, so the total is known at login. */
 	private static final String CAPACITY_KEY_PREFIX = "capacity.";
+	/** RS-profile keys: each boat's salvage in the hold, kept across logins (owner, 2026-10-17). */
+	private static final String HOLD_SALVAGE_KEY_PREFIX = "holdSalvage.";
 	/** RuneScape-profile config key prefix for the learned rate correction of each wreck. */
 	private static final String RATE_KEY_PREFIX = "rate.";
 	/** How often the learned rate is written out while salvaging. */
@@ -293,6 +295,8 @@ public class AfkSalvagingPlugin extends Plugin
 	private final HoldSalvageCount holdSalvage = new HoldSalvageCount();
 	/** The salvage in the inventory at its last change, or -1 before the first. */
 	private int lastInventorySalvage = -1;
+	/** What was last written for the hold's salvage, key and value, so it is only written when it changes. */
+	private String lastSavedHoldSalvage;
 	/** The inventory's items at the last change, id to quantity, to see which types a deposit took. */
 	private Map<Integer, Integer> lastInventory = new HashMap<>();
 
@@ -1016,6 +1020,7 @@ public class AfkSalvagingPlugin extends Plugin
 			saveHoldItems();
 		}
 		holdSalvage.crewSalvage(session.takeCrewSalvageCounted());
+		saveHoldSalvage();
 		if (updateMessage != null)
 		{
 			if (config.updateMessage())
@@ -2398,6 +2403,7 @@ public class AfkSalvagingPlugin extends Plugin
 		monitoredSlot = 0;
 		holdSalvage.forget();
 		lastInventorySalvage = -1;
+		lastSavedHoldSalvage = null;
 		alertShownAt = 0;
 		reminderShownAt = 0;
 		readInterfaceNextTick = false;
@@ -2831,6 +2837,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			// What this boat's hold held when last seen, until it is opened again.
 			loadHoldItems(slot);
+			holdSalvage.restore(loadSavedHoldSalvage(slot));
 			if (capacityFromInterface[slot] == CargoHoldCapacity.UNKNOWN)
 			{
 				// Its size as the hold window last showed it, so the counter has a total before the hold is seen.
@@ -3007,6 +3014,45 @@ public class AfkSalvagingPlugin extends Plugin
 		if (configManager.getRSProfileKey() != null)
 		{
 			configManager.setRSProfileConfiguration(AfkSalvagingConfig.GROUP, CAPACITY_KEY_PREFIX + slot, capacity);
+		}
+	}
+
+	/**
+	 * Writes the hold's salvage for this boat when it has changed, once a tick at most, so the value left at logout
+	 * is the last one known (owner, 2026-10-17). An unknown count writes nothing.
+	 */
+	private void saveHoldSalvage()
+	{
+		int count = holdSalvage.get();
+		if (monitoredSlot == 0 || count == HoldSalvageCount.UNKNOWN || configManager.getRSProfileKey() == null)
+		{
+			return;
+		}
+		String key = HOLD_SALVAGE_KEY_PREFIX + monitoredSlot;
+		String entry = key + "=" + count;
+		if (!entry.equals(lastSavedHoldSalvage))
+		{
+			configManager.setRSProfileConfiguration(AfkSalvagingConfig.GROUP, key, count);
+			lastSavedHoldSalvage = entry;
+		}
+	}
+
+	/** This boat's salvage in the hold as last saved, or {@link HoldSalvageCount#UNKNOWN}. */
+	private int loadSavedHoldSalvage(int slot)
+	{
+		if (configManager.getRSProfileKey() == null)
+		{
+			return HoldSalvageCount.UNKNOWN;
+		}
+		String saved = configManager.getRSProfileConfiguration(AfkSalvagingConfig.GROUP, HOLD_SALVAGE_KEY_PREFIX + slot);
+		try
+		{
+			return saved == null ? HoldSalvageCount.UNKNOWN : Integer.parseInt(saved.trim());
+		}
+		catch (NumberFormatException e)
+		{
+			log.debug("Ignoring unreadable remembered hold salvage '{}' for boat {}", saved, slot);
+			return HoldSalvageCount.UNKNOWN;
 		}
 	}
 

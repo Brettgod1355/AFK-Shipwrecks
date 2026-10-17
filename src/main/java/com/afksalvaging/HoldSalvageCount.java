@@ -62,6 +62,18 @@ final class HoldSalvageCount
 		}
 	}
 
+	/**
+	 * The count remembered for this boat at the end of the last session (owner, 2026-10-17: "remember the hold
+	 * salvage count at logout"), used until the hold is read again. A count already known is kept.
+	 */
+	void restore(int saved)
+	{
+		if (count == UNKNOWN && saved >= 0)
+		{
+			count = saved;
+		}
+	}
+
 	/** The crew banked the hold: it is empty. */
 	void banked()
 	{
