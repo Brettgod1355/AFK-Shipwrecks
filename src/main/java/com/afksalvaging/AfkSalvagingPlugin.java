@@ -99,6 +99,7 @@ import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
+import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.Text;
 import net.runelite.http.api.item.ItemPrice;
@@ -1536,7 +1537,7 @@ public class AfkSalvagingPlugin extends Plugin
 				continue;
 			}
 			marks.createMenuEntry(0)
-				.setOption(rule.getLabel())
+				.setOption(markOption(rule, sortColor(rule)))
 				.setType(MenuAction.RUNELITE)
 				.onClick(e -> markItem(itemId, rule));
 		}
@@ -1546,6 +1547,31 @@ public class AfkSalvagingPlugin extends Plugin
 				.setOption("Unmark")
 				.setType(MenuAction.RUNELITE)
 				.onClick(e -> markItem(itemId, null));
+		}
+	}
+
+	/**
+	 * A marking submenu entry in its list's box color, so Drop reads red and Alch green, following the color
+	 * settings (owner, 2026-10-17). Unmark keeps the menu's own color.
+	 */
+	static String markOption(SortRule rule, Color color)
+	{
+		return ColorUtil.wrapWithColorTag(rule.getLabel(), color);
+	}
+
+	/** A list's box color from the settings, as the inventory boxes draw it. */
+	private Color sortColor(SortRule rule)
+	{
+		switch (rule)
+		{
+			case KEEP:
+				return config.keepColor();
+			case HOLD:
+				return config.holdColor();
+			case ALCH:
+				return config.alchColor();
+			default:
+				return config.dropColor();
 		}
 	}
 

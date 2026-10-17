@@ -156,4 +156,14 @@ public class SalvageSorterTest
 		assertTrue(SalvageSorter.excluded(ShipwreckType.BARRACUDA.getSalvageItemId()));
 		assertTrue(!SalvageSorter.excluded(ItemID.LOBSTER));
 	}
+
+	@Test
+	public void theMarkingMenuShowsEachListInItsBoxColor()
+	{
+		// Drop in red and Alch in green, as the boxes draw them (owner, 2026-10-17).
+		assertEquals("<col=ff0000>Drop</col>", AfkSalvagingPlugin.markOption(SortRule.DROP, java.awt.Color.RED));
+		assertEquals("<col=00ff00>Alch</col>", AfkSalvagingPlugin.markOption(SortRule.ALCH, java.awt.Color.GREEN));
+		// A color with transparency still reads as its solid color in the menu.
+		assertEquals("<col=9aa37a>Keep</col>", AfkSalvagingPlugin.markOption(SortRule.KEEP, new java.awt.Color(0x9A, 0xA3, 0x7A, 0x60)));
+	}
 }
