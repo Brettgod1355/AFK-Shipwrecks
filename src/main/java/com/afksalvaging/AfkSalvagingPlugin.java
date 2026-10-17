@@ -832,13 +832,20 @@ public class AfkSalvagingPlugin extends Plugin
 	public void onOverheadTextChanged(OverheadTextChanged event)
 	{
 		Actor actor = event.getActor();
-		if (!(actor instanceof NPC) || !isSailing())
+		if (!(actor instanceof NPC))
 		{
 			return;
 		}
-		WorldView mine = client.getLocalPlayer().getWorldView();
+		WorldView mine = client.getLocalPlayer() == null ? null : client.getLocalPlayer().getWorldView();
 		WorldView theirs = actor.getWorldView();
-		if (mine == null || theirs == null || mine.getId() != theirs.getId())
+		if (config.hideOtherCrewText() && theirs != null
+			&& onAnotherBoat(mine == null ? null : mine.getId(), theirs.getId(), theirs.isTopLevel()))
+		{
+			// Another player's crewmate: blank the line over their head so a busy spot stays readable.
+			actor.setOverheadText("");
+			return;
+		}
+		if (!isSailing() || mine == null || theirs == null || mine.getId() != theirs.getId())
 		{
 			return;
 		}
@@ -924,6 +931,15 @@ public class AfkSalvagingPlugin extends Plugin
 	}
 
 	/** The player's own order putting a crewmate on a hook or to rest, said at a salvaging spot. */
+	/**
+	 * Whether an NPC stands on a boat that is not the player's: every boat is a world view of its own, so an NPC
+	 * on a world view that is neither the main world nor the player's own is another player's crew.
+	 */
+	static boolean onAnotherBoat(Integer playerWorldViewId, int npcWorldViewId, boolean npcOnMainWorld)
+	{
+		return !npcOnMainWorld && (playerWorldViewId == null || playerWorldViewId != npcWorldViewId);
+	}
+
 	private boolean isOwnCrewOrderAtSpot(ChatMessage event)
 	{
 		Player me = client.getLocalPlayer();

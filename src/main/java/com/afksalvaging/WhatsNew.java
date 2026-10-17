@@ -18,15 +18,14 @@ import java.util.Collection;
 public final class WhatsNew
 {
 	/** The version being run. Must match {@code version} in build.gradle and runelite-plugin.properties. */
-	public static final String VERSION = "2.2";
+	public static final String VERSION = "2.3";
 
 	/**
 	 * One line on what this version brings, no links; a full stop is added when it is said. Leave
 	 * it empty for a release not worth a line (a fix, a wording change) and nothing is said.
 	 */
-	public static final String NOTE = "your next step lights up on deck (station, hold or hook), each wreck gets a small tile "
-		+ "instead of the hull outline, full-hold alerts wait while you sail, your hold's size is remembered at login, the "
-		+ "marking menu shows its colors, the hold count is more accurate, and the Tips tab links to a full guide on the wiki";
+	public static final String NOTE = "other boats' crew text is hidden, so a busy spot stays readable (your own crew still "
+		+ "talks)";
 
 	/**
 	 * What the rename to AFK Shipwrecks brought, said to a Cargo Hold Alert 1.0 player whatever version

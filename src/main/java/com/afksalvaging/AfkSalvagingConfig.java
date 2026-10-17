@@ -284,13 +284,26 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "hideOtherCrewText",
+		name = "Hide other boats' crew text",
+		description = "Hide the text over other players' crewmates (\"Managed to hook some salvage! I'll put it in the "
+			+ "cargo hold.\"), so a busy spot stays readable. Your own crew's lines still show.",
+		section = REMINDERS,
+		position = 17
+	)
+	default boolean hideOtherCrewText()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "hookGuide",
 		name = "Show where to click for an empty hook",
 		description = "While a hook is empty and a crewmate could take it, flash a green box on the next click: the Sailing "
 			+ "tab, the empty hook's Assign button, then the free crewmate with the most deckhandiness for that hook. "
 			+ "It starts with the reminder, or as soon as you start sorting after leaving the hook.",
 		section = REMINDERS,
-		position = 17
+		position = 18
 	)
 	default boolean hookGuide()
 	{
