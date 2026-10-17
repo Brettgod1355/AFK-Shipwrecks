@@ -41,19 +41,6 @@ body:
         1. Park at a double spot with two crewmates on the hooks
         2. Open the cargo hold and close it
         3. ...
-  - type: input
-    id: version
-    attributes:
-      label: Plugin version
-      description: Shown next to AFK Shipwrecks in RuneLite's Plugin Hub list.
-      placeholder: "2.2"
-    validations:
-      required: true
-  - type: textarea
-    id: settings
-    attributes:
-      label: Settings you changed
-      description: Any AFK Shipwrecks settings you changed from their defaults that might matter.
   - type: textarea
     id: screenshots
     attributes:
