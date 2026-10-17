@@ -28,7 +28,7 @@ import net.runelite.client.util.Text;
  * While a hook stands empty and a crewmate could take it, a flashing neon green box shows the next click
  * (owner, 2026-10-07): the Sailing tab, then the Facilities tab, then the Assign button of the empty
  * hook, then the idle crewmate with the most deckhandiness who can work that hook. A row scrolled out
- * of view gets its scrollbar boxed instead, and a crew list opened for some other facility gets its
+ * of view (less than two thirds showing) gets its scrollbar boxed instead, and a crew list opened for some other facility gets its
  * Back button. Only boxes are drawn; every click is the player's.
  * <p>
  * The Facilities rows carry no hook names, so the empty hook's row is found by its pictures: the hook
@@ -235,16 +235,30 @@ public class HookGuideOverlay extends Overlay
 		return false;
 	}
 
-	/** The button, or the list's scrollbar while the button is scrolled out of view. */
+	/**
+	 * The button, or the list's scrollbar while the button is scrolled out of view. A button cut off at the
+	 * list's edge but mostly showing is boxed where it shows, since it can be clicked there (owner, 2026-10-17).
+	 */
 	private Rectangle inView(Widget button, int scrollable, int scrollbar)
 	{
-		Rectangle target = button.getBounds();
 		Widget view = client.getWidget(scrollable);
-		if (view == null || view.getBounds().contains(target))
+		Rectangle shown = shownPart(button.getBounds(), view == null ? null : view.getBounds());
+		return shown != null ? shown : bounds(scrollbar);
+	}
+
+	/** The part of the target inside the list, or null when less than two thirds of its height shows. */
+	static Rectangle shownPart(Rectangle target, Rectangle view)
+	{
+		if (view == null || view.contains(target))
 		{
 			return target;
 		}
-		return bounds(scrollbar);
+		Rectangle shown = target.intersection(view);
+		if (shown.isEmpty() || shown.width < target.width || shown.height * 3 < target.height * 2)
+		{
+			return null;
+		}
+		return shown;
 	}
 
 	/** "Ex-Captain Siad<br>H3 P2 D3" is Ex-Captain Siad. */
