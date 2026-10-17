@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Read the guide
+    url: https://github.com/Brettgod1355/AFK-Shipwrecks/wiki
+    about: How every feature and setting works, and the plugin's limits.
+  - name: Ask on Discord
+    url: https://discord.gg/c85DK83jWx
+    about: For questions, or if you'd rather not use GitHub.

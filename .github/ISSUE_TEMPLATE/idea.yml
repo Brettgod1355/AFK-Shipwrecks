@@ -1,0 +1,21 @@
+name: Idea
+description: Something you'd like AFK Shipwrecks to do.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas are welcome. Have a look at the [Plans](https://github.com/Brettgod1355/AFK-Shipwrecks/wiki/Plans)
+        page first: it may already be planned, or decided against with the reason why.
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like?
+      placeholder: A timer for the crystal extractor.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: How would it help you?
+      description: What you're doing when you'd want it, and what you do now instead.
