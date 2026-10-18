@@ -5,6 +5,9 @@ a shipwreck, put your crew on the hooks, and it tells you how long until the car
 then tells you loudly when it is. Along the way it shows where to park, which hook has gone empty,
 what to do with your inventory and where to click next on deck.
 
+> **[See everything it does in the Gallery](https://github.com/Brettgod1355/AFK-Shipwrecks/wiki/Gallery)**: every feature in short videos and looping
+> animations, each with a line on what it shows.
+
 It started life as Cargo Hold Alert, and everything that plugin did is still here.
 
 New to it? [Getting started](https://github.com/Brettgod1355/AFK-Shipwrecks/wiki/Getting-started) walks you
@@ -50,6 +53,8 @@ https://github.com/user-attachments/assets/f28564c5-f5e7-459b-935b-484b2665534a
 Your next step lights up on deck: the drop and alch boxes, then the cargo hold for the deposit, the
 salvaging station once you've taken salvage out, and, with too little salvage left in the hold to fill
 your inventory, a hook.
+
+More, including marking items and where to click for an empty hook, in the **[Gallery](https://github.com/Brettgod1355/AFK-Shipwrecks/wiki/Gallery)**.
 
 <p>
 <img src="docs/images/sidebar-spots.png" width="300" alt="The sidebar's Spots tab: the Discord and GitHub buttons, Test alert and Forget rates, the filter and sort, the Auto route note, the nearest dock you can use and the nearest where your crew bank the hold, the session line and a favorite spot with Map, Route, star and Auto">
