@@ -30,11 +30,9 @@ public final class CrewSpeech
 	/** Game message when the boat is somewhere it may not salvage. */
 	private static final String HAZARDOUS = "not safe to salvage while in hazardous waters";
 	/**
-	 * The player's orders putting a crewmate on a hook or off their job: "Ex-Captain Siad, take control of
-	 * the starboard side rune salvaging hook!" and "Ex-Captain Siad, take a rest!".
+	 * Any order to a crewmate: onto a hook ("Ex-Captain Siad, take control of the starboard side rune salvaging hook!"),
+	 * to any other job such as steering (seen over other players, 2026-10-17), or to rest ("Ex-Captain Siad, take a rest!").
 	 */
-	private static final Pattern CREW_ORDER = Pattern.compile("^.+, (?:take control of the .*salvaging hook|take a rest)!?$");
-	/** Any order to a crewmate, hook or not, such as one to steer the ship (seen over other players, 2026-10-17). */
 	private static final Pattern ANY_CREW_ORDER = Pattern.compile("^[^,]+, (?:take control of the .+|take a rest)!?$");
 	/** The ghostly cabin boy only ever says variations of "Wooo wooo." */
 	private static final Pattern GHOST_SPEECH = Pattern.compile("(?i)^(?:w+o+[ ,]*)+[.!]*$");
@@ -104,13 +102,7 @@ public final class CrewSpeech
 		return !line.isEmpty() && GHOST_SPEECH.matcher(line).matches();
 	}
 
-	/** Whether this is the player ordering a crewmate onto a salvaging hook or to rest. */
-	public static boolean isCrewOrder(String text)
-	{
-		return CREW_ORDER.matcher(plain(text)).matches();
-	}
-
-	/** Whether a player's line orders a crewmate to any job or to rest, so it can be hidden over their head. */
+	/** Whether a player's line orders a crewmate to any job or to rest, so it can be hidden. */
 	public static boolean isAnyCrewOrder(String text)
 	{
 		return ANY_CREW_ORDER.matcher(plain(text)).matches();

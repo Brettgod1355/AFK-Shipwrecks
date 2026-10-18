@@ -7,6 +7,7 @@ package com.afksalvaging;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -47,13 +48,24 @@ public class CrewSpeechTest
 	@Test
 	public void recognizesTheOrdersPuttingACrewmateOnAHookOrToRest()
 	{
-		assertTrue(CrewSpeech.isCrewOrder("Ex-Captain Siad, take control of the starboard side rune salvaging hook!"));
-		assertTrue(CrewSpeech.isCrewOrder("<col=00ffff>Jenkins, take control of the port side salvaging hook!</col>"));
-		assertTrue(CrewSpeech.isCrewOrder("Ex-Captain Siad, take a rest!"));
-		assertFalse(CrewSpeech.isCrewOrder("Jenkins, take control of the sails!"));
-		assertFalse(CrewSpeech.isCrewOrder("You start operating the salvaging hook..."));
-		assertFalse(CrewSpeech.isCrewOrder("I could take a rest!"));
-		assertFalse(CrewSpeech.isCrewOrder(null));
+		assertTrue(CrewSpeech.isAnyCrewOrder("Ex-Captain Siad, take control of the starboard side rune salvaging hook!"));
+		assertTrue(CrewSpeech.isAnyCrewOrder("<col=00ffff>Jenkins, take control of the port side salvaging hook!</col>"));
+		assertTrue(CrewSpeech.isAnyCrewOrder("Ex-Captain Siad, take a rest!"));
+		assertFalse(CrewSpeech.isAnyCrewOrder("You start operating the salvaging hook..."));
+		assertFalse(CrewSpeech.isAnyCrewOrder("I could take a rest!"));
+	}
+
+	@Test
+	public void crewTextHidingAppliesWhereChosenAndCarriesTheOldSwitchOver()
+	{
+		// Owner, 2026-10-18: a dropdown between "at salvage spots" and "everywhere".
+		assertFalse(CrewTextHiding.OFF.applies(true));
+		assertTrue(CrewTextHiding.SALVAGING_SPOTS.applies(true));
+		assertFalse("away from a spot, crews and players talk as normal", CrewTextHiding.SALVAGING_SPOTS.applies(false));
+		assertTrue(CrewTextHiding.EVERYWHERE.applies(false));
+		// 2.2's switch: off stays off; on only ever applied at salvaging spots.
+		assertEquals(CrewTextHiding.OFF, CrewTextHiding.carried(false));
+		assertEquals(CrewTextHiding.SALVAGING_SPOTS, CrewTextHiding.carried(true));
 	}
 
 	@Test

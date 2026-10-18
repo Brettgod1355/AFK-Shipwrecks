@@ -269,20 +269,19 @@ public interface AfkSalvagingConfig extends Config
 		return true;
 	}
 
-	// The key is still "hideCrewOrders" from when it only hid the orders, so a player's choice carries over (2.3).
 	@ConfigItem(
-		keyName = "hideCrewOrders",
-		name = "Hide all crew text",
-		description = "Hide the text over every crewmate's head, on your boat and on others' (\"Managed to hook some "
-			+ "salvage! I'll put it in the cargo hold.\", \"Wooo wooo.\"), and players' orders to their crew over their "
-			+ "heads (\"Jenkins, take a rest!\"). At a salvaging spot your own orders also stay out of the chat box. The hold "
-			+ "count still reads every line.",
+		keyName = "crewTextHiding",
+		name = "Hide crew text",
+		description = "Hide the text over crewmates' heads, on your boat and on others' (\"Managed to hook some salvage! "
+			+ "I'll put it in the cargo hold.\", \"Wooo wooo.\"), players' orders to their crew over their heads "
+			+ "(\"Jenkins, take a rest!\"), and your own orders in the chat box. At salvaging spots only, everywhere you "
+			+ "sail, or off. The hold count still reads every line.",
 		section = REMINDERS,
 		position = 16
 	)
-	default boolean hideCrewOrders()
+	default CrewTextHiding crewTextHiding()
 	{
-		return true;
+		return CrewTextHiding.SALVAGING_SPOTS;
 	}
 
 	@ConfigItem(
@@ -1144,6 +1143,19 @@ public interface AfkSalvagingConfig extends Config
 	default boolean outlineWrecks()
 	{
 		return true;
+	}
+
+	/** 2.2's "Hide crew orders in chat" switch, read once by the first start on 2.3 for "Hide crew text". */
+	@ConfigItem(keyName = "hideCrewOrders", name = "", description = "", hidden = true)
+	default boolean hideCrewOrders()
+	{
+		return true;
+	}
+
+	@ConfigItem(keyName = "crewTextHidingCarried", name = "", description = "", hidden = true)
+	default boolean crewTextHidingCarried()
+	{
+		return false;
 	}
 
 	@ConfigItem(keyName = "wreckMarkingCarried", name = "", description = "", hidden = true)

@@ -399,6 +399,7 @@ public class AfkSalvagingPlugin extends Plugin
 		noteVersion();
 		carryWreckMarking();
 		carryWreckTile();
+		carryCrewTextHiding();
 		try
 		{
 			seaMap = SeaMap.load();
@@ -511,7 +512,7 @@ public class AfkSalvagingPlugin extends Plugin
 			// Other per-character data the plugin itself writes (remembered counts, rates, favorites, dropdowns): nothing to apply.
 			return;
 		}
-		if ("hideCrewOrders".equals(event.getKey()))
+		if ("crewTextHiding".equals(event.getKey()))
 		{
 			// Show or hide the hook orders already in the chatbox.
 			client.refreshChat();
@@ -890,7 +891,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			// Players' orders to their crew ("Ex-Captain Siad, take control of the ..."), the player's own included,
 			// count as crew text too; anything else a player says stays.
-			if (config.hideCrewOrders() && CrewSpeech.isAnyCrewOrder(text))
+			if (hidingCrewText() && CrewSpeech.isAnyCrewOrder(text))
 			{
 				actor.setOverheadText("");
 			}
@@ -901,7 +902,7 @@ public class AfkSalvagingPlugin extends Plugin
 			return;
 		}
 		readCrewLine(actor, theirs, text);
-		if (config.hideCrewOrders() && !theirs.isTopLevel())
+		if (hidingCrewText() && !theirs.isTopLevel())
 		{
 			// Every crewmate stands on a boat, and every boat is a world view of its own: once the tally has read
 			// the line, blank it, on the player's boat and on others' (owner, 2026-10-17: "hide all crew text").
@@ -959,7 +960,7 @@ public class AfkSalvagingPlugin extends Plugin
 	public void onChatMessage(ChatMessage event)
 	{
 		ChatMessageType type = event.getType();
-		if (isOwnCrewOrderAtSpot(event))
+		if (isOwnCrewOrderToHide(event))
 		{
 			hiddenCrewOrders.add(event.getMessageNode().getId());
 			while (hiddenCrewOrders.size() > ChatLines.KEPT)
@@ -997,20 +998,27 @@ public class AfkSalvagingPlugin extends Plugin
 		}
 	}
 
-	/** The player's own order putting a crewmate on a hook or to rest, said at a salvaging spot. */
-	private boolean isOwnCrewOrderAtSpot(ChatMessage event)
+	/** The player's own order to a crewmate, said where "Hide crew text" applies. */
+	private boolean isOwnCrewOrderToHide(ChatMessage event)
 	{
 		Player me = client.getLocalPlayer();
 		return me != null && me.getName() != null && event.getMessageNode() != null
 			&& Text.sanitize(me.getName()).equals(Text.sanitize(Text.removeTags(event.getName())))
-			&& session.view().atSpot && CrewSpeech.isCrewOrder(event.getMessage());
+			&& hidingCrewText() && CrewSpeech.isAnyCrewOrder(event.getMessage());
+	}
+
+	/** Whether "Hide crew text" applies right now: off, only at a salvaging spot, or everywhere (owner, 2026-10-18). */
+	private boolean hidingCrewText()
+	{
+		return config.crewTextHiding().applies(session.view().atSpot);
 	}
 
 	/** RuneLite's chat filter hook: a line hidden here stays hidden until the setting is turned off. */
 	@Subscribe
 	public void onScriptCallbackEvent(ScriptCallbackEvent event)
 	{
-		if (!"chatFilterCheck".equals(event.getEventName()) || !config.hideCrewOrders() || hiddenCrewOrders.isEmpty())
+		if (!"chatFilterCheck".equals(event.getEventName()) || config.crewTextHiding() == CrewTextHiding.OFF
+			|| hiddenCrewOrders.isEmpty())
 		{
 			return;
 		}
@@ -1412,6 +1420,22 @@ public class AfkSalvagingPlugin extends Plugin
 			configManager.setConfiguration(AfkSalvagingConfig.GROUP, "wreckMarking", moved);
 		}
 		configManager.setConfiguration(AfkSalvagingConfig.GROUP, "wreckTileCarried", true);
+	}
+
+	/**
+	 * 2.3 turned 2.2's "Hide crew orders in chat" switch into the "Hide crew text" dropdown (owner, 2026-10-18). RuneLite
+	 * saves the dropdown's default before the plugin starts, so the first start on 2.3 reads the old switch once: off
+	 * stays off, on becomes "At salvaging spots", where it always applied. A fresh install reads the switch's default
+	 * (on), which is the dropdown's own default.
+	 */
+	private void carryCrewTextHiding()
+	{
+		if (config.crewTextHidingCarried())
+		{
+			return;
+		}
+		configManager.setConfiguration(AfkSalvagingConfig.GROUP, "crewTextHiding", CrewTextHiding.carried(config.hideCrewOrders()));
+		configManager.setConfiguration(AfkSalvagingConfig.GROUP, "crewTextHidingCarried", true);
 	}
 
 	// ---- Inventory sorting: boxes round items, marks, the sidebar lists ----
