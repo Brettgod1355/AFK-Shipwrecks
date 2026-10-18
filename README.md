@@ -34,10 +34,10 @@ It never clicks anything for you and sends nothing anywhere.
 
 Video not playing? [Watch it on GitHub](https://github.com/Brettgod1355/AFK-Shipwrecks#see-it-in-action).
 
-https://github.com/user-attachments/assets/6f1cf6bd-e389-4eec-a42c-ddaa5d2442fa
+https://github.com/user-attachments/assets/03b0cbbf-cc82-4cd3-b50c-d2d91e217555
 
-Parked in a double spot as the hold fills: the overlay counting down, the nearly-full and full
-banners, the countdown infobox in the corner, then emptying the hold and the timer starting over.
+The hold alerts: the orange nearly-full banner and a screen flash as the count reaches 200/210, then
+the overlay counting down the last seconds to the red full-hold banner and its flash.
 
 Video not playing? [Watch it on GitHub](https://github.com/Brettgod1355/AFK-Shipwrecks#see-it-in-action).
 
