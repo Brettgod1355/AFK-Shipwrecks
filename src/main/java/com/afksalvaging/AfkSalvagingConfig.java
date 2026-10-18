@@ -871,7 +871,9 @@ public interface AfkSalvagingConfig extends Config
 	)
 	default int doubleSpotHideSeconds()
 	{
-		return 20;
+		// 10 since 2.3, was 20 (owner, 2026-10-18). RuneLite saves a setting's default the first time the plugin
+		// runs, so players who already had it keep their 20; only new installs start at 10.
+		return 10;
 	}
 
 	@ConfigItem(
