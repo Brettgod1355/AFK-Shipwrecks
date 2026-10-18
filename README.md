@@ -38,10 +38,18 @@ banners, the countdown infobox in the corner, then emptying the hold and the tim
 
 Video not playing? [Watch it on GitHub](https://github.com/Brettgod1355/AFK-Shipwrecks#see-it-in-action).
 
-https://github.com/user-attachments/assets/6b5b42ff-b842-4c68-9973-07f69d166191
+https://github.com/user-attachments/assets/7671fd8a-857b-42a7-afff-937fae6f9cc2
 
-Sailing in and parking: the reach boxes and the double spot appear as you arrive, the label counts
-your hooks in, and once both are in it says you are parked.
+Parking: the reach boxes round each wreck and the green double spot, the label counting your hooks in
+until it says Parked, then the big boxes clear away and the wreck timers stay.
+
+Video not playing? [Watch it on GitHub](https://github.com/Brettgod1355/AFK-Shipwrecks#see-it-in-action).
+
+https://github.com/user-attachments/assets/f28564c5-f5e7-459b-935b-484b2665534a
+
+Your next step lights up on deck: the drop and alch boxes, then the cargo hold for the deposit, the
+salvaging station once you've taken salvage out, and, with too little salvage left in the hold to fill
+your inventory, a hook.
 
 <p>
 <img src="docs/images/sidebar-spots.png" width="300" alt="The sidebar's Spots tab: the Discord and GitHub buttons, Test alert and Forget rates, the filter and sort, the Auto route note, the nearest dock you can use and the nearest where your crew bank the hold, the session line and a favorite spot with Map, Route, star and Auto">
