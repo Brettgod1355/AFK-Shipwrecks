@@ -37,7 +37,8 @@ Video not playing? [Watch it on GitHub](https://github.com/Brettgod1355/AFK-Ship
 https://github.com/user-attachments/assets/03b0cbbf-cc82-4cd3-b50c-d2d91e217555
 
 The hold alerts: the orange nearly-full banner and a screen flash as the count reaches 200/210, then
-the overlay counting down the last seconds to the red full-hold banner and its flash.
+the overlay counting down the last seconds to the red full-hold banner and its flash. Both can play a
+sound too, your own if you like: set it in the plugin's Full hold settings.
 
 Video not playing? [Watch it on GitHub](https://github.com/Brettgod1355/AFK-Shipwrecks#see-it-in-action).
 
