@@ -210,7 +210,9 @@ public interface AfkSalvagingConfig extends Config
 	)
 	default boolean worldAlert()
 	{
-		return true;
+		// Off for new installs since 2.3 (owner, 2026-10-19: a flashing notice is a lot for someone trying the plugin);
+		// RuneLite saved the old default for everyone else.
+		return false;
 	}
 
 	// ---- Crew and hooks, then Reminders (one "Reminders" section until 2.3) ----
@@ -284,7 +286,9 @@ public interface AfkSalvagingConfig extends Config
 	)
 	default boolean swapAlert()
 	{
-		return true;
+		// Off for new installs since 2.3 (owner, 2026-10-19: a flashing notice is a lot for someone trying the plugin);
+		// RuneLite saved the old default for everyone else.
+		return false;
 	}
 
 	@ConfigItem(
