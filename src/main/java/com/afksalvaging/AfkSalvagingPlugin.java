@@ -1425,7 +1425,7 @@ public class AfkSalvagingPlugin extends Plugin
 	/**
 	 * 2.3 turned 2.2's "Hide crew orders in chat" switch into the "Hide crew text" dropdown (owner, 2026-10-18). RuneLite
 	 * saves the dropdown's default before the plugin starts, so the first start on 2.3 reads the old switch once: off
-	 * stays off, on becomes "At salvaging spots", where it always applied. A fresh install reads the switch's default
+	 * stays off, on becomes "Salvage spots", where it always applied. A fresh install reads the switch's default
 	 * (on), which is the dropdown's own default.
 	 */
 	private void carryCrewTextHiding()

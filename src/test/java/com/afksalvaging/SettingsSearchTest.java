@@ -70,6 +70,40 @@ public class SettingsSearchTest
 	}
 
 	@Test
+	public void hoverTextIsWrappedSoItStaysOnScreen() throws Exception
+	{
+		// Owner, 2026-10-19: one long line ran off the screen.
+		List<String> descriptions = new ArrayList<>();
+		for (Method method : AfkSalvagingConfig.class.getDeclaredMethods())
+		{
+			ConfigItem item = method.getAnnotation(ConfigItem.class);
+			if (item != null && !item.hidden())
+			{
+				descriptions.add(item.description());
+			}
+		}
+		for (Field field : AfkSalvagingConfig.class.getDeclaredFields())
+		{
+			ConfigSection section = field.getAnnotation(ConfigSection.class);
+			if (section != null)
+			{
+				descriptions.add(section.description());
+			}
+		}
+		for (String description : descriptions)
+		{
+			for (String line : description.split(SettingsSearch.TOOLTIP_BREAK))
+			{
+				assertTrue(line, line.length() <= SettingsSearch.TOOLTIP_LINE);
+			}
+		}
+		for (SettingsSearch.Entry entry : entries())
+		{
+			assertFalse("searched and shown as plain text", entry.getDescription().contains("<"));
+		}
+	}
+
+	@Test
 	public void aWordFindsTheSettingAndSaysWhereItIs() throws Exception
 	{
 		List<SettingsSearch.Entry> found = SettingsSearch.find(entries(), "banner size");
@@ -167,9 +201,9 @@ public class SettingsSearchTest
 				found.add(entry.getName());
 			}
 		}
-		assertTrue(found.contains("Highlight where salvage goes"));
-		assertTrue(found.contains("Point to a hook"));
-		assertTrue(found.contains("Show where to click for an empty hook"));
+		assertTrue(found.contains("Salvage highlight"));
+		assertTrue(found.contains("Hook highlight"));
+		assertTrue(found.contains("Empty hook crew highlight"));
 	}
 
 	/** The names found for a search, best first. */
@@ -191,11 +225,11 @@ public class SettingsSearchTest
 			"disable highlight", "remove highlight", "how to turn off the highlighting", "Highlights off"})
 		{
 			List<String> found = names(query);
-			assertTrue(query + ": " + found, found.contains("Highlight where salvage goes"));
-			assertTrue(query + ": " + found, found.contains("Point to a hook"));
+			assertTrue(query + ": " + found, found.contains("Salvage highlight"));
+			assertTrue(query + ": " + found, found.contains("Hook highlight"));
 		}
-		assertEquals("Point to a hook", names("hook highlight").get(0));
-		assertTrue(names("outline").contains("Highlight where salvage goes"));
+		assertEquals("Hook highlight", names("hook highlight").get(0));
+		assertTrue(names("outline").contains("Salvage highlight"));
 	}
 
 	@Test

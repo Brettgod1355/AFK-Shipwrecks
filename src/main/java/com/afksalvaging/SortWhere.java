@@ -8,7 +8,7 @@ package com.afksalvaging;
 /** Where the inventory boxes are drawn. */
 public enum SortWhere
 {
-	AT_WRECKS("At salvaging spots"),
+	AT_WRECKS("Salvage spots"),
 	ABOARD("On my boat"),
 	EVERYWHERE("Everywhere");
 

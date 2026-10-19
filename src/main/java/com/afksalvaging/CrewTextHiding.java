@@ -13,7 +13,7 @@ package com.afksalvaging;
 public enum CrewTextHiding
 {
 	OFF("Off"),
-	SALVAGING_SPOTS("At salvaging spots"),
+	SALVAGING_SPOTS("Salvage spots"),
 	EVERYWHERE("Everywhere");
 
 	private final String label;
@@ -31,7 +31,7 @@ public enum CrewTextHiding
 
 	/**
 	 * The choice carried over from 2.2's on/off switch ("Hide crew orders in chat"): off stays off, and on becomes
-	 * "At salvaging spots", the only place the switch ever applied.
+	 * "Salvage spots", the only place the switch ever applied.
 	 */
 	static CrewTextHiding carried(boolean switchOn)
 	{

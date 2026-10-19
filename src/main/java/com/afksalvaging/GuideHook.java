@@ -8,8 +8,8 @@ package com.afksalvaging;
 /** Which salvaging hook the salvage highlight may point at (owner, 2026-10-12). */
 public enum GuideHook
 {
-	WEAKEST_CREW("Free, or the weakest crewmate's"),
-	FREE_ONLY("Free hooks only"),
+	WEAKEST_CREW("Free or weakest"),
+	FREE_ONLY("Free only"),
 	OFF("Off");
 
 	private final String label;

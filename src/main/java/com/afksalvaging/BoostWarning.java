@@ -12,9 +12,9 @@ package com.afksalvaging;
  */
 public enum BoostWarning
 {
-	BEFORE("Before it runs out", true, false),
-	AFTER("After the crew stop", false, true),
-	BOTH("Before and after", true, true);
+	BEFORE("Before it ends", true, false),
+	AFTER("After crew stop", false, true),
+	BOTH("Both", true, true);
 
 	private final String label;
 	private final boolean before;

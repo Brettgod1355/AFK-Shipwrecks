@@ -9,7 +9,7 @@ package com.afksalvaging;
 public enum GuideTarget
 {
 	AUTOMATIC("Automatic"),
-	STATION("Salvaging station"),
+	STATION("Station"),
 	HOLD("Cargo hold"),
 	OFF("Off");
 

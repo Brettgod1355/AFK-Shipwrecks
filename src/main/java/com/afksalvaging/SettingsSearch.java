@@ -31,6 +31,10 @@ final class SettingsSearch
 {
 	/** The most matches listed at once; past that the words should be narrowed. */
 	static final int MAX_RESULTS = 8;
+	/** The line break in a setting's description; RuneLite shows the description as HTML hover text. */
+	static final String TOOLTIP_BREAK = "<br>";
+	/** The longest line of hover text, in characters, before it needs a {@link #TOOLTIP_BREAK}. */
+	static final int TOOLTIP_LINE = 64;
 
 	/** One setting as the search sees it. */
 	static final class Entry
@@ -106,9 +110,10 @@ final class SettingsSearch
 			ConfigSectionDescriptor section = sections.get(annotation.section());
 			// The panel lists sections and loose settings together by position; a loose setting comes
 			// before a section that shares its position.
+			// Descriptions break their lines with <br> so RuneLite's hover text stays on screen; here they are text.
 			entries.add(new Entry(annotation.name(),
 				section == null ? "" : section.name(),
-				annotation.description(),
+				annotation.description().replace(TOOLTIP_BREAK, " "),
 				section == null ? annotation.position() : section.position(),
 				section == null ? Integer.MIN_VALUE : annotation.position()));
 		}
