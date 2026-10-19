@@ -1140,8 +1140,8 @@ public interface AfkSalvagingConfig extends Config
 			+ "free one, or else the one with your weakest crewmate<br>"
 			+ "(clicking it sends them to rest). If the cargo hold holds<br>"
 			+ "enough salvage to fill your free inventory, the hold lights<br>"
-			+ "instead. Opening the cargo hold and taking nothing out<br>"
-			+ "leaves only the hook lit.",
+			+ "instead, even after a look inside. Opening the hold and<br>"
+			+ "taking nothing out otherwise leaves only the hook lit.",
 		section = NEXT_STEP,
 		position = 1
 	)

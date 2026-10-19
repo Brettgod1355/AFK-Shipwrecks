@@ -161,7 +161,26 @@ public class SalvageGuideTest
 		in.hookChoice = GuideHook.WEAKEST_CREW;
 		in.holdSalvage = 50;
 		in.holdTurnedDown = true;
-		assertEquals("the hold just turned down: the hook, however much", Collections.singletonList(Target.HOOK), SalvageGuide.decide(in).getTargets());
+		assertEquals("a look at a hold with a full load: still the hold", Collections.singletonList(Target.HOLD), SalvageGuide.decide(in).getTargets());
+	}
+
+	@Test
+	public void turningTheHoldDownCountsOnlyBelowAFullLoad()
+	{
+		// Owner, 2026-10-19 (option 2): opening the hold only to check the count should not send them to a hook.
+		in.holdHasSalvage = true;
+		in.holdTurnedDown = true;
+		in.freeSlots = 20;
+		in.wreckInReach = false;
+		in.holdSalvage = 20;
+		assertEquals("a full load waiting: the hold stays lit", Collections.singletonList(Target.HOLD), SalvageGuide.decide(in).getTargets());
+		in.holdSalvage = 19;
+		assertEquals("less than a load, turned down: nothing", Collections.emptyList(), SalvageGuide.decide(in).getTargets());
+		in.holdSalvage = HoldSalvageCount.UNKNOWN;
+		assertEquals("count unknown: turned down as before", Collections.emptyList(), SalvageGuide.decide(in).getTargets());
+		in.holdSalvage = 50;
+		in.freeSlots = 0;
+		assertEquals("no room to take any out: turned down as before", Collections.emptyList(), SalvageGuide.decide(in).getTargets());
 	}
 
 	@Test

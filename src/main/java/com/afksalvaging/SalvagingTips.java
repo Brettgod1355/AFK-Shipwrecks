@@ -90,7 +90,7 @@ public final class SalvagingTips
 			"Your next step lights up on deck: the station (amber) while you carry salvage, then, once drop and alch "
 				+ "items are gone, the hold for deposits. After that, the hold if it holds enough salvage to fill your "
 				+ "free inventory, otherwise a hook (green) you could take yourself.",
-			"Open the hold and take nothing out, and only the hook stays lit. \"Hook highlight\" picks a free one, or "
+			"Open the hold and take nothing out, and only the hook stays lit, unless the hold could fill your inventory. \"Hook highlight\" picks a free one, or "
 				+ "the weakest crewmate's: clicking a crewed hook sends them to rest.")
 	));
 

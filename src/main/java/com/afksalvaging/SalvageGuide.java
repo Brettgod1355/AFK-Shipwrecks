@@ -20,7 +20,8 @@ import java.util.List;
  * <li>Then items left with an Alch box: nothing; alch them first.</li>
  * <li>Then items left with a Deposit box: the cargo hold.</li>
  * <li>Then: the cargo hold if it holds salvage (withdraw more to sort), and a hook (hook by hand), side by
- * side; the player picks. After the hold was opened and closed with nothing taken, only the hook.</li>
+ * side; the player picks. After the hold was opened and closed with nothing taken, only the hook, unless the
+ * hold holds a full inventory's worth.</li>
  * </ol>
  * Only Keep boxes never hold a step back. Pure, so it is tested without a client.
  */
@@ -175,7 +176,11 @@ public final class SalvageGuide
 			// a flash of the wrong thing (owner, 2026-10-17). Waiting at a hook with no wreck up, the hold stays.
 			return Result.NONE;
 		}
-		boolean hold = in.holdHasSalvage && !in.holdTurnedDown && allowed(in.mode, Target.HOLD);
+		// Turning the hold down only counts while it holds less than a full inventory's worth: a look at a fuller
+		// hold, to check the count, keeps it lit (owner, 2026-10-19).
+		boolean fullLoadInHold = in.holdSalvage != HoldSalvageCount.UNKNOWN && in.freeSlots > 0
+			&& in.holdSalvage >= in.freeSlots;
+		boolean hold = in.holdHasSalvage && (!in.holdTurnedDown || fullLoadInHold) && allowed(in.mode, Target.HOLD);
 		HookFacts hook = in.playerAtHook || !in.wreckInReach ? null : pickHook(in.hooks, in.hookChoice);
 		if (hold && hook != null && in.holdSalvage != HoldSalvageCount.UNKNOWN && in.freeSlots > 0)
 		{
