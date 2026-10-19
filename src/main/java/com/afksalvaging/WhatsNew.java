@@ -24,8 +24,8 @@ public final class WhatsNew
 	 * One line on what this version brings, no links; a full stop is added when it is said. Leave
 	 * it empty for a release not worth a line (a fix, a wording change) and nothing is said.
 	 */
-	public static final String NOTE = "at a salvaging spot the text over every crewmate's head is hidden, yours and other "
-		+ "boats', so it stays readable (\"Hide crew text\", which was \"Hide crew orders in chat\", can also be everywhere or off)";
+	public static final String NOTE = "crew text is hidden at salvaging spots so busy spots stay readable, the hold count is "
+		+ "more accurate, and the settings are tidier, with a Crew and hooks section and names that fit";
 
 	/**
 	 * What the rename to AFK Shipwrecks brought, said to a Cargo Hold Alert 1.0 player whatever version
