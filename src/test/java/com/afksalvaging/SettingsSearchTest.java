@@ -171,4 +171,49 @@ public class SettingsSearchTest
 		assertTrue(found.contains("Point to a hook"));
 		assertTrue(found.contains("Show where to click for an empty hook"));
 	}
+
+	/** The names found for a search, best first. */
+	private static List<String> names(String query) throws Exception
+	{
+		List<String> names = new ArrayList<>();
+		for (SettingsSearch.Entry entry : SettingsSearch.find(entries(), query))
+		{
+			names.add(entry.getName());
+		}
+		return names;
+	}
+
+	@Test
+	public void theWaysPlayersAskForTheHighlightsAllFindThem() throws Exception
+	{
+		// Issue #14 asked for "highlighting"; on 2.2 that and the rest of these found nothing (2026-10-19).
+		for (String query : new String[]{"highlight", "highlights", "highlighting", "turn off highlight",
+			"disable highlight", "remove highlight", "how to turn off the highlighting", "Highlights off"})
+		{
+			List<String> found = names(query);
+			assertTrue(query + ": " + found, found.contains("Highlight where salvage goes"));
+			assertTrue(query + ": " + found, found.contains("Point to a hook"));
+		}
+		assertEquals("Point to a hook", names("hook highlight").get(0));
+		assertTrue(names("outline").contains("Highlight where salvage goes"));
+	}
+
+	@Test
+	public void endingsAreForgivenButEveryWordStillCounts() throws Exception
+	{
+		assertEquals("Fill the boxes", names("filling boxes").get(0));
+		assertEquals("Show nearest docks", names("nearest dock").get(0));
+		assertEquals("Banner size", names("banners size").get(0));
+		assertTrue(names("highlighting zzzz").isEmpty());
+		assertEquals("hook", SettingsSearch.stem("hooks"));
+		assertEquals("box", SettingsSearch.stem("boxes"));
+		assertEquals("need", SettingsSearch.stem("need"));
+		assertEquals("class", SettingsSearch.stem("class"));
+	}
+
+	@Test
+	public void onlyFillerTypedIsSearchedAsTyped() throws Exception
+	{
+		assertFalse(SettingsSearch.find(entries(), "off").isEmpty());
+	}
 }

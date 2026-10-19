@@ -6,13 +6,16 @@
 package com.afksalvaging;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import net.runelite.client.config.ConfigDescriptor;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigItemDescriptor;
@@ -114,15 +117,43 @@ final class SettingsSearch
 	}
 
 	/**
+	 * Words that say what to do with a setting rather than which one, skipped so "turn off highlight" finds what
+	 * "highlight" finds (2.3, issue #14: a player searching for how to turn the highlights off found nothing).
+	 */
+	private static final Set<String> FILLER = new HashSet<>(Arrays.asList(
+		"turn", "off", "on", "disable", "enable", "remove", "how", "to", "the", "a", "my", "i", "can"));
+
+	/** Words players use for the same outline; a match through another of them ranks below any direct match. */
+	private static final Set<String> OUTLINE_WORDS = new HashSet<>(Arrays.asList("highlight", "outline", "box"));
+
+	/**
 	 * The settings matching every word typed, best first: a word in the name beats one only in the
-	 * section, which beats one only in the description. An empty query matches nothing.
+	 * section, which beats one only in the description. An empty query matches nothing. Endings are
+	 * forgiven ("highlighting" finds "highlight"), filler words are skipped unless nothing else was
+	 * typed, and highlight, outline and box find each other.
 	 */
 	static List<Entry> find(List<Entry> entries, String query)
 	{
-		String[] words = query == null ? new String[0] : query.toLowerCase(Locale.ROOT).trim().split("\\s+");
-		if (words.length == 0 || words[0].isEmpty())
+		String[] typed = query == null ? new String[0] : query.toLowerCase(Locale.ROOT).trim().split("\\s+");
+		if (typed.length == 0 || typed[0].isEmpty())
 		{
 			return Collections.emptyList();
+		}
+		List<String> words = new ArrayList<>();
+		for (String word : typed)
+		{
+			if (!FILLER.contains(word))
+			{
+				words.add(stem(word));
+			}
+		}
+		if (words.isEmpty())
+		{
+			// Only filler typed ("off", say): search for that as typed.
+			for (String word : typed)
+			{
+				words.add(stem(word));
+			}
 		}
 		List<Entry> found = new ArrayList<>();
 		Map<Entry, Integer> scores = new IdentityHashMap<>();
@@ -135,23 +166,23 @@ final class SettingsSearch
 			boolean all = true;
 			for (String word : words)
 			{
-				if (name.contains(word))
+				int best = score(word, name, section, description);
+				if (best == 0 && OUTLINE_WORDS.contains(word))
 				{
-					score += 100;
+					for (String other : OUTLINE_WORDS)
+					{
+						if (score(other, name, section, description) > 0)
+						{
+							best = 1;
+						}
+					}
 				}
-				else if (section.contains(word))
-				{
-					score += 10;
-				}
-				else if (description.contains(word))
-				{
-					score += 1;
-				}
-				else
+				if (best == 0)
 				{
 					all = false;
 					break;
 				}
+				score += best;
 			}
 			if (all)
 			{
@@ -162,5 +193,50 @@ final class SettingsSearch
 		// Stable: equal scores keep the settings panel's own order.
 		found.sort(Comparator.comparingInt((Entry e) -> scores.get(e)).reversed());
 		return found.size() > MAX_RESULTS ? new ArrayList<>(found.subList(0, MAX_RESULTS)) : found;
+	}
+
+	/** 100 for a word in the name, 10 in the section, 2 in the description, 0 nowhere (1 is a match by synonym). */
+	private static int score(String word, String name, String section, String description)
+	{
+		if (name.contains(word))
+		{
+			return 100;
+		}
+		if (section.contains(word))
+		{
+			return 10;
+		}
+		return description.contains(word) ? 2 : 0;
+	}
+
+	/**
+	 * The word without a plural or -ing/-ed ending, so "highlighting", "highlights" and "boxes" match "highlight"
+	 * and "box". Only ever shortens, and the match is by contains, so a stemmed word finds everything the typed
+	 * one did. Short words are left alone.
+	 */
+	static String stem(String word)
+	{
+		String stem = word;
+		if (stem.endsWith("ings"))
+		{
+			stem = stem.substring(0, stem.length() - 4);
+		}
+		else if (stem.endsWith("ing") || stem.endsWith("ies"))
+		{
+			stem = stem.substring(0, stem.length() - 3);
+		}
+		else if (stem.endsWith("xes") || stem.endsWith("ches") || stem.endsWith("shes") || stem.endsWith("sses"))
+		{
+			stem = stem.substring(0, stem.length() - 2);
+		}
+		else if (stem.endsWith("ed"))
+		{
+			stem = stem.substring(0, stem.length() - 2);
+		}
+		else if (stem.endsWith("s") && !stem.endsWith("ss"))
+		{
+			stem = stem.substring(0, stem.length() - 1);
+		}
+		return stem.length() >= 3 ? stem : word;
 	}
 }
