@@ -123,6 +123,28 @@ public class HookWatchTest
 	}
 
 	@Test
+	public void standingAtTheirHookAfterTheWreckSankIsNeverAnEmptyHookForCrew()
+	{
+		// Owner, 2026-10-19: "salvaging on the hook yourself and the shipwreck sinks... we get an alarm saying empty
+		// hook". Two hooks, a crewmate on the other, a spare crewmate aboard.
+		Situation sunk = playerLeft();
+		sunk.wreckInReach = false;
+		sunk.playerIdleAtHook = true;
+		sunk.playerAtHook = true;
+		assertNull("no wreck up: they are at their hook, nothing to say", HookWatch.reasonFor(sunk));
+		Situation rose = playerLeft();
+		rose.playerIdleAtHook = true;
+		assertEquals("a wreck rose: click the hook, not assign a crewmate", Reason.PLAYER_NEEDED, HookWatch.reasonFor(rose));
+		assertEquals(Signal.NONE, watch.update(0, rose, GRACE, NO_REPEAT));
+		assertEquals(Signal.REMIND, watch.update(GRACE, rose, GRACE, NO_REPEAT));
+		assertFalse("no assign guide for the player's own hook", watch.showAssignGuide());
+		Situation another = playerLeft();
+		another.hookCount = 3;
+		another.playerIdleAtHook = true;
+		assertEquals("another hook empty too: the spare crewmate for that one", Reason.SPARE_CREW, HookWatch.reasonFor(another));
+	}
+
+	@Test
 	public void thePlayerIsAskedToClickWhenNoCrewmateCanTakeOver()
 	{
 		Situation s = playerLeft();

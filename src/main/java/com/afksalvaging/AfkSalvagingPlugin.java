@@ -1092,6 +1092,7 @@ public class AfkSalvagingPlugin extends Plugin
 		in.boatPoint = boatEntity == null ? null : topLevelPoint(boatEntity);
 		in.otherBoats = otherBoatPoints(boatEntity);
 		in.playerPoint = playerTopLevelPoint();
+		in.deckPoint = player == null ? null : player.getLocalLocation();
 		in.cargoInterfaceOpen = isCargoInterfaceOpen();
 		in.idleLogoutMillis = AfkSession.idleLogoutMillis(client.getIdleTimeout(), client.getMouseIdleTicks(), client.getKeyboardIdleTicks());
 

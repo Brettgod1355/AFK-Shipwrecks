@@ -42,6 +42,11 @@ public final class HookWatch
 		public int crewOnHooks;
 		/** Whether the player is at a hook, salvaging or not. */
 		public boolean playerAtHook;
+		/**
+		 * Whether the player stands at a hook doing nothing (its wreck sank under them). With a wreck in reach they
+		 * still count as off it, since they do not restart by themselves, but the word is to click it.
+		 */
+		public boolean playerIdleAtHook;
 		/** Whether the player is sorting at a station. */
 		public boolean playerSorting;
 		/** Idle crewmates aboard who are deckhand enough for an empty hook. */
@@ -164,13 +169,21 @@ public final class HookWatch
 		{
 			return null;
 		}
-		if (emptyHooks(s.hookCount, s.crewOnHooks, s.playerAtHook) == 0)
+		int empty = emptyHooks(s.hookCount, s.crewOnHooks, s.playerAtHook);
+		if (empty == 0)
 		{
 			return null;
 		}
-		if (s.spareCrew > 0)
+		// Standing at their own hook after the wreck sank, the player wants to click it, not to hand it to a
+		// crewmate (owner, 2026-10-19: an "empty hook" alarm while salvaging on the hook themselves).
+		boolean standing = s.playerIdleAtHook && !s.playerAtHook;
+		if ((standing ? empty - 1 : empty) > 0 && s.spareCrew > 0)
 		{
 			return Reason.SPARE_CREW;
+		}
+		if (standing)
+		{
+			return s.wreckInReach ? Reason.PLAYER_NEEDED : null;
 		}
 		if (!s.playerAtHook && !s.playerSorting && s.wreckInReach)
 		{

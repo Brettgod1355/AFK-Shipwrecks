@@ -154,6 +154,8 @@ public final class AfkSession
 		public WorldPoint boatPoint;
 		/** Where the player stands, in the top-level world. */
 		public WorldPoint playerPoint;
+		/** Where the player stands in their own world view (on a boat: the deck, which moves with it), or null. */
+		public Object deckPoint;
 		/** Other players' boats in view, in the top-level world; ours left out. */
 		public List<WorldPoint> otherBoats = Collections.emptyList();
 		public boolean cargoInterfaceOpen;
@@ -1027,7 +1029,7 @@ public final class AfkSession
 		PlayerActivity current;
 		if (in.sailing)
 		{
-			current = activity.update(in.animation, tick);
+			current = activity.update(in.animation, tick, in.deckPoint);
 		}
 		else
 		{
@@ -1292,6 +1294,7 @@ public final class AfkSession
 		situation.hookCount = boat.hookCount();
 		situation.crewOnHooks = hookSlots.size();
 		situation.playerAtHook = playerAtHook;
+		situation.playerIdleAtHook = aboard && current == PlayerActivity.AT_HOOK_IDLE;
 		situation.playerSorting = current == PlayerActivity.SORTING;
 		situation.spareCrew = spare;
 		situation.holdFull = confirmedFull;

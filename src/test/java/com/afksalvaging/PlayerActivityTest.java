@@ -43,6 +43,29 @@ public class PlayerActivityTest
 	}
 
 	@Test
+	public void staysAtTheHookAfterItsWreckSinksUntilThePlayerMoves()
+	{
+		// Original RS2, 2026-10-19, ticks 4831-4851: the 3x8 hook's reset, then no animation on the same spot.
+		PlayerActivity.Detector detector = new PlayerActivity.Detector();
+		String hook = "15940,12869";
+		assertEquals(PlayerActivity.SALVAGING, detector.update(AnimationID.SAILING_HUMAN_SALVAGE_HOOK_KANDARIN_3X8_IDLE01, 4816, hook));
+		assertEquals(PlayerActivity.AT_HOOK_IDLE, detector.update(AnimationID.SAILING_HUMAN_SALVAGE_HOOK_KANDARIN_3X8_RESET01, 4831, hook));
+		assertEquals(PlayerActivity.AT_HOOK_IDLE, detector.update(-1, 4842, hook));
+		assertEquals("still there twenty ticks on", PlayerActivity.AT_HOOK_IDLE, detector.update(-1, 4862, hook));
+		assertEquals("a step away: off the hook once the hold runs out", PlayerActivity.AT_HOOK_IDLE, detector.update(-1, 4863, "15939,12870"));
+		assertEquals(PlayerActivity.IDLE, detector.update(-1, 4867, "15939,12870"));
+		assertEquals(PlayerActivity.IDLE, detector.update(-1, 4868, hook));
+		// Without a position the reset is only held for the usual few ticks.
+		detector.reset();
+		detector.update(AnimationID.SAILING_HUMAN_SALVAGE_HOOK_KANDARIN_2X5_RESET01, 10);
+		assertEquals(PlayerActivity.IDLE, detector.update(-1, 14));
+		// Salvaging, then no animation on the same spot (a full inventory) is not held: that is walking off to sort.
+		detector.reset();
+		detector.update(AnimationID.SAILING_HUMAN_SALVAGE_HOOK_KANDARIN_3X8_IDLE01, 20, hook);
+		assertEquals(PlayerActivity.IDLE, detector.update(-1, 24, hook));
+	}
+
+	@Test
 	public void switchesStraightFromSalvagingToSorting()
 	{
 		PlayerActivity.Detector detector = new PlayerActivity.Detector();
