@@ -78,7 +78,7 @@ public class SettingsSearchTest
 
 		found = SettingsSearch.find(entries(), "MARK WRECKS");
 		assertEquals("Mark wrecks", found.get(0).getName());
-		assertEquals("Wrecks and parking", found.get(0).getSection());
+		assertEquals("Wrecks", found.get(0).getSection());
 	}
 
 	@Test
@@ -142,5 +142,33 @@ public class SettingsSearchTest
 			}
 		}
 		assertEquals(2, loose.size());
+	}
+
+	@Test
+	public void everyVisibleSettingHasItsOwnName() throws Exception
+	{
+		// Two "Repeat every" settings read alike in search results and on the wiki (2.3).
+		Set<String> names = new HashSet<>();
+		for (SettingsSearch.Entry entry : entries())
+		{
+			assertTrue(entry.getName() + " is used twice", names.add(entry.getName()));
+		}
+	}
+
+	@Test
+	public void highlightFindsTheNextStepHighlights() throws Exception
+	{
+		// Issue #14: a player could not find how to turn the station, hold and hook outlines off.
+		List<String> found = new ArrayList<>();
+		for (SettingsSearch.Entry entry : SettingsSearch.find(entries(), "highlight"))
+		{
+			if (entry.getSection().equals("Next step highlights"))
+			{
+				found.add(entry.getName());
+			}
+		}
+		assertTrue(found.contains("Highlight where salvage goes"));
+		assertTrue(found.contains("Point to a hook"));
+		assertTrue(found.contains("Show where to click for an empty hook"));
 	}
 }

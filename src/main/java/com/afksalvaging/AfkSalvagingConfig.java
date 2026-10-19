@@ -63,28 +63,28 @@ public interface AfkSalvagingConfig extends Config
 	String BANNER = "banner";
 
 	@ConfigSection(
-		name = "Reminders",
-		description = "Nudges when a hook is standing empty or the crew have stopped",
+		name = "Crew and hooks",
+		description = "Nudges when a hook is standing empty, the crew have stopped or a better crewmate is free",
 		position = 3,
+		closedByDefault = true
+	)
+	String CREW = "crew";
+
+	@ConfigSection(
+		name = "Reminders",
+		description = "The idle logout, danger, and when a wreck rises or you are done sorting",
+		position = 4,
 		closedByDefault = true
 	)
 	String REMINDERS = "reminders";
 
 	@ConfigSection(
-		name = "Wrecks and parking",
-		description = "How wrecks are marked, and the boxes on the water that show where to park",
-		position = 4,
-		closedByDefault = true
-	)
-	String SPOTS = "spots";
-
-	@ConfigSection(
-		name = "Wreck tracking",
-		description = "Timers on the wrecks, and what the plugin can see",
+		name = "Wrecks",
+		description = "How wrecks are marked, their timers, and the boxes on the water that show where to park",
 		position = 5,
 		closedByDefault = true
 	)
-	String TRACKING = "tracking";
+	String SPOTS = "spots";
 
 	@ConfigSection(
 		name = "Salvaging worlds",
@@ -200,7 +200,7 @@ public interface AfkSalvagingConfig extends Config
 		return true;
 	}
 
-	// ---- Reminders ----
+	// ---- Crew and hooks, then Reminders (one "Reminders" section until 2.3) ----
 
 	@ConfigItem(
 		keyName = "hookEmptyNotification",
@@ -208,7 +208,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Notify when a salvaging hook is standing empty and a crewmate aboard could be working it, "
 			+ "for example after you step off your hook to sort. Only at a salvaging spot, with a wreck site, up or "
 			+ "sunk, within reach of your hooks.",
-		section = REMINDERS,
+		section = CREW,
 		position = 0
 	)
 	default Notification hookEmptyNotification()
@@ -221,7 +221,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Your hook is idle",
 		description = "Notify when a wreck is up, a hook is empty and only you can take it, for example after the "
 			+ "wreck you were salvaging sank. Unlike your crew, you do not start again by yourself.",
-		section = REMINDERS,
+		section = CREW,
 		position = 1
 	)
 	default Notification hookIdleNotification()
@@ -234,8 +234,8 @@ public interface AfkSalvagingConfig extends Config
 		name = "Crew stopped: level too low",
 		description = "Notify when the crew stop because your Sailing level, boosted or not, has dropped below "
 			+ "what the wreck in reach needs.",
-		section = REMINDERS,
-		position = 2
+		section = CREW,
+		position = 5
 	)
 	default Notification boostDroppedNotification()
 	{
@@ -248,8 +248,8 @@ public interface AfkSalvagingConfig extends Config
 		description = "A crewmate with more deckhandiness is sitting idle while a weaker one works a hook: say who to "
 			+ "swap, once, after the pair has stood for ten seconds. Only when every hook is manned; an empty hook "
 			+ "gets its own reminder first.",
-		section = REMINDERS,
-		position = 3
+		section = CREW,
+		position = 7
 	)
 	default Notification betterCrewNotification()
 	{
@@ -261,8 +261,8 @@ public interface AfkSalvagingConfig extends Config
 		name = "Flash the swap on screen",
 		description = "While a better crewmate is free, flash a SWAP CREW notice in the middle of the screen, in the "
 			+ "reminder banner color, until the swap is made.",
-		section = REMINDERS,
-		position = 4
+		section = CREW,
+		position = 8
 	)
 	default boolean swapAlert()
 	{
@@ -276,8 +276,8 @@ public interface AfkSalvagingConfig extends Config
 			+ "I'll put it in the cargo hold.\", \"Wooo wooo.\"), players' orders to their crew over their heads "
 			+ "(\"Jenkins, take a rest!\"), and your own orders in the chat box. At salvaging spots only, everywhere you "
 			+ "sail, or off. The hold count still reads every line.",
-		section = REMINDERS,
-		position = 16
+		section = CREW,
+		position = 9
 	)
 	default CrewTextHiding crewTextHiding()
 	{
@@ -290,8 +290,8 @@ public interface AfkSalvagingConfig extends Config
 		description = "While a hook is empty and a crewmate could take it, flash a green box on the next click: the Sailing "
 			+ "tab, the empty hook's Assign button, then the free crewmate with the most deckhandiness for that hook. "
 			+ "It starts with the reminder, or as soon as you start sorting after leaving the hook.",
-		section = REMINDERS,
-		position = 17
+		section = NEXT_STEP,
+		position = 2
 	)
 	default boolean hookGuide()
 	{
@@ -304,7 +304,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Notify once every wreck in reach has been down for ten seconds, with the latest the next can rise "
 			+ "when that is known. Off unless you want it.",
 		section = REMINDERS,
-		position = 5
+		position = 4
 	)
 	default Notification waitingNotification()
 	{
@@ -329,8 +329,8 @@ public interface AfkSalvagingConfig extends Config
 		name = "Grace period",
 		description = "How long a hook may stand empty before the first reminder, sorting or not. Using the cargo "
 			+ "hold buys a little extra.",
-		section = REMINDERS,
-		position = 7
+		section = CREW,
+		position = 2
 	)
 	@Range(min = 3, max = 60)
 	@Units(Units.SECONDS)
@@ -341,10 +341,10 @@ public interface AfkSalvagingConfig extends Config
 
 	@ConfigItem(
 		keyName = "reminderRepeatSeconds",
-		name = "Repeat every",
+		name = "Repeat hook reminder every",
 		description = "Remind again this often while the hook stays empty. 0 reminds once.",
-		section = REMINDERS,
-		position = 8
+		section = CREW,
+		position = 3
 	)
 	@Range(min = 0, max = 600)
 	@Units(Units.SECONDS)
@@ -359,7 +359,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Notify shortly before the game logs you out for idling while you are on your own boat, so a "
 			+ "full-hold alert does not arrive after you are gone.",
 		section = REMINDERS,
-		position = 9
+		position = 0
 	)
 	default Notification idleLogoutNotification()
 	{
@@ -371,7 +371,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Warn before logout",
 		description = "How long before the idle logout to warn. 0 never warns.",
 		section = REMINDERS,
-		position = 10
+		position = 1
 	)
 	@Range(min = 0, max = 600)
 	@Units(Units.SECONDS)
@@ -385,8 +385,8 @@ public interface AfkSalvagingConfig extends Config
 		name = "Crew stopped, wreck in reach",
 		description = "Notify when the crew stop bringing salvage in although a wreck they can work is in reach. The game "
 			+ "shows nothing for it; nudging the boat or assigning them again usually starts them.",
-		section = REMINDERS,
-		position = 11
+		section = CREW,
+		position = 4
 	)
 	default Notification crewStalledNotification()
 	{
@@ -399,7 +399,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Notify when a wreck rises in reach after you have waited for one. Your crew start on it by "
 			+ "themselves; your own hook does not.",
 		section = REMINDERS,
-		position = 12
+		position = 5
 	)
 	default Notification wreckRoseNotification()
 	{
@@ -412,8 +412,8 @@ public interface AfkSalvagingConfig extends Config
 		description = "When to warn about a Sailing boost wearing off below the level of the wreck in reach: just before it "
 			+ "drops (the crew still salvaging), after the crew have stopped, or both. Sent the way \"Crew stopped: level "
 			+ "too low\" is set.",
-		section = REMINDERS,
-		position = 13
+		section = CREW,
+		position = 6
 	)
 	default BoostWarning boostWarnWhen()
 	{
@@ -426,7 +426,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "While you are parked at a salvaging spot on your own boat: notify, with a sound, when the boat takes "
 			+ "damage, you are hit, or you are poisoned. At most once every 30 seconds.",
 		section = REMINDERS,
-		position = 14
+		position = 2
 	)
 	default Notification dangerNotification()
 	{
@@ -439,7 +439,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Also flash a red DANGER notice in the middle of the screen while it lasts: ten seconds after the "
 			+ "last hit, or until a poison is cured.",
 		section = REMINDERS,
-		position = 15
+		position = 3
 	)
 	default boolean dangerAlert()
 	{
@@ -450,7 +450,7 @@ public interface AfkSalvagingConfig extends Config
 
 	@ConfigItem(
 		keyName = "notification",
-		name = "Notification",
+		name = "Full-hold notification",
 		description = "The RuneLite notification sent when the hold is completely full. "
 			+ "Use the gear to choose sound, tray popup, screen flash and focus behavior.",
 		section = CARGO_FULL,
@@ -463,7 +463,7 @@ public interface AfkSalvagingConfig extends Config
 
 	@ConfigItem(
 		keyName = "repeatSeconds",
-		name = "Repeat every",
+		name = "Repeat full-hold alert every",
 		description = "Send the alert again this often while the hold stays full. 0 alerts once each time it fills.",
 		section = CARGO_FULL,
 		position = 1
@@ -704,7 +704,7 @@ public interface AfkSalvagingConfig extends Config
 		return false;
 	}
 
-	// ---- Sidebar, then Wrecks and parking (one "Salvage spots" section until 2.1) ----
+	// ---- Sidebar, then Wrecks ("Salvage spots" until 2.1, "Wrecks and parking" until 2.3) ----
 
 	@ConfigItem(
 		keyName = "spotSidebar",
@@ -742,8 +742,8 @@ public interface AfkSalvagingConfig extends Config
 			+ "and on a sunk one when the next wreck can rise, \"Sunk - next ≤ 0:45\" (in gray; \"maybe next\" when "
 			+ "another sunk site could take it). A wreck's clock starts only once a boat is seen beside it or your hook "
 			+ "rolls on it; until then it says \"no clock yet\".",
-		section = TRACKING,
-		position = 0
+		section = SPOTS,
+		position = 1
 	)
 	default boolean wreckTimers()
 	{
@@ -756,8 +756,8 @@ public interface AfkSalvagingConfig extends Config
 		description = "Draw a faint dashed square on the water round the area the game has loaded. The plugin only knows "
 			+ "about wrecks inside it, so if a set of wrecks is outside, sail a little toward it until the square moves "
 			+ "past it. The game redraws this area as you sail, so the square jumps now and then.",
-		section = TRACKING,
-		position = 1
+		section = SPOTS,
+		position = 11
 	)
 	default boolean showSceneEdge()
 	{
@@ -770,7 +770,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Shade the inside of the reach and double spot boxes. Off draws the outlines only, so nothing on the "
 			+ "water is tinted.",
 		section = SPOTS,
-		position = 9
+		position = 10
 	)
 	default boolean boxFill()
 	{
@@ -783,7 +783,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Take the boxes round wrecks off the water while every hook on your boat is inside a double spot box. "
 			+ "They come back the moment you drift out.",
 		section = SPOTS,
-		position = 2
+		position = 3
 	)
 	default boolean hideReachWhenParked()
 	{
@@ -797,7 +797,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Outline color of the boxes round wrecks that are up (Mark wrecks: Area). The fill is a fainter "
 			+ "version of it. Sunk wrecks' boxes are gray.",
 		section = SPOTS,
-		position = 1
+		position = 2
 	)
 	default Color wreckReachColor()
 	{
@@ -810,7 +810,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Box the water where one hook reaches two wreck sites at once, whether or not both wrecks are up "
 			+ "right now. Park so every hook sits in the box and it changes color and says Parked.",
 		section = SPOTS,
-		position = 3
+		position = 4
 	)
 	default boolean doubleSpotBoxes()
 	{
@@ -824,7 +824,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Outline color of the double spot boxes while you are not parked in them. The fill is a fainter "
 			+ "version of it.",
 		section = SPOTS,
-		position = 4
+		position = 5
 	)
 	default Color doubleSpotColor()
 	{
@@ -838,7 +838,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "The color a double spot box changes to once every hook on your boat is inside it: both hooks on a "
 			+ "sloop, the one hook on a raft or skiff.",
 		section = SPOTS,
-		position = 5
+		position = 6
 	)
 	default Color doubleSpotParkedColor()
 	{
@@ -851,7 +851,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Write \"Double spot\" on each box where to park, with how many of your hooks are in it, and "
 			+ "\"Parked\" once they all are.",
 		section = SPOTS,
-		position = 6
+		position = 7
 	)
 	default boolean doubleSpotLabels()
 	{
@@ -866,7 +866,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "How long after the boat stops the double spot boxes disappear, at login too; they come back the "
 			+ "moment the boat moves. 0 keeps them on screen.",
 		section = SPOTS,
-		position = 7
+		position = 8
 	)
 	default int doubleSpotHideSeconds()
 	{
@@ -881,7 +881,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "Once the double spot boxes have hidden, keep the words \"Parked in double spot\" in the "
 			+ "middle of your boat while every hook is in it. Only the text, no box.",
 		section = SPOTS,
-		position = 8
+		position = 9
 	)
 	default boolean parkedTextAfterHide()
 	{
@@ -937,6 +937,16 @@ public interface AfkSalvagingConfig extends Config
 		closedByDefault = true
 	)
 	String SORTING = "sorting";
+
+	// Their own section from 2.3 (issue #14, 2026-10-19: a player could not find how to turn them off under
+	// Inventory sorting and Reminders). Keys unchanged, so saved choices carry over.
+	@ConfigSection(
+		name = "Next step highlights",
+		description = "Outlines on your boat for where to go next: the salvaging station, the cargo hold or a hook",
+		position = 9,
+		closedByDefault = true
+	)
+	String NEXT_STEP = "nextStep";
 
 	// ---- Inventory sorting ----
 
@@ -1031,8 +1041,8 @@ public interface AfkSalvagingConfig extends Config
 			+ "carry salvage (the cargo hold if your boat has no station), brighter once your inventory is full; after "
 			+ "sorting, drop the Drop items and alch the Alch items first, then the cargo hold lights up for Deposit "
 			+ "items, or for more salvage. Salvaging station or Cargo hold light only that one.",
-		section = SORTING,
-		position = 10
+		section = NEXT_STEP,
+		position = 0
 	)
 	default GuideTarget salvageGuide()
 	{
@@ -1046,8 +1056,8 @@ public interface AfkSalvagingConfig extends Config
 			+ "hook from yourself: a free one, or else the one with your weakest crewmate (clicking it sends them to "
 			+ "rest). If the cargo hold holds enough salvage to fill your free inventory, the hold lights instead. "
 			+ "Opening the cargo hold and taking nothing out leaves only the hook lit.",
-		section = SORTING,
-		position = 11
+		section = NEXT_STEP,
+		position = 1
 	)
 	default GuideHook guideHook()
 	{
