@@ -126,7 +126,8 @@ public interface AfkSalvagingConfig extends Config
 	)
 	default boolean showClockTime()
 	{
-		return true;
+		// Off for new installs since 2.3 (owner, 2026-10-19); RuneLite saved the old default for everyone else.
+		return false;
 	}
 
 	enum ClockFormat
@@ -648,7 +649,8 @@ public interface AfkSalvagingConfig extends Config
 	)
 	default boolean showHooks()
 	{
-		return true;
+		// Off for new installs since 2.3 (owner, 2026-10-19); RuneLite saved the old default for everyone else.
+		return false;
 	}
 
 	@ConfigItem(
@@ -666,7 +668,7 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "counterScale",
 		name = "Text size",
-		description = "Size of the overlay lines. 100% is the normal RuneLite overlay size; 150% by default.",
+		description = "Size of the overlay lines. 100% is the normal RuneLite overlay size.",
 		section = OVERLAY,
 		position = 10
 	)
@@ -674,8 +676,9 @@ public interface AfkSalvagingConfig extends Config
 	@Units(Units.PERCENT)
 	default int overlayScale()
 	{
-		// 150% by default (owner, 2026-10-04).
-		return 150;
+		// 100% for new installs since 2.3, was 150% (owner, 2026-10-04, then 2026-10-19); RuneLite saved the old default
+		// for everyone else.
+		return 100;
 	}
 
 	@ConfigItem(
