@@ -58,8 +58,8 @@ public final class SalvagingTips
 			"Your crew salvage at your Sailing level, boosted or not. If a boost lapses below the wreck's level they "
 				+ "stop, and the plugin says so.",
 			"Your own hook does not restart when the wreck sinks; your crew's do. The plugin reminds you to click it.",
-			"If a deckhandier crewmate sits idle while a weaker one works a hook, it says who to swap; turn on "
-				+ "\"Flash the swap on screen\" for a flashing SWAP CREW until you do."),
+			"If a deckhandier crewmate sits idle while a weaker one works a hook, it says who to swap, with a "
+				+ "SWAP CREW notice until you do (\"Swap on screen\": steady, flashing or off)."),
 		new Group("Timer and alerts",
 			"The timer and counter need one real look at the hold: open it once. Opening it again resyncs the tally.",
 			"The overlay shows while a wreck site is in view (\"Show overlay\" can make it always aboard) and steps "

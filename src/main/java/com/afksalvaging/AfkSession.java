@@ -7,6 +7,7 @@ package com.afksalvaging;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -37,6 +38,8 @@ public final class AfkSession
 	public static final int HOLD_ACTION_TICKS = 10;
 	/** Ticks the player needs to sort one piece of salvage. */
 	public static final int SORT_TICKS = 3;
+	/** How close together the player getting onto a hook and a crewmate leaving one must be to call it a takeover. */
+	static final int TAKEOVER_TICKS = 5;
 	/** Unanswered wails from the ghost, in a row, before he is taken to have stopped salvaging. */
 	public static final int GHOST_SILENCE_LINES = 6;
 	/** How near capacity the tally must be for the ghost's silence to mean the hold is full. */
@@ -244,6 +247,15 @@ public final class AfkSession
 	private final SalvageEvents events = new SalvageEvents();
 	private final HookWatch hookWatch = new HookWatch();
 	private final CrewSwapWatch crewSwap = new CrewSwapWatch();
+	/** Crewmates on hooks last tick, by unique id, to see who the player takes a hook from. */
+	private Set<Integer> onHooksLastTick = Collections.emptySet();
+	/** The last crewmate to leave a hook, and when; 0 and -1 for none. */
+	private int leftHookId;
+	private int leftHookTick = -1;
+	/** When the player last got onto a hook, or -1 while they are not on one. */
+	private int onHookSince = -1;
+	/** The crewmate whose hook the player took, while the player stays on it; 0 for none. */
+	private int hookTakenFrom;
 	private final PlayerActivity.Detector activity = new PlayerActivity.Detector();
 	private final SmoothedCountdown countdown = new SmoothedCountdown();
 	private final MemoryStore memory;
@@ -942,6 +954,11 @@ public final class AfkSession
 		events.reset();
 		hookWatch.reset();
 		crewSwap.reset();
+		onHooksLastTick = Collections.emptySet();
+		leftHookId = 0;
+		leftHookTick = -1;
+		onHookSince = -1;
+		hookTakenFrom = 0;
 		activity.reset();
 		countdown.reset();
 		rate = new SalvageRateModel();
@@ -1308,6 +1325,7 @@ public final class AfkSession
 		}
 
 		// Only once every hook is manned: an empty hook is the thing to fix first, and the hook watch says so.
+		noteHookTakeover(aboard && current.isAtHook(), tick);
 		boolean hooksAllManned = situation.parked && !confirmedFull && boat.hookCount() > 0
 			&& HookWatch.emptyHooks(boat.hookCount(), hookSlots.size(), playerAtHook) == 0;
 		if (crewSwap.update(now, hooksAllManned ? betterCrew(tick) : null) != null)
@@ -1507,6 +1525,13 @@ public final class AfkSession
 		{
 			return null;
 		}
+		if (swap.playerTookTheirHook)
+		{
+			// Owner, 2026-10-22: say that the player caused it, and what to do next time.
+			return "You took " + crewName(swap.in) + "'s hook (deckhandiness " + swap.inDeckhandiness + ") while "
+				+ crewName(swap.out) + " (" + swap.outDeckhandiness + ") works the other: put " + swap.in.shortName()
+				+ " on in " + swap.out.shortName() + "'s place, and next time take " + swap.out.shortName() + "'s hook instead.";
+		}
 		return crewName(swap.in) + " (deckhandiness " + swap.inDeckhandiness + ") is free: put them on the hook instead of "
 			+ crewName(swap.out) + " (" + swap.outDeckhandiness + ").";
 	}
@@ -1565,7 +1590,45 @@ public final class AfkSession
 				bestDeckhandiness = d;
 			}
 		}
-		return best == null ? null : new CrewSwapWatch.Suggestion(weakest, best, weakestDeckhandiness, bestDeckhandiness);
+		return best == null ? null : new CrewSwapWatch.Suggestion(weakest, best, weakestDeckhandiness, bestDeckhandiness,
+			hookTakenFrom != 0 && best.getUniqueId() == hookTakenFrom);
+	}
+
+	/**
+	 * Remembers whose hook the player took. Clicking a hook a crewmate is working sends them to rest; the game changes
+	 * their job within a few ticks of the player starting on it (Original RS2, 2026-10-22: Deploy at 271, on the hook
+	 * at 274).
+	 */
+	private void noteHookTakeover(boolean playerOnHook, int tick)
+	{
+		Set<Integer> now = new HashSet<>();
+		for (Crewmate crewmate : roster.onHooks(tick))
+		{
+			now.add(crewmate.getUniqueId());
+		}
+		for (int id : onHooksLastTick)
+		{
+			if (!now.contains(id))
+			{
+				leftHookId = id;
+				leftHookTick = tick;
+			}
+		}
+		onHooksLastTick = now;
+		if (!playerOnHook)
+		{
+			onHookSince = -1;
+			hookTakenFrom = 0;
+			return;
+		}
+		if (onHookSince < 0)
+		{
+			onHookSince = tick;
+		}
+		if (hookTakenFrom == 0 && leftHookId != 0 && Math.abs(leftHookTick - onHookSince) <= TAKEOVER_TICKS)
+		{
+			hookTakenFrom = leftHookId;
+		}
 	}
 
 	public String holdMessage(Notice notice)

@@ -276,19 +276,19 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "swapAlert",
-		name = "Flash the swap on screen",
-		description = "While a better crewmate is free, flash a SWAP CREW notice in<br>"
-			+ "the middle of the screen, in the reminder banner color,<br>"
-			+ "until the swap is made.",
+		keyName = "swapNotice",
+		name = "Swap on screen",
+		description = "While a better crewmate is free, a SWAP CREW notice in the<br>"
+			+ "middle of the screen, in the reminder banner color, until the<br>"
+			+ "swap is made. On shows it steady, Flash makes it flash, Off<br>"
+			+ "leaves only the notification and the overlay line.",
 		section = CREW,
 		position = 8
 	)
-	default boolean swapAlert()
+	default SwapNotice swapNotice()
 	{
-		// Off for new installs since 2.3 (owner, 2026-10-19: a flashing notice is a lot for someone trying the plugin);
-		// RuneLite saved the old default for everyone else.
-		return false;
+		// Steady for new installs (owner, 2026-10-22); 2.3's "Flash the swap on screen" switch carries over once.
+		return SwapNotice.ON;
 	}
 
 	@ConfigItem(
@@ -1252,6 +1252,23 @@ public interface AfkSalvagingConfig extends Config
 	default boolean hideCrewOrders()
 	{
 		return true;
+	}
+
+	/**
+	 * 2.3's "Flash the swap on screen" switch, read once by the first start on 2.3.1 for "Swap on screen". Its default is
+	 * on again, so a fresh install (whose default RuneLite stores before the plugin starts) carries over to the steady
+	 * notice; a 2.3 install that was given "off" keeps it off.
+	 */
+	@ConfigItem(keyName = "swapAlert", name = "", description = "", hidden = true)
+	default boolean swapAlert()
+	{
+		return true;
+	}
+
+	@ConfigItem(keyName = "swapNoticeCarried", name = "", description = "", hidden = true)
+	default boolean swapNoticeCarried()
+	{
+		return false;
 	}
 
 	@ConfigItem(keyName = "crewTextHidingCarried", name = "", description = "", hidden = true)

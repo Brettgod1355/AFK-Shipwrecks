@@ -509,6 +509,38 @@ public class AfkSessionTest
 	}
 
 	@Test
+	public void takingTheStrongerCrewmatesHookSaysSoAndWhatToDoNextTime()
+	{
+		// Original RS2, 2026-10-22 tick 271: the player took Jenkins's (4) hook while Siad (3) kept the other.
+		session.roster().setCrewmate(0, ADA);
+		session.roster().setPosition(0, CrewAssignment.HOOK_SLOOP_1);
+		session.roster().setCrewmate(1, JENKINS);
+		session.roster().setPosition(1, CrewAssignment.HOOK_SLOOP_2);
+		ticks(5);
+		session.roster().setPosition(1, CrewAssignment.NONE);
+		animation = SALVAGING;
+		AfkSession.View view = ticks(30);
+		assertEquals(1, count(Notice.BETTER_CREW));
+		assertTrue(view.betterCrew.playerTookTheirHook);
+		assertEquals("You took Cabin Boy Jenkins's hook (deckhandiness 4) while Adventurer Ada (1) works the other: put Jenkins "
+			+ "on in Ada's place, and next time take Ada's hook instead.", session.betterCrewMessage());
+	}
+
+	@Test
+	public void anIdleStrongerCrewmateTheyDidNotBumpKeepsThePlainWording()
+	{
+		session.roster().setCrewmate(0, ADA);
+		session.roster().setPosition(0, CrewAssignment.HOOK_SLOOP_1);
+		session.roster().setCrewmate(1, JENKINS);
+		ticks(5);
+		animation = SALVAGING;
+		AfkSession.View view = ticks(30);
+		assertEquals(1, count(Notice.BETTER_CREW));
+		assertFalse(view.betterCrew.playerTookTheirHook);
+		assertTrue(session.betterCrewMessage().startsWith("Cabin Boy Jenkins (deckhandiness 4) is free"));
+	}
+
+	@Test
 	public void aCrewmateWhoCannotUseTheHookIsNotOffered()
 	{
 		session.roster().setCrewmate(0, JENKINS);

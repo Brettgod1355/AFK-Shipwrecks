@@ -34,6 +34,13 @@ final class FlashingNotice
 	 */
 	static Dimension draw(Graphics2D graphics, Client client, String title, String detail, Color color, float scale, long now, int yOffset)
 	{
+		return draw(graphics, client, title, detail, color, scale, now, yOffset, true);
+	}
+
+	/** The same notice, flashing or steady. */
+	static Dimension draw(Graphics2D graphics, Client client, String title, String detail, Color color, float scale, long now, int yOffset,
+		boolean flash)
+	{
 		Font bold = FontManager.getRunescapeBoldFont();
 		Font titleFont = bold.deriveFont(bold.getSize2D() * scale);
 		Font plain = FontManager.getRunescapeFont();
@@ -48,7 +55,7 @@ final class FlashingNotice
 		int y = (client.getCanvasHeight() - height) / 2 + yOffset;
 
 		Color background = color;
-		if ((now / FLASH_PERIOD_MS) % 2 == 1)
+		if (flash && (now / FLASH_PERIOD_MS) % 2 == 1)
 		{
 			background = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha() / 3);
 		}

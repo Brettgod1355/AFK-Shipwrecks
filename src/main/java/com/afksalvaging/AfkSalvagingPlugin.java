@@ -400,6 +400,7 @@ public class AfkSalvagingPlugin extends Plugin
 		carryWreckMarking();
 		carryWreckTile();
 		carryCrewTextHiding();
+		carrySwapNotice();
 		try
 		{
 			seaMap = SeaMap.load();
@@ -1437,6 +1438,17 @@ public class AfkSalvagingPlugin extends Plugin
 		}
 		configManager.setConfiguration(AfkSalvagingConfig.GROUP, "crewTextHiding", CrewTextHiding.carried(config.hideCrewOrders()));
 		configManager.setConfiguration(AfkSalvagingConfig.GROUP, "crewTextHidingCarried", true);
+	}
+
+	/** Carries 2.3's "Flash the swap on screen" switch into the "Swap on screen" dropdown, once. */
+	private void carrySwapNotice()
+	{
+		if (config.swapNoticeCarried())
+		{
+			return;
+		}
+		configManager.setConfiguration(AfkSalvagingConfig.GROUP, "swapNotice", SwapNotice.carried(config.swapAlert()));
+		configManager.setConfiguration(AfkSalvagingConfig.GROUP, "swapNoticeCarried", true);
 	}
 
 	// ---- Inventory sorting: boxes round items, marks, the sidebar lists ----

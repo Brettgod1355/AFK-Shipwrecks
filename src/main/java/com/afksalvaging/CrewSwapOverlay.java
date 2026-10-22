@@ -14,10 +14,11 @@ import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 
 /**
- * A flashing notice in the middle of the screen while a deckhandier crewmate sits idle and a
- * weaker one works a hook (owner, 2026-10-03: "a different overlay thats flashing to notify us
- * when we should swap npc's on the hook"). It stands, in the reminder banner's color, from the
- * moment the swap is announced until it is made or the pair breaks up; a setting, on by default.
+ * A notice in the middle of the screen while a deckhandier crewmate sits idle and a weaker one
+ * works a hook (owner, 2026-10-03: "a different overlay thats flashing to notify us when we should
+ * swap npc's on the hook"). It stands, in the reminder banner's color, from the moment the swap is
+ * announced until it is made or the pair breaks up; "Swap on screen" shows it steady (the default
+ * since 2.3.1, owner 2026-10-22), flashing, or not at all.
  * It sits a little below the salvaging-world notice, so the two never cover each other.
  */
 public class CrewSwapOverlay extends Overlay
@@ -44,13 +45,15 @@ public class CrewSwapOverlay extends Overlay
 	public Dimension render(Graphics2D graphics)
 	{
 		CrewSwapWatch.Suggestion swap = plugin.getSession().view().betterCrew;
-		if (!config.swapAlert() || swap == null || !plugin.isOwnBoat()
+		SwapNotice notice = config.swapNotice();
+		if (notice == SwapNotice.OFF || swap == null || !plugin.isOwnBoat()
 			|| plugin.mainInterfaceOpen())
 		{
 			return null;
 		}
 		return FlashingNotice.draw(graphics, client, "SWAP CREW",
 			swap.in.shortName() + " for " + swap.out.shortName() + " (" + swap.inDeckhandiness + " vs " + swap.outDeckhandiness + ")",
-			config.reminderBannerColor(), config.bannerScale() / 100f, System.currentTimeMillis(), BELOW_CENTER);
+			config.reminderBannerColor(), config.bannerScale() / 100f, System.currentTimeMillis(), BELOW_CENTER,
+			notice == SwapNotice.FLASH);
 	}
 }

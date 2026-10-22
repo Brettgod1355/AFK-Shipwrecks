@@ -69,6 +69,15 @@ public class CrewSpeechTest
 	}
 
 	@Test
+	public void theSwapNoticeCarriesTheOldSwitchOver()
+	{
+		// 2.3's "Flash the swap on screen": off stays off; on (the default for everyone before 2.3) becomes steady.
+		assertEquals(SwapNotice.OFF, SwapNotice.carried(false));
+		assertEquals(SwapNotice.ON, SwapNotice.carried(true));
+		assertEquals("On", SwapNotice.ON.toString());
+	}
+
+	@Test
 	public void recognizesThePlayersOwnDeposit()
 	{
 		assertTrue(CrewSpeech.reportsPlayerDeposit("You deposit some cargo into the cargo hold."));

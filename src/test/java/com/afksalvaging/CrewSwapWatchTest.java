@@ -32,15 +32,30 @@ public class CrewSwapWatchTest
 	}
 
 	@Test
-	public void steppingOffTheHookAndBackDoesNotRepeatIt()
+	public void theSamePairComingBackAfterItWasGoneIsSaidAgain()
+	{
+		// Owner, 2026-10-22: "if someone ignores it once they might not realize they are losing out on xp".
+		CrewSwapWatch watch = new CrewSwapWatch();
+		watch.update(0, JENKINS_FOR_ADA);
+		assertSame(JENKINS_FOR_ADA, watch.update(CrewSwapWatch.GRACE_MILLIS, JENKINS_FOR_ADA));
+		// Gone for a whole sort at the station.
+		assertNull(watch.update(20_000, null));
+		assertNull(watch.update(20_000 + CrewSwapWatch.FORGET_MILLIS, null));
+		long back = 20_000 + CrewSwapWatch.FORGET_MILLIS + 5_000;
+		assertNull(watch.update(back, JENKINS_FOR_ADA));
+		assertSame("happening again: said again", JENKINS_FOR_ADA, watch.update(back + CrewSwapWatch.GRACE_MILLIS, JENKINS_FOR_ADA));
+	}
+
+	@Test
+	public void aShortGapIsTheSameTimeNotANewOne()
 	{
 		CrewSwapWatch watch = new CrewSwapWatch();
 		watch.update(0, JENKINS_FOR_ADA);
 		assertSame(JENKINS_FOR_ADA, watch.update(CrewSwapWatch.GRACE_MILLIS, JENKINS_FOR_ADA));
-		// The player steps off their hook to sort: no swap to suggest while a hook is empty.
+		// Gone for a moment, shorter than FORGET_MILLIS (the crew shuffled): no swap while a hook is empty.
 		assertNull(watch.update(20_000, null));
 		assertNull(watch.standing());
-		// Back on the hook, the same pair stands again: shown, not announced again.
+		// The same pair stands again: shown, not announced again.
 		assertNull(watch.update(30_000, JENKINS_FOR_ADA));
 		assertNull(watch.update(30_000 + CrewSwapWatch.GRACE_MILLIS, JENKINS_FOR_ADA));
 		assertNotNull(watch.standing());
