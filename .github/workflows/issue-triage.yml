@@ -6,17 +6,15 @@ on:
     types: [opened]
   issue_comment:
     types: [created]
-  schedule:
-    - cron: "23 * * * *" # hourly: the issue author's 👍 / 👎 on the bot's answer
   workflow_dispatch:
     inputs:
       issue_number:
-        description: Issue to triage (0 = check reactions)
+        description: Issue to triage
         type: number
-        default: 0
+        required: true
 
 concurrency:
-  group: issue-triage-${{ github.event.issue.number || inputs.issue_number || 'reactions' }}
+  group: issue-triage-${{ github.event.issue.number || inputs.issue_number }}
 
 jobs:
   triage:
