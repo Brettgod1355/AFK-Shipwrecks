@@ -45,6 +45,16 @@ public final class SailingOverlap
 		return false;
 	}
 
+	/**
+	 * Whether a settings change turned on one of the Sailing switches read here, so the overlap is looked at again
+	 * (owner, 2026-10-25: turning Highlight Active Locations on at a spot said nothing until the next login).
+	 */
+	static boolean turnedOn(String group, String key, String newValue)
+	{
+		return GROUP.equals(group) && (COUNT.equals(key) || ACTIVE_WRECKS.equals(key) || INACTIVE_WRECKS.equals(key))
+			&& !"false".equals(newValue);
+	}
+
 	/** One of Sailing's switches; unset counts as on, its default for all three read here. */
 	static boolean on(ConfigManager configManager, String key)
 	{
