@@ -1024,6 +1024,16 @@ public interface AfkSalvagingConfig extends Config
 	)
 	String NEXT_STEP = "nextStep";
 
+	// The plugin's own chat lines (owner, 2026-10-25: "add a setting category called chat messages? Move the Say when
+	// updated into that as well"). Keys unchanged, so saved choices carry over.
+	@ConfigSection(
+		name = "Chat messages",
+		description = "The plugin's own lines in the chat box",
+		position = 10,
+		closedByDefault = true
+	)
+	String CHAT = "chat";
+
 	// ---- Inventory sorting ----
 
 	@ConfigItem(
@@ -1226,9 +1236,26 @@ public interface AfkSalvagingConfig extends Config
 		description = "One line in chat, once, the first time you log in after the<br>"
 			+ "Plugin Hub has updated the plugin, saying what the new<br>"
 			+ "version brings.",
-		position = 100
+		section = CHAT,
+		position = 0
 	)
 	default boolean updateMessage()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "pluginConflicts",
+		name = "Plugin conflicts",
+		description = "Once each login, the first time you are on your boat at a<br>"
+			+ "salvaging spot: when another plugin shows the same things<br>"
+			+ "(the Sailing plugin's cargo hold count or wreck outlines), a<br>"
+			+ "line in chat says which of its settings to turn off to see<br>"
+			+ "only these.",
+		section = CHAT,
+		position = 1
+	)
+	default boolean pluginConflicts()
 	{
 		return true;
 	}
@@ -1267,13 +1294,6 @@ public interface AfkSalvagingConfig extends Config
 
 	@ConfigItem(keyName = "swapNoticeCarried", name = "", description = "", hidden = true)
 	default boolean swapNoticeCarried()
-	{
-		return false;
-	}
-
-	/** Whether the one-time line about the Sailing plugin drawing the same things has been said. */
-	@ConfigItem(keyName = "sailingOverlapTold", name = "", description = "", hidden = true)
-	default boolean sailingOverlapTold()
 	{
 		return false;
 	}

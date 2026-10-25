@@ -378,7 +378,7 @@ public class AfkSalvagingPlugin extends Plugin
 	private boolean lastSailing;
 	private boolean lastOwnBoat;
 	private int ticksSinceLogin;
-	/** Whether the Sailing plugin's overlap was looked at since this login. */
+	/** Whether the Sailing plugin's overlap was looked at since this login (once, at the first salvaging spot). */
 	private boolean sailingOverlapChecked;
 	private long testAlertAt;
 	/** The update line owed to the player, said on the first tick they are logged in. */
@@ -1124,7 +1124,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			boarded();
 		}
-		if (in.ownBoat && !sailingOverlapChecked && ticksSinceLogin > BOARDING_SETTLE_TICKS)
+		if (in.ownBoat && !sailingOverlapChecked && ticksSinceLogin > BOARDING_SETTLE_TICKS && session.view().atSpot)
 		{
 			sailingOverlapChecked = true;
 			tellSailingOverlap();
@@ -1985,12 +1985,13 @@ public class AfkSalvagingPlugin extends Plugin
 	}
 
 	/**
-	 * Once per install, on the player's own boat: when the Sailing plugin also draws a count on the hold or outlines on
-	 * the wrecks (all on by default there), which of its settings to turn off to see only ours (owner, 2026-10-25).
+	 * Once each login, the first time on the player's own boat at a salvaging spot: when the Sailing plugin also draws a
+	 * count on the hold or outlines on the wrecks (all on by default there), which of its settings to turn off to see
+	 * only ours (owner, 2026-10-25: "once per login once it detects it"; "Plugin conflicts" under Chat messages).
 	 */
 	private void tellSailingOverlap()
 	{
-		if (config.sailingOverlapTold() || !SailingOverlap.sailingOn(pluginManager))
+		if (!config.pluginConflicts() || !SailingOverlap.sailingOn(pluginManager))
 		{
 			return;
 		}
@@ -2001,7 +2002,6 @@ public class AfkSalvagingPlugin extends Plugin
 		if (message != null)
 		{
 			sayTip(message);
-			configManager.setConfiguration(AfkSalvagingConfig.GROUP, "sailingOverlapTold", true);
 		}
 	}
 

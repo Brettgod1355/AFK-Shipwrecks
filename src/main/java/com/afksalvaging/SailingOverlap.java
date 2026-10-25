@@ -11,8 +11,9 @@ import net.runelite.client.plugins.PluginManager;
 
 /**
  * Whether the Sailing plugin draws what this plugin draws too: a count on the cargo hold and outlines on the wrecks,
- * all on by default there. A player coming from it sees both and may switch ours off, so the plugin says once which of
- * Sailing's settings to turn off to see only ours (owner, 2026-10-25). Sailing's settings are only read, never changed.
+ * all on by default there. A player coming from it sees both and may switch ours off, so the plugin says once each
+ * login which of Sailing's settings to turn off to see only ours (owner, 2026-10-25; the "Plugin conflicts" setting).
+ * Sailing's settings are only read, never changed.
  */
 public final class SailingOverlap
 {

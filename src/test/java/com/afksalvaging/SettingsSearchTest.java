@@ -142,7 +142,8 @@ public class SettingsSearchTest
 	{
 		List<SettingsSearch.Entry> all = entries();
 		assertEquals("Default notification", all.get(0).getName());
-		assertEquals("Say when updated", all.get(all.size() - 1).getName());
+		// The last section, Chat messages (2.3.2), ends with Plugin conflicts.
+		assertEquals("Plugin conflicts", all.get(all.size() - 1).getName());
 	}
 
 	@Test
@@ -165,7 +166,7 @@ public class SettingsSearchTest
 	}
 
 	@Test
-	public void onlyTwoSettingsSitOutsideTheSections() throws Exception
+	public void onlyTheDefaultNotificationSitsOutsideTheSections() throws Exception
 	{
 		List<String> loose = new ArrayList<>();
 		for (SettingsSearch.Entry entry : entries())
@@ -175,7 +176,8 @@ public class SettingsSearchTest
 				loose.add(entry.getName());
 			}
 		}
-		assertEquals(2, loose.size());
+		// Say when updated moved into Chat messages in 2.3.2 (owner, 2026-10-25).
+		assertEquals(java.util.Collections.singletonList("Default notification"), loose);
 	}
 
 	@Test
