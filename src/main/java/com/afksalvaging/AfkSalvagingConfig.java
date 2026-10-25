@@ -51,7 +51,7 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigSection(
 		name = "Full hold",
 		description = "The alert when the hold is full, and the heads-up before it",
-		position = 1,
+		position = 2,
 		closedByDefault = true
 	)
 	String CARGO_FULL = "cargoFull";
@@ -59,7 +59,7 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigSection(
 		name = "Banner",
 		description = "The banner drawn over the game while an alert is active",
-		position = 2,
+		position = 3,
 		closedByDefault = true
 	)
 	String BANNER = "banner";
@@ -68,7 +68,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Crew and hooks",
 		description = "Nudges when a hook is standing empty, the crew have stopped<br>"
 			+ "or a better crewmate is free",
-		position = 3,
+		position = 4,
 		closedByDefault = true
 	)
 	String CREW = "crew";
@@ -77,7 +77,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Reminders",
 		description = "The idle logout, danger, and when a wreck rises or you are<br>"
 			+ "done sorting",
-		position = 4,
+		position = 5,
 		closedByDefault = true
 	)
 	String REMINDERS = "reminders";
@@ -86,7 +86,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Wrecks",
 		description = "How wrecks are marked, their timers, and the boxes on the<br>"
 			+ "water that show where to park",
-		position = 5,
+		position = 6,
 		closedByDefault = true
 	)
 	String SPOTS = "spots";
@@ -95,7 +95,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Salvaging worlds",
 		description = "The worlds where every wreck site is worked, and the tip and<br>"
 			+ "alert off them",
-		position = 6,
+		position = 7,
 		closedByDefault = true
 	)
 	String WORLDS = "worlds";
@@ -103,7 +103,7 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigSection(
 		name = "Sidebar",
 		description = "The sidebar of salvaging spots and docks",
-		position = 7,
+		position = 8,
 		closedByDefault = true
 	)
 	String SIDEBAR = "sidebar";
@@ -733,15 +733,95 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "countOnHold",
 		name = "Count on the hold",
-		description = "Write the cargo count on the cargo hold itself, as \"Counter<br>"
-			+ "shows\" sets it (for example 39/160), colored green to red as<br>"
-			+ "it fills.",
-		section = OVERLAY,
-		position = 7
+		description = "Write the cargo count on the cargo hold itself, in the middle<br>"
+			+ "of the hold (for example 39/160), whenever you are on your<br>"
+			+ "own boat.",
+		section = CARGO_HOLD,
+		position = 0
 	)
 	default boolean countOnHold()
 	{
 		return true;
+	}
+
+	@ConfigItem(
+		keyName = "holdCountFormat",
+		name = "Count shows",
+		description = "What the count on the hold reads: the same as the overlay's<br>"
+			+ "\"Counter shows\", or its own: 154/160, 6 left or 96%.",
+		section = CARGO_HOLD,
+		position = 1
+	)
+	default HoldCountFormat holdCountFormat()
+	{
+		return HoldCountFormat.SAME_AS_OVERLAY;
+	}
+
+	@ConfigItem(
+		keyName = "holdCountSize",
+		name = "Count size",
+		description = "How big the count on the hold is drawn. 100% is RuneLite's<br>"
+			+ "normal overlay text size.",
+		section = CARGO_HOLD,
+		position = 2
+	)
+	@Range(min = 50, max = 300)
+	@Units(Units.PERCENT)
+	default int holdCountSize()
+	{
+		return 100;
+	}
+
+	@ConfigItem(
+		keyName = "holdColorStyle",
+		name = "Color style",
+		description = "Fade goes from the empty color to the full color as the hold<br>"
+			+ "fills. Steps shows the empty color, then the nearly-full color<br>"
+			+ "once \"Warn with slots left\" is reached, then the full color.<br>"
+			+ "One color always shows the empty color.",
+		section = CARGO_HOLD,
+		position = 3
+	)
+	default HoldColorStyle holdColorStyle()
+	{
+		return HoldColorStyle.FADE;
+	}
+
+	@ConfigItem(
+		keyName = "holdEmptyColor",
+		name = "When empty",
+		description = "The count's color while the hold has room (One color: always).",
+		section = CARGO_HOLD,
+		position = 4
+	)
+	default Color holdEmptyColor()
+	{
+		return Palette.COUNTER_EMPTY;
+	}
+
+	@ConfigItem(
+		keyName = "holdNearlyFullColor",
+		name = "When nearly full",
+		description = "The count's color once \"Warn with slots left\" is reached<br>"
+			+ "(Steps only).",
+		section = CARGO_HOLD,
+		position = 5
+	)
+	default Color holdNearlyFullColor()
+	{
+		return Palette.COUNTER_NEARLY_FULL;
+	}
+
+	@ConfigItem(
+		keyName = "holdFullColor",
+		name = "When full",
+		description = "The count's color when the hold is full (Fade and Steps).",
+		section = CARGO_HOLD,
+		position = 6
+	)
+	default Color holdFullColor()
+	{
+		return Palette.COUNTER_FULL;
 	}
 
 	@ConfigItem(
@@ -1008,7 +1088,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "Inventory sorting",
 		description = "Boxes round inventory items saying what to keep, put in the<br>"
 			+ "hold, alch or drop",
-		position = 8,
+		position = 9,
 		closedByDefault = true
 	)
 	String SORTING = "sorting";
@@ -1019,17 +1099,28 @@ public interface AfkSalvagingConfig extends Config
 		name = "Next step highlights",
 		description = "Outlines on your boat for where to go next: the salvaging<br>"
 			+ "station, the cargo hold or a hook",
-		position = 9,
+		position = 10,
 		closedByDefault = true
 	)
 	String NEXT_STEP = "nextStep";
+
+	// The count written on the cargo hold, and how it looks (owner, 2026-10-25: "make it its own setting group called
+	// Cargo Hold"). "Count on the hold" moved here from Overlay; its key is unchanged, so saved choices carry over.
+	@ConfigSection(
+		name = "Cargo hold",
+		description = "The count written on the cargo hold: what it reads, its size<br>"
+			+ "and its colors",
+		position = 1,
+		closedByDefault = true
+	)
+	String CARGO_HOLD = "cargoHold";
 
 	// The plugin's own chat lines (owner, 2026-10-25: "add a setting category called chat messages? Move the Say when
 	// updated into that as well"). Keys unchanged, so saved choices carry over.
 	@ConfigSection(
 		name = "Chat messages",
 		description = "The plugin's own lines in the chat box",
-		position = 10,
+		position = 11,
 		closedByDefault = true
 	)
 	String CHAT = "chat";

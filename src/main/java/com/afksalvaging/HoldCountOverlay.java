@@ -7,6 +7,7 @@ package com.afksalvaging;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -62,9 +63,11 @@ public class HoldCountOverlay extends Overlay
 		}
 		int used = monitor.getUsed();
 		int capacity = monitor.getCapacity();
-		String text = config.counterStyle().format(used, capacity);
-		double fill = capacity > 0 ? Math.min(1.0, (double) used / capacity) : 0;
-		Color color = ColorUtil.colorLerp(Palette.COUNTER_EMPTY, Palette.COUNTER_FULL, fill);
+		String text = config.holdCountFormat().style(config.counterStyle()).format(used, capacity);
+		Color color = color(config.holdColorStyle(), used, capacity, config.warnSlotsRemaining(), config.holdEmptyColor(),
+			config.holdNearlyFullColor(), config.holdFullColor());
+		Font font = graphics.getFont();
+		graphics.setFont(font.deriveFont(font.getSize2D() * Math.max(50, config.holdCountSize()) / 100f));
 		Point at = centered(graphics, hold.getConvexHull(), text);
 		if (at == null)
 		{
@@ -94,6 +97,25 @@ public class HoldCountOverlay extends Overlay
 		}
 		FontMetrics metrics = graphics.getFontMetrics();
 		return textAt(bounds, metrics.stringWidth(text), metrics.getAscent(), metrics.getDescent());
+	}
+
+	/** The count's color for the chosen style (owner, 2026-10-25: the Cargo hold settings). */
+	static Color color(HoldColorStyle style, int used, int capacity, int warnSlots, Color empty, Color nearlyFull, Color full)
+	{
+		switch (style)
+		{
+			case ONE_COLOR:
+				return empty;
+			case STEPS:
+				if (capacity > 0 && used >= capacity)
+				{
+					return full;
+				}
+				return capacity > 0 && warnSlots > 0 && capacity - used <= warnSlots ? nearlyFull : empty;
+			default:
+				double fill = capacity > 0 ? Math.min(1.0, (double) used / capacity) : 0;
+				return ColorUtil.colorLerp(empty, full, fill);
+		}
 	}
 
 	/** The baseline point that centers text of this width and height on the box. */
