@@ -824,7 +824,8 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "holdEmptyColor",
 		name = "When empty",
-		description = "The count's color while the hold has room (One color: always).",
+		description = "The count's color while the hold has room. One color uses this<br>"
+			+ "color all the time.",
 		section = CARGO_HOLD,
 		position = 6
 	)
