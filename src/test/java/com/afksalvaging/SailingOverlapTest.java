@@ -7,7 +7,6 @@ package com.afksalvaging;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -24,16 +23,5 @@ public class SailingOverlapTest
 		String wrecks = SailingOverlap.message(false, true);
 		assertTrue(wrecks.contains("Highlight Inactive Locations") && !wrecks.contains("Item Count"));
 		assertNull("nothing overlaps: nothing said", SailingOverlap.message(false, false));
-	}
-
-	@Test
-	public void turningOnAnOverlappingSailingSettingIsNoticed()
-	{
-		assertTrue(SailingOverlap.turnedOn("sailing", SailingOverlap.ACTIVE_WRECKS, "true"));
-		assertTrue(SailingOverlap.turnedOn("sailing", SailingOverlap.COUNT, "true"));
-		assertTrue("reset to its default, which is on", SailingOverlap.turnedOn("sailing", SailingOverlap.INACTIVE_WRECKS, null));
-		assertFalse(SailingOverlap.turnedOn("sailing", SailingOverlap.ACTIVE_WRECKS, "false"));
-		assertFalse(SailingOverlap.turnedOn("sailing", "someOtherSetting", "true"));
-		assertFalse(SailingOverlap.turnedOn("afksalvaging", SailingOverlap.ACTIVE_WRECKS, "true"));
 	}
 }

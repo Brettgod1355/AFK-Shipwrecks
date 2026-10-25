@@ -89,7 +89,6 @@ import net.runelite.client.config.RuneScapeProfile;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
-import net.runelite.client.events.PluginChanged;
 import net.runelite.client.events.RuneScapeProfileChanged;
 import net.runelite.client.events.WorldsFetch;
 import net.runelite.client.game.ItemManager;
@@ -381,8 +380,6 @@ public class AfkSalvagingPlugin extends Plugin
 	private int ticksSinceLogin;
 	/** Whether the Sailing plugin's overlap was looked at since this login (once, at the first salvaging spot). */
 	private boolean sailingOverlapChecked;
-	/** Whether the overlap line was said this login: once said, a Sailing setting turned on later does not repeat it. */
-	private boolean sailingOverlapSaid;
 	private long testAlertAt;
 	/** The update line owed to the player, said on the first tick they are logged in. */
 	private String updateMessage;
@@ -496,11 +493,6 @@ public class AfkSalvagingPlugin extends Plugin
 
 	private void configChanged(ConfigChanged event)
 	{
-		if (SailingOverlap.turnedOn(event.getGroup(), event.getKey(), event.getNewValue()))
-		{
-			lookAtSailingOverlapAgain();
-			return;
-		}
 		if ("runelite".equals(event.getGroup()) && "infoBoxSize".equals(event.getKey()))
 		{
 			// The label is drawn at the box's size: redraw it at the new one.
@@ -2010,28 +2002,6 @@ public class AfkSalvagingPlugin extends Plugin
 		if (message != null)
 		{
 			sayTip(message);
-			sailingOverlapSaid = true;
-		}
-	}
-
-	@Subscribe
-	public void onPluginChanged(PluginChanged event)
-	{
-		if (event.isLoaded() && event.getPlugin() != null && SailingOverlap.PLUGIN_NAME.equals(event.getPlugin().getName()))
-		{
-			clientThread.invokeLater(this::lookAtSailingOverlapAgain);
-		}
-	}
-
-	/**
-	 * The Sailing plugin or one of its overlapping settings was just turned on: look again on the next tick at a salvaging
-	 * spot, which is at once when already at one, unless the line was already said this login.
-	 */
-	private void lookAtSailingOverlapAgain()
-	{
-		if (!sailingOverlapSaid)
-		{
-			sailingOverlapChecked = false;
 		}
 	}
 
@@ -2618,7 +2588,6 @@ public class AfkSalvagingPlugin extends Plugin
 		lastOwnBoat = false;
 		ticksSinceLogin = 0;
 		sailingOverlapChecked = false;
-		sailingOverlapSaid = false;
 		sortActive = false;
 	}
 
