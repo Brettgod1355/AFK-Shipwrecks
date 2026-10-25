@@ -44,11 +44,4 @@ public class HoldCountOverlayTest
 		// One color: always the empty color.
 		assertEquals(empty, HoldCountOverlay.color(HoldColorStyle.ONE_COLOR, 160, 160, 75, 100, empty, nearly, full));
 	}
-
-	@Test
-	public void theCountReadsLikeTheOverlayUnlessItHasItsOwnFormat()
-	{
-		assertEquals(CounterStyle.SLOTS_LEFT, HoldCountFormat.SAME_AS_OVERLAY.style(CounterStyle.SLOTS_LEFT));
-		assertEquals(CounterStyle.PERCENT_FULL, HoldCountFormat.PERCENT_FULL.style(CounterStyle.SLOTS_LEFT));
-	}
 }

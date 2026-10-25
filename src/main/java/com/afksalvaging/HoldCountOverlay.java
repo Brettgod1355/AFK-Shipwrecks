@@ -63,7 +63,7 @@ public class HoldCountOverlay extends Overlay
 		}
 		int used = monitor.getUsed();
 		int capacity = monitor.getCapacity();
-		String text = config.holdCountFormat().style(config.counterStyle()).format(used, capacity);
+		String text = config.holdCountFormat().format(used, capacity);
 		Color color = color(config.holdColorStyle(), used, capacity, config.holdStepsNearlyFull(), config.holdStepsFull(),
 			config.holdEmptyColor(),
 			config.holdNearlyFullColor(), config.holdFullColor());

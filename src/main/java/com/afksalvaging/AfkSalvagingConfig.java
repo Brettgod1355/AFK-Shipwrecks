@@ -747,14 +747,15 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "holdCountFormat",
 		name = "Count shows",
-		description = "What the count on the hold reads: the same as the overlay's<br>"
-			+ "\"Counter shows\", or its own: 154/160, 6 left or 96%.",
+		description = "What the count on the hold reads: used of total (154/160),<br>"
+			+ "slots left (6 left) or percent full (96%).",
 		section = CARGO_HOLD,
 		position = 1
 	)
-	default HoldCountFormat holdCountFormat()
+	default CounterStyle holdCountFormat()
 	{
-		return HoldCountFormat.SAME_AS_OVERLAY;
+		// Its own choice, not "same as overlay" (owner, 2026-10-25: "Delete same as overlay have default be Used / Total").
+		return CounterStyle.USED_OF_TOTAL;
 	}
 
 	@ConfigItem(
