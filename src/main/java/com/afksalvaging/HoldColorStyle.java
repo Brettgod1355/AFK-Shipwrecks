@@ -8,7 +8,7 @@ package com.afksalvaging;
 /** How the count on the cargo hold is colored (owner, 2026-10-25). The constant names are what RuneLite saves. */
 public enum HoldColorStyle
 {
-	/** From the empty color to the full color as the hold fills: the look before 2.3.2. */
+	/** From the empty color through the nearly-full color (at half full) to the full color as the hold fills. */
 	FADE("Fade"),
 	/** The empty color, the nearly-full color once "Warn with slots left" is reached, the full color when full. */
 	STEPS("Steps"),

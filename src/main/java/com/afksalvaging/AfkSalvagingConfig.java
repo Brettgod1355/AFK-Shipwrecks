@@ -775,8 +775,9 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "holdColorStyle",
 		name = "Color style",
-		description = "Fade goes from the empty color to the full color as the hold<br>"
-			+ "fills. Steps shows the empty color, then the nearly-full color<br>"
+		description = "Fade goes from the empty color through the nearly-full color<br>"
+			+ "(at half full) to the full color as the hold fills. Steps<br>"
+			+ "shows the empty color, then the nearly-full color<br>"
 			+ "once \"Warn with slots left\" is reached, then the full color.<br>"
 			+ "One color always shows the empty color.",
 		section = CARGO_HOLD,
@@ -796,20 +797,20 @@ public interface AfkSalvagingConfig extends Config
 	)
 	default Color holdEmptyColor()
 	{
-		return Palette.COUNTER_EMPTY;
+		return Palette.HOLD_EMPTY;
 	}
 
 	@ConfigItem(
 		keyName = "holdNearlyFullColor",
 		name = "When nearly full",
-		description = "The count's color once \"Warn with slots left\" is reached<br>"
-			+ "(Steps only).",
+		description = "The count's color at half full (Fade), or once \"Warn with<br>"
+			+ "slots left\" is reached (Steps).",
 		section = CARGO_HOLD,
 		position = 5
 	)
 	default Color holdNearlyFullColor()
 	{
-		return Palette.COUNTER_NEARLY_FULL;
+		return Palette.HOLD_NEARLY_FULL;
 	}
 
 	@ConfigItem(
@@ -821,7 +822,7 @@ public interface AfkSalvagingConfig extends Config
 	)
 	default Color holdFullColor()
 	{
-		return Palette.COUNTER_FULL;
+		return Palette.HOLD_FULL;
 	}
 
 	@ConfigItem(

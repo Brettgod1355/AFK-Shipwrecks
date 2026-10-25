@@ -26,8 +26,9 @@ public class HoldCountOverlayTest
 	public void theCountIsColoredByTheChosenStyle()
 	{
 		java.awt.Color empty = java.awt.Color.GREEN, nearly = java.awt.Color.ORANGE, full = java.awt.Color.RED;
-		// Fade: the look before 2.3.2, empty to full as the hold fills.
+		// Fade: three stops, empty, nearly full at half, full.
 		assertEquals(empty, HoldCountOverlay.color(HoldColorStyle.FADE, 0, 160, 5, empty, nearly, full));
+		assertEquals(nearly, HoldCountOverlay.color(HoldColorStyle.FADE, 80, 160, 5, empty, nearly, full));
 		assertEquals(full, HoldCountOverlay.color(HoldColorStyle.FADE, 160, 160, 5, empty, nearly, full));
 		// Steps: empty, then nearly full at "Warn with slots left", then full.
 		assertEquals(empty, HoldCountOverlay.color(HoldColorStyle.STEPS, 154, 160, 5, empty, nearly, full));

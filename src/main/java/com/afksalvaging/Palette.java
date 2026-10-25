@@ -23,8 +23,13 @@ final class Palette
 	static final Color BAD = new Color(240, 90, 90);
 	static final Color COUNTER_EMPTY = new Color(70, 200, 70);
 	static final Color COUNTER_FULL = new Color(230, 60, 60);
-	/** The count on the hold once "Warn with slots left" is reached, with the Steps color style. */
-	static final Color COUNTER_NEARLY_FULL = new Color(235, 150, 40);
+	/**
+	 * The count on the cargo hold: neon green, yellow, red, faded through in three stops (owner, 2026-10-25: "3 colors
+	 * with green being the brightest neon green"). The overlay's counter line keeps COUNTER_EMPTY and COUNTER_FULL.
+	 */
+	static final Color HOLD_EMPTY = new Color(0, 255, 0);
+	static final Color HOLD_NEARLY_FULL = new Color(255, 215, 0);
+	static final Color HOLD_FULL = new Color(230, 60, 60);
 	/** The outline round a wreck that is up and salvageable: the game's own hover cyan, a little softer. */
 	static final Color WRECK_OUTLINE = new Color(90, 220, 230);
 	/**

@@ -113,8 +113,11 @@ public class HoldCountOverlay extends Overlay
 				}
 				return capacity > 0 && warnSlots > 0 && capacity - used <= warnSlots ? nearlyFull : empty;
 			default:
+				// Three stops: empty, nearly full at half, full (owner, 2026-10-25). A straight two-color mix went through
+				// a dull olive in the middle.
 				double fill = capacity > 0 ? Math.min(1.0, (double) used / capacity) : 0;
-				return ColorUtil.colorLerp(empty, full, fill);
+				return fill <= 0.5 ? ColorUtil.colorLerp(empty, nearlyFull, fill * 2)
+					: ColorUtil.colorLerp(nearlyFull, full, (fill - 0.5) * 2);
 		}
 	}
 
