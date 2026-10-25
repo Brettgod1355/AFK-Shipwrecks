@@ -1271,6 +1271,13 @@ public interface AfkSalvagingConfig extends Config
 		return false;
 	}
 
+	/** Whether the one-time line about the Sailing plugin drawing the same things has been said. */
+	@ConfigItem(keyName = "sailingOverlapTold", name = "", description = "", hidden = true)
+	default boolean sailingOverlapTold()
+	{
+		return false;
+	}
+
 	@ConfigItem(keyName = "crewTextHidingCarried", name = "", description = "", hidden = true)
 	default boolean crewTextHidingCarried()
 	{

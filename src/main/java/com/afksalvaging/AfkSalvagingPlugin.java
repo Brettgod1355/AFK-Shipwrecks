@@ -378,6 +378,8 @@ public class AfkSalvagingPlugin extends Plugin
 	private boolean lastSailing;
 	private boolean lastOwnBoat;
 	private int ticksSinceLogin;
+	/** Whether the Sailing plugin's overlap was looked at since this login. */
+	private boolean sailingOverlapChecked;
 	private long testAlertAt;
 	/** The update line owed to the player, said on the first tick they are logged in. */
 	private String updateMessage;
@@ -1121,6 +1123,11 @@ public class AfkSalvagingPlugin extends Plugin
 		if (in.ownBoat && !lastOwnBoat && !lastSailing && ticksSinceLogin > BOARDING_SETTLE_TICKS)
 		{
 			boarded();
+		}
+		if (in.ownBoat && !sailingOverlapChecked && ticksSinceLogin > BOARDING_SETTLE_TICKS)
+		{
+			sailingOverlapChecked = true;
+			tellSailingOverlap();
 		}
 		watchSpotRoute(in);
 		lastOwnBoat = in.ownBoat;
@@ -1977,6 +1984,27 @@ public class AfkSalvagingPlugin extends Plugin
 		chatLines.remember(node, text);
 	}
 
+	/**
+	 * Once per install, on the player's own boat: when the Sailing plugin also draws a count on the hold or outlines on
+	 * the wrecks (all on by default there), which of its settings to turn off to see only ours (owner, 2026-10-25).
+	 */
+	private void tellSailingOverlap()
+	{
+		if (config.sailingOverlapTold() || !SailingOverlap.sailingOn(pluginManager))
+		{
+			return;
+		}
+		boolean count = config.countOnHold() && SailingOverlap.on(configManager, SailingOverlap.COUNT);
+		boolean wrecks = config.wreckMarking() != WreckMarking.OFF
+			&& (SailingOverlap.on(configManager, SailingOverlap.ACTIVE_WRECKS) || SailingOverlap.on(configManager, SailingOverlap.INACTIVE_WRECKS));
+		String message = SailingOverlap.message(count, wrecks);
+		if (message != null)
+		{
+			sayTip(message);
+			configManager.setConfiguration(AfkSalvagingConfig.GROUP, "sailingOverlapTold", true);
+		}
+	}
+
 	/** The chatbox is see-through only in resizable mode with the game's transparency setting on. */
 	private boolean isChatTransparent()
 	{
@@ -2559,6 +2587,7 @@ public class AfkSalvagingPlugin extends Plugin
 		lastSailing = false;
 		lastOwnBoat = false;
 		ticksSinceLogin = 0;
+		sailingOverlapChecked = false;
 		sortActive = false;
 	}
 
