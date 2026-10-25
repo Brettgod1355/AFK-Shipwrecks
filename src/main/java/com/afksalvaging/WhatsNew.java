@@ -18,14 +18,13 @@ import java.util.Collection;
 public final class WhatsNew
 {
 	/** The version being run. Must match {@code version} in build.gradle and runelite-plugin.properties. */
-	public static final String VERSION = "2.3.1";
+	public static final String VERSION = "2.3.2";
 
 	/**
 	 * One line on what this version brings, no links; a full stop is added when it is said. Leave
 	 * it empty for a release not worth a line (a fix, a wording change) and nothing is said.
 	 */
-	public static final String NOTE = "no false empty-hook alarm when your own wreck sinks, and the swap reminder says when you "
-		+ "took the stronger crewmate's hook, comes back each time, and stays steady on screen (Swap on screen)";
+	public static final String NOTE = "the cargo count sits in the middle of the cargo hold";
 
 	/**
 	 * What the rename to AFK Shipwrecks brought, said to a Cargo Hold Alert 1.0 player whatever version

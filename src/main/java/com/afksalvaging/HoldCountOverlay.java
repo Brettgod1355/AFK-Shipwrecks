@@ -7,7 +7,10 @@ package com.afksalvaging;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.Shape;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
@@ -26,7 +29,7 @@ import net.runelite.client.util.ColorUtil;
  */
 public class HoldCountOverlay extends Overlay
 {
-	/** How high above the hold the words sit, in local units. */
+	/** How high above the hold the words sit when its outline is not known, in local units. */
 	private static final int HEIGHT = 80;
 
 	private final Client client;
@@ -62,11 +65,42 @@ public class HoldCountOverlay extends Overlay
 		String text = config.counterStyle().format(used, capacity);
 		double fill = capacity > 0 ? Math.min(1.0, (double) used / capacity) : 0;
 		Color color = ColorUtil.colorLerp(Palette.COUNTER_EMPTY, Palette.COUNTER_FULL, fill);
-		Point at = Perspective.getCanvasTextLocation(client, graphics, hold.getLocalLocation(), text, HEIGHT);
+		Point at = centered(graphics, hold.getConvexHull(), text);
+		if (at == null)
+		{
+			at = Perspective.getCanvasTextLocation(client, graphics, hold.getLocalLocation(), text, HEIGHT);
+		}
 		if (at != null)
 		{
 			OverlayUtil.renderTextLocation(graphics, at, text, color);
 		}
 		return null;
+	}
+
+	/**
+	 * Where the text sits in the middle of the hold as drawn on screen, or null when the hold has no outline (owner,
+	 * 2026-10-25: "get the cargo hold count on the cargo hold a bit more centered"; it sat above the hold).
+	 */
+	private static Point centered(Graphics2D graphics, Shape hull, String text)
+	{
+		if (hull == null)
+		{
+			return null;
+		}
+		Rectangle bounds = hull.getBounds();
+		if (bounds.isEmpty())
+		{
+			return null;
+		}
+		FontMetrics metrics = graphics.getFontMetrics();
+		return textAt(bounds, metrics.stringWidth(text), metrics.getAscent(), metrics.getDescent());
+	}
+
+	/** The baseline point that centers text of this width and height on the box. */
+	static Point textAt(Rectangle box, int width, int ascent, int descent)
+	{
+		int x = (int) Math.round(box.getCenterX() - width / 2.0);
+		int y = (int) Math.round(box.getCenterY() + (ascent - descent) / 2.0);
+		return new Point(x, y);
 	}
 }
