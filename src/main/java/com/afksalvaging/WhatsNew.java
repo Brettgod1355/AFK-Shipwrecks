@@ -24,7 +24,8 @@ public final class WhatsNew
 	 * One line on what this version brings, no links; a full stop is added when it is said. Leave
 	 * it empty for a release not worth a line (a fix, a wording change) and nothing is said.
 	 */
-	public static final String NOTE = "the cargo count sits in the middle of the cargo hold, with its own Cargo hold settings";
+	public static final String NOTE = "the cargo count sits in the middle of the cargo hold with its own Cargo hold settings, "
+		+ "and a chat line says when another plugin shows the same things and how to turn them off there";
 
 	/**
 	 * What the rename to AFK Shipwrecks brought, said to a Cargo Hold Alert 1.0 player whatever version
