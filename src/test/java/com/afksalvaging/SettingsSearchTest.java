@@ -142,7 +142,7 @@ public class SettingsSearchTest
 	{
 		List<SettingsSearch.Entry> all = entries();
 		assertEquals("Default notification", all.get(0).getName());
-		// The last section, Chat messages (2.3.2), ends with Plugin conflicts.
+		// The last section, Chat messages (2.4), ends with Plugin conflicts.
 		assertEquals("Plugin conflicts", all.get(all.size() - 1).getName());
 	}
 
@@ -176,7 +176,7 @@ public class SettingsSearchTest
 				loose.add(entry.getName());
 			}
 		}
-		// Say when updated moved into Chat messages in 2.3.2 (owner, 2026-10-25).
+		// Say when updated moved into Chat messages in 2.4 (owner, 2026-10-25).
 		assertEquals(java.util.Collections.singletonList("Default notification"), loose);
 	}
 
