@@ -760,7 +760,7 @@ public interface AfkSalvagingConfig extends Config
 
 	@ConfigItem(
 		keyName = "holdCountSize",
-		name = "Count size",
+		name = "Hold text size",
 		description = "How big the count on the hold is drawn. 100% is RuneLite's<br>"
 			+ "normal overlay text size.",
 		section = CARGO_HOLD,
