@@ -777,9 +777,9 @@ public interface AfkSalvagingConfig extends Config
 		name = "Color style",
 		description = "Fade goes from the empty color through the nearly-full color<br>"
 			+ "(at half full) to the full color as the hold fills. Steps<br>"
-			+ "shows the empty color, then the nearly-full color<br>"
-			+ "once \"Warn with slots left\" is reached, then the full color.<br>"
-			+ "One color always shows the empty color.",
+			+ "jumps from one color to the next at the two percentages<br>"
+			+ "below, with no fade in between. One color always shows the<br>"
+			+ "empty color.",
 		section = CARGO_HOLD,
 		position = 3
 	)
@@ -788,12 +788,44 @@ public interface AfkSalvagingConfig extends Config
 		return HoldColorStyle.FADE;
 	}
 
+	// Steps by how full the hold is, so every hold size changes at the same point (owner, 2026-10-25: "yellow could be
+	// 75% and red could be 100% with the option to change the %", "just for the steps").
+	@ConfigItem(
+		keyName = "holdStepsNearlyFull",
+		name = "Steps: nearly full at",
+		description = "With Steps, the count turns the nearly-full color once the<br>"
+			+ "hold is this full.",
+		section = CARGO_HOLD,
+		position = 4
+	)
+	@Range(min = 1, max = 100)
+	@Units(Units.PERCENT)
+	default int holdStepsNearlyFull()
+	{
+		return 75;
+	}
+
+	@ConfigItem(
+		keyName = "holdStepsFull",
+		name = "Steps: full at",
+		description = "With Steps, the count turns the full color once the hold is<br>"
+			+ "this full.",
+		section = CARGO_HOLD,
+		position = 5
+	)
+	@Range(min = 1, max = 100)
+	@Units(Units.PERCENT)
+	default int holdStepsFull()
+	{
+		return 100;
+	}
+
 	@ConfigItem(
 		keyName = "holdEmptyColor",
 		name = "When empty",
 		description = "The count's color while the hold has room (One color: always).",
 		section = CARGO_HOLD,
-		position = 4
+		position = 6
 	)
 	default Color holdEmptyColor()
 	{
@@ -803,10 +835,10 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "holdNearlyFullColor",
 		name = "When nearly full",
-		description = "The count's color at half full (Fade), or once \"Warn with<br>"
-			+ "slots left\" is reached (Steps).",
+		description = "The count's color at half full (Fade), or from \"Steps: nearly<br>"
+			+ "full at\" (Steps).",
 		section = CARGO_HOLD,
-		position = 5
+		position = 7
 	)
 	default Color holdNearlyFullColor()
 	{
@@ -818,7 +850,7 @@ public interface AfkSalvagingConfig extends Config
 		name = "When full",
 		description = "The count's color when the hold is full (Fade and Steps).",
 		section = CARGO_HOLD,
-		position = 6
+		position = 8
 	)
 	default Color holdFullColor()
 	{

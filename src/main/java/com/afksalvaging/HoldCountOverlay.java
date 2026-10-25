@@ -64,7 +64,8 @@ public class HoldCountOverlay extends Overlay
 		int used = monitor.getUsed();
 		int capacity = monitor.getCapacity();
 		String text = config.holdCountFormat().style(config.counterStyle()).format(used, capacity);
-		Color color = color(config.holdColorStyle(), used, capacity, config.warnSlotsRemaining(), config.holdEmptyColor(),
+		Color color = color(config.holdColorStyle(), used, capacity, config.holdStepsNearlyFull(), config.holdStepsFull(),
+			config.holdEmptyColor(),
 			config.holdNearlyFullColor(), config.holdFullColor());
 		Font font = graphics.getFont();
 		graphics.setFont(font.deriveFont(font.getSize2D() * Math.max(50, config.holdCountSize()) / 100f));
@@ -100,18 +101,24 @@ public class HoldCountOverlay extends Overlay
 	}
 
 	/** The count's color for the chosen style (owner, 2026-10-25: the Cargo hold settings). */
-	static Color color(HoldColorStyle style, int used, int capacity, int warnSlots, Color empty, Color nearlyFull, Color full)
+	static Color color(HoldColorStyle style, int used, int capacity, int nearlyPercent, int fullPercent, Color empty,
+		Color nearlyFull, Color full)
 	{
 		switch (style)
 		{
 			case ONE_COLOR:
 				return empty;
 			case STEPS:
-				if (capacity > 0 && used >= capacity)
+				// By percentage of this hold's size (owner, 2026-10-25); the full step wins if the two are set the wrong way round.
+				if (capacity <= 0)
+				{
+					return empty;
+				}
+				if (used * 100 >= capacity * fullPercent)
 				{
 					return full;
 				}
-				return capacity > 0 && warnSlots > 0 && capacity - used <= warnSlots ? nearlyFull : empty;
+				return used * 100 >= capacity * nearlyPercent ? nearlyFull : empty;
 			default:
 				// Three stops: empty, nearly full at half, full (owner, 2026-10-25). A straight two-color mix went through
 				// a dull olive in the middle.

@@ -10,7 +10,7 @@ public enum HoldColorStyle
 {
 	/** From the empty color through the nearly-full color (at half full) to the full color as the hold fills. */
 	FADE("Fade"),
-	/** The empty color, the nearly-full color once "Warn with slots left" is reached, the full color when full. */
+	/** The empty color, then the nearly-full and full colors at their set percentages (75% and 100%), no fade. */
 	STEPS("Steps"),
 	/** Always the empty color. */
 	ONE_COLOR("One color");
