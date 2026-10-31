@@ -66,15 +66,6 @@ Discord and the Discord logo are trademarks of Discord Inc.; GitHub and the Inve
 trademarks of GitHub, Inc. They are used only to link to this plugin's own Discord server and GitHub
 repository, and imply no endorsement by either company.
 
-## Gradle wrapper
-
-The wrapper scripts, JAR, and properties originate from the RuneLite example
-plugin, commit `5370caa0f5f6a5bba4fbb42931722ca535ad3fd5`, via
-[Sidebar Favorites](https://github.com/Brettgod1355/Sidebar-Favorites), commit
-`4a539621363eaacdc1b82cfd3b9e9e2fc0e7c422`. Gradle is licensed under Apache 2.0; see
-`licenses/Apache-2.0.txt` and the notices retained in the scripts and wrapper. This
-development tooling is not included in the plugin JAR.
-
 ## Behavior references (no code copied)
 
 - Game figures were checked against the [Old School RuneScape Wiki](https://oldschool.runescape.wiki),
