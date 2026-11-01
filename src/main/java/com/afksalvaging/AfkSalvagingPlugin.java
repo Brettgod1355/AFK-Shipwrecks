@@ -368,6 +368,8 @@ public class AfkSalvagingPlugin extends Plugin
 	private long reminderShownAt;
 	/** When the plugin last raised an alert, for the dimmer's "Undim on alerts"; 0 for none. */
 	private long lastAlertAt;
+	/** Whether the dimmer darkens the game, worked out once a tick (its inputs change no faster). */
+	private boolean dimmedNow;
 	private boolean readInterfaceNextTick;
 	private int lastSailingXp = -1;
 	private volatile WorldResult worldResult;
@@ -430,7 +432,7 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.add(wreckTimerOverlay);
 		overlayManager.add(dangerOverlay);
 		overlayManager.add(holdCountOverlay);
-		dimmerOverlay.useLayer();
+		dimmerOverlay.configure();
 		overlayManager.add(dimmerOverlay);
 		overlayManager.add(sceneEdgeOverlay);
 		overlayManager.add(sortOverlay);
@@ -503,12 +505,19 @@ public class AfkSalvagingPlugin extends Plugin
 
 	private void configChanged(ConfigChanged event)
 	{
-		if (AfkSalvagingConfig.GROUP.equals(event.getGroup()) && "dimmerCovers".equals(event.getKey()))
+		if (AfkSalvagingConfig.GROUP.equals(event.getGroup()) && event.getKey().startsWith("dim"))
 		{
-			// Under or over the game's windows: re-added, since RuneLite files an overlay under its layer.
-			overlayManager.remove(dimmerOverlay);
-			dimmerOverlay.useLayer();
-			overlayManager.add(dimmerOverlay);
+			if ("dimmerCovers".equals(event.getKey()))
+			{
+				// Under or over the game's windows: re-added, since RuneLite files an overlay under its layer.
+				overlayManager.remove(dimmerOverlay);
+				dimmerOverlay.configure();
+				overlayManager.add(dimmerOverlay);
+			}
+			else
+			{
+				dimmerOverlay.configure();
+			}
 			return;
 		}
 		if ("runelite".equals(event.getGroup()) && "infoBoxSize".equals(event.getKey()))
@@ -550,6 +559,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			case LOGIN_SCREEN:
 				clearState();
+				dimmedNow = false;
 				break;
 			case HOPPING:
 				session.worldHopped();
@@ -562,6 +572,7 @@ public class AfkSalvagingPlugin extends Plugin
 			case LOADING:
 				// The scene is being replaced: the wreck objects we hold are about to be stale.
 				wreckObjects.clear();
+				dimmedNow = false;
 				session.sceneReloading(clock());
 				break;
 			case LOGGED_IN:
@@ -1122,6 +1133,7 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			give(notice, now);
 		}
+		dimmedNow = workOutDimmed(now);
 		ShipwreckType crewSalvage = session.takeCrewSalvage();
 		if (crewSalvage != null && holdItemIds.add(crewSalvage.getSalvageItemId()))
 		{
@@ -1201,14 +1213,19 @@ public class AfkSalvagingPlugin extends Plugin
 		return session;
 	}
 
-	/** Whether the dimmer darkens the game now: never while loading, off the own boat or over an open window (2.5). */
+	/** Whether the dimmer darkens the game now (2.5); the overlay also clears it at once over an open window. */
 	public boolean dimmed()
 	{
-		if (client.getGameState() != GameState.LOGGED_IN || !isOwnBoat() || mainInterfaceOpen())
+		return dimmedNow;
+	}
+
+	/** Never while loading or off the own boat, and nothing to work out with every dimmer switch off. */
+	private boolean workOutDimmed(long now)
+	{
+		if (!Dimmer.anyOn(config) || client.getGameState() != GameState.LOGGED_IN || !isOwnBoat())
 		{
 			return false;
 		}
-		long now = clock();
 		if (config.dimUndimOnAlerts() && (bannerLevel(now) != CargoHoldMonitor.Level.OK || reminderBanner(now) != null
 			|| (lastAlertAt > 0 && now - lastAlertAt < DIMMER_ALERT_MILLIS)))
 		{
@@ -2646,16 +2663,11 @@ public class AfkSalvagingPlugin extends Plugin
 
 	private void give(AfkSession.Notice notice, long now)
 	{
-		if (notice != AfkSession.Notice.WAITING_FOR_WRECK && notice != AfkSession.Notice.WORLD_TIP)
-		{
-			// Waiting is what "While no wreck is up" dims for, and the world tip is only a chat line.
-			lastAlertAt = now;
-		}
 		switch (notice)
 		{
 			case HOLD_FULL:
 				alertShownAt = now;
-				notifier.notify(resolved(config.notification()), session.holdMessage(notice));
+				send(resolved(config.notification()), session.holdMessage(notice), now);
 				break;
 			case HOLD_NEARLY_FULL:
 				alertShownAt = now;
@@ -2664,52 +2676,52 @@ public class AfkSalvagingPlugin extends Plugin
 				{
 					notification = withoutSound(notification);
 				}
-				notifier.notify(notification, session.holdMessage(notice));
+				send(notification, session.holdMessage(notice), now);
 				break;
 			case HOOK_EMPTY:
 				reminderShownAt = now;
-				notifier.notify(resolved(config.hookEmptyNotification()), "A salvaging hook is empty. Assign a crewmate to it.");
+				send(resolved(config.hookEmptyNotification()), "A salvaging hook is empty. Assign a crewmate to it.", now);
 				break;
 			case HOOK_IDLE:
 				reminderShownAt = now;
-				notifier.notify(resolved(config.hookIdleNotification()), "Your salvaging hook is idle and a wreck is up. Click the hook, or assign a crewmate.");
+				send(resolved(config.hookIdleNotification()), "Your salvaging hook is idle and a wreck is up. Click the hook, or assign a crewmate.", now);
 				break;
 			case BETTER_CREW:
 				String swap = session.betterCrewMessage();
 				if (swap != null)
 				{
-					notifier.notify(resolved(config.betterCrewNotification()), swap);
+					send(resolved(config.betterCrewNotification()), swap, now);
 				}
 				break;
 			case BOOST_DROPPED:
 				int needed = session.view().levelNeeded;
-				notifier.notify(resolved(config.boostDroppedNotification()), "Your crew stopped salvaging: your Sailing level is too low for this wreck"
-					+ (needed > 0 ? " (needs " + needed + ")." : "."));
+				send(resolved(config.boostDroppedNotification()), "Your crew stopped salvaging: your Sailing level is too low for this wreck"
+					+ (needed > 0 ? " (needs " + needed + ")." : "."), now);
 				break;
 			case IDLE_LOGOUT_SOON:
-				notifier.notify(resolved(config.idleLogoutNotification()), "You will be logged out for idling in about "
-					+ Durations.countdown(session.view().idleLogoutMillis) + ". Move the mouse or press a key.");
+				send(resolved(config.idleLogoutNotification()), "You will be logged out for idling in about "
+					+ Durations.countdown(session.view().idleLogoutMillis) + ". Move the mouse or press a key.", now);
 				break;
 			case SORTING_DONE:
 				// Off by default: for players who sort with their eyes elsewhere (owner, 2026-10-03).
-				notifier.notify(resolved(config.sortingDoneNotification()), "You have sorted all your salvage.");
+				send(resolved(config.sortingDoneNotification()), "You have sorted all your salvage.", now);
 				break;
 			case CREW_STALLED:
-				notifier.notify(resolved(config.crewStalledNotification()), "Your crew have stopped salvaging although a wreck is "
-					+ "in reach. Nudge the boat or assign them again.");
+				send(resolved(config.crewStalledNotification()), "Your crew have stopped salvaging although a wreck is "
+					+ "in reach. Nudge the boat or assign them again.", now);
 				break;
 			case WRECK_ROSE:
-				notifier.notify(resolved(config.wreckRoseNotification()), "A wreck has risen in reach.");
+				send(resolved(config.wreckRoseNotification()), "A wreck has risen in reach.", now);
 				break;
 			case BOOST_RUNNING_OUT:
 				int at = session.view().boostLevelNeeded;
-				notifier.notify(resolved(config.boostDroppedNotification()), "Your Sailing boost is about to wear off: below level "
-					+ at + " your crew stop salvaging this wreck. Top it up.");
+				send(resolved(config.boostDroppedNotification()), "Your Sailing boost is about to wear off: below level "
+					+ at + " your crew stop salvaging this wreck. Top it up.", now);
 				break;
 			case DANGER:
 				String what = session.view().danger;
-				notifier.notify(withSoundOn(resolved(config.dangerNotification())), "Danger at your salvaging spot: "
-					+ (what == null ? "check your boat" : what.toLowerCase()) + ".");
+				send(withSoundOn(resolved(config.dangerNotification())), "Danger at your salvaging spot: "
+					+ (what == null ? "check your boat" : what.toLowerCase()) + ".", now);
 				break;
 			case WAITING_FOR_WRECK:
 				WreckTracker.NextRise next = session.view().nextWreck;
@@ -2726,6 +2738,16 @@ public class AfkSalvagingPlugin extends Plugin
 			default:
 				break;
 		}
+	}
+
+	/** Sends a notification and, when it is switched on, notes it for the dimmer's "Undim on alerts". */
+	private void send(Notification notification, String message, long now)
+	{
+		if (notification.isEnabled())
+		{
+			lastAlertAt = now;
+		}
+		notifier.notify(notification, message);
 	}
 
 	private void followBoat(WorldView view)

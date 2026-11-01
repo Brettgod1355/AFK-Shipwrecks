@@ -10,6 +10,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.geom.Area;
+import java.util.Objects;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.gameval.InterfaceID;
@@ -21,6 +22,8 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 /**
  * Darkens the game while {@link Dimmer} says nothing needs the player (2.5). Drawn under the game's windows for
  * "Game view", over them otherwise; the plugin's own banners and boxes are drawn after it, so they stay bright.
+ * With every "While" switch off it does nothing at all, and the area it darkens is kept until the canvas, the game
+ * view, the chat box or "Dimmer covers" changes (the PR audit on AFK-Shipwrecks#22, 2026-11-01).
  */
 public class DimmerOverlay extends Overlay
 {
@@ -32,6 +35,17 @@ public class DimmerOverlay extends Overlay
 	private final AfkSalvagingPlugin plugin;
 	private final AfkSalvagingConfig config;
 
+	/** Whether any "While" switch is on, and what the dimmer covers: read when a Dimmer setting changes. */
+	private boolean on;
+	private DimmerCovers covers = DimmerCovers.GAME_VIEW;
+
+	/** The area last worked out, and what it was worked out from. */
+	private Area area;
+	private DimmerCovers areaCovers;
+	private final Rectangle areaCanvas = new Rectangle();
+	private final Rectangle areaViewport = new Rectangle();
+	private Rectangle areaChat;
+
 	@Inject
 	DimmerOverlay(Client client, AfkSalvagingPlugin plugin, AfkSalvagingConfig config)
 	{
@@ -40,38 +54,61 @@ public class DimmerOverlay extends Overlay
 		this.config = config;
 		setPosition(OverlayPosition.DYNAMIC);
 		setPriority(PRIORITY_LOW);
-		useLayer();
+		configure();
 	}
 
 	/**
-	 * The layer for the chosen "Dimmer covers". RuneLite files an overlay under its layer when it is added, so the
-	 * plugin removes and adds it again after a change.
+	 * Reads the Dimmer settings and picks the layer for "Dimmer covers". RuneLite files an overlay under its layer
+	 * when it is added, so the plugin removes and adds it again after that one changes.
 	 */
-	void useLayer()
+	void configure()
 	{
-		setLayer(config.dimmerCovers() == DimmerCovers.GAME_VIEW ? OverlayLayer.UNDER_WIDGETS : OverlayLayer.ABOVE_WIDGETS);
+		on = Dimmer.anyOn(config);
+		covers = config.dimmerCovers();
+		setLayer(covers == DimmerCovers.GAME_VIEW ? OverlayLayer.UNDER_WIDGETS : OverlayLayer.ABOVE_WIDGETS);
 	}
 
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		if (!plugin.dimmed())
+		// The cargo hold or another window opening clears it at once, not at the next tick.
+		if (!on || !plugin.dimmed() || plugin.mainInterfaceOpen())
 		{
 			return null;
 		}
-		Rectangle canvas = new Rectangle(client.getCanvasWidth(), client.getCanvasHeight());
-		Rectangle viewport = new Rectangle(client.getViewportXOffset(), client.getViewportYOffset(),
-			client.getViewportWidth(), client.getViewportHeight());
-		Area area = Dimmer.area(config.dimmerCovers(), canvas, viewport, chat());
-		if (area == null)
+		Area dark = area();
+		if (dark == null)
 		{
 			return null;
 		}
 		Color before = graphics.getColor();
 		graphics.setColor(config.dimmerColor());
-		graphics.fill(area);
+		graphics.fill(dark);
 		graphics.setColor(before);
 		return null;
+	}
+
+	/** The area to darken, worked out again only when what it depends on has changed. */
+	private Area area()
+	{
+		int width = client.getCanvasWidth();
+		int height = client.getCanvasHeight();
+		int x = client.getViewportXOffset();
+		int y = client.getViewportYOffset();
+		int viewWidth = client.getViewportWidth();
+		int viewHeight = client.getViewportHeight();
+		Rectangle chat = covers == DimmerCovers.ALL_BUT_CHAT ? chat() : null;
+		if (covers != areaCovers || width != areaCanvas.width || height != areaCanvas.height || x != areaViewport.x
+			|| y != areaViewport.y || viewWidth != areaViewport.width || viewHeight != areaViewport.height
+			|| !Objects.equals(chat, areaChat))
+		{
+			areaCovers = covers;
+			areaCanvas.setBounds(0, 0, width, height);
+			areaViewport.setBounds(x, y, viewWidth, viewHeight);
+			areaChat = chat;
+			area = Dimmer.area(covers, areaCanvas, areaViewport, chat);
+		}
+		return area;
 	}
 
 	/** Where the shown chat box is, or null when none is. */

@@ -52,6 +52,12 @@ final class Dimmer
 		}
 	}
 
+	/** Whether any "While" switch is on; with none, the dimmer has nothing to work out. */
+	static boolean anyOn(AfkSalvagingConfig config)
+	{
+		return config.dimWhileCrewSalvage() || config.dimWhileNoWreck() || config.dimWhileSalvaging() || config.dimWhileSorting();
+	}
+
 	/** Within the chosen seconds of sorting's estimated end; an unknown end is not "nearly done". */
 	static boolean sortingNearlyDone(int earlySeconds, long leftMillis)
 	{

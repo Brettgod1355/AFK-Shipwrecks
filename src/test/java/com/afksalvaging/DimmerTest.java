@@ -108,6 +108,14 @@ public class DimmerTest
 	}
 
 	@Test
+	public void anySwitchTurnsItOn()
+	{
+		assertFalse(Dimmer.anyOn(settings));
+		settings.sorting = true;
+		assertTrue(Dimmer.anyOn(settings));
+	}
+
+	@Test
 	public void theCrewDimUntilTheyStopOrTheHoldIsFullEnough()
 	{
 		settings.crew = true;
