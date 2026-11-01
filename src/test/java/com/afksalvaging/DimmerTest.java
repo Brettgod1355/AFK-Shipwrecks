@@ -96,7 +96,8 @@ public class DimmerTest
 		assertFalse(defaults.dimWhileCrewSalvage() || defaults.dimWhileNoWreck() || defaults.dimWhileSalvaging()
 			|| defaults.dimWhileSorting());
 		assertEquals(DimmerCovers.GAME_VIEW, defaults.dimmerCovers());
-		assertTrue("the safety switches start on", defaults.dimUndimOnAlerts() && defaults.dimUndimInventoryFull());
+		assertTrue(defaults.dimUndimOnAlerts());
+		assertFalse(defaults.dimUndimInventoryFull());
 		for (PlayerActivity activity : PlayerActivity.values())
 		{
 			view.activity = activity;
@@ -198,6 +199,7 @@ public class DimmerTest
 	public void aFullInventoryClearsItUnlessYouAreSorting()
 	{
 		settings.crew = settings.salvaging = settings.sorting = true;
+		settings.undimInventoryFull = true;
 		view.inventoryFull = true;
 		assertFalse("idle with the crew still salvaging", dims());
 		view.activity = PlayerActivity.SALVAGING;

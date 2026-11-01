@@ -1476,7 +1476,8 @@ public interface AfkSalvagingConfig extends Config
 	)
 	default boolean dimUndimInventoryFull()
 	{
-		return true;
+		// Off by default (owner, 2026-11-01).
+		return false;
 	}
 
 	@Alpha
