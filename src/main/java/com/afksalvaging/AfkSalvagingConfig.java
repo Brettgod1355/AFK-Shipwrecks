@@ -1450,6 +1450,35 @@ public interface AfkSalvagingConfig extends Config
 		return 0;
 	}
 
+	// Owner, 2026-11-01: "Can we add a setting to undim on alerts?" and, for stopping at the hook with a full
+	// inventory while the crew salvage, "can we add a setting to undim for that too?"
+	@ConfigItem(
+		keyName = "dimUndimOnAlerts",
+		name = "Undim on alerts",
+		description = "Clear the dimming while one of this plugin's banners is up,<br>"
+			+ "and for 10 seconds after any of its alerts.",
+		section = DIMMER,
+		position = 6
+	)
+	default boolean dimUndimOnAlerts()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "dimUndimInventoryFull",
+		name = "Undim when inventory full",
+		description = "Clear the dimming while your inventory is full, so you see it<br>"
+			+ "is time to sort, even with the crew still salvaging. Sorting<br>"
+			+ "from a full inventory stays dimmed with \"While you sort\".",
+		section = DIMMER,
+		position = 7
+	)
+	default boolean dimUndimInventoryFull()
+	{
+		return true;
+	}
+
 	@Alpha
 	@ConfigItem(
 		keyName = "dimmerColor",
@@ -1457,7 +1486,7 @@ public interface AfkSalvagingConfig extends Config
 		description = "The dimmer's color and how see-through it is: half see-through<br>"
 			+ "black by default.",
 		section = DIMMER,
-		position = 6
+		position = 8
 	)
 	default Color dimmerColor()
 	{
@@ -1471,7 +1500,7 @@ public interface AfkSalvagingConfig extends Config
 			+ "and open windows stay bright. All but chat darkens those too,<br>"
 			+ "except the chat box. Everything darkens the whole game.",
 		section = DIMMER,
-		position = 7
+		position = 9
 	)
 	default DimmerCovers dimmerCovers()
 	{

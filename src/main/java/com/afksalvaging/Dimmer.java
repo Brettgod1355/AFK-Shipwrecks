@@ -26,6 +26,11 @@ final class Dimmer
 		{
 			return false;
 		}
+		if (config.dimUndimInventoryFull() && view.inventoryFull && view.activity != PlayerActivity.SORTING)
+		{
+			// Time to sort, even if the crew carry on or the hook's animation still loops.
+			return false;
+		}
 		switch (view.activity)
 		{
 			case SALVAGING:

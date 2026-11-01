@@ -169,6 +169,8 @@ public class AfkSalvagingPlugin extends Plugin
 	private static final int SIDEBAR_REFRESH_TICKS = 4;
 	/** Ticks after login before boarding counts as boarding: logging in aboard is not. */
 	private static final int BOARDING_SETTLE_TICKS = 3;
+	/** How long "Undim on alerts" keeps the dimmer clear after an alert with no banner. */
+	private static final long DIMMER_ALERT_MILLIS = 10_000;
 	/** How long the banner shows for a test alert when the banner setting keeps it up indefinitely. */
 	private static final int TEST_BANNER_SECONDS = 10;
 	/** The varbits naming the crewmate in each of the boat's crew slots, slot 1 first. */
@@ -364,6 +366,8 @@ public class AfkSalvagingPlugin extends Plugin
 	private int monitoredSlot;
 	private long alertShownAt;
 	private long reminderShownAt;
+	/** When the plugin last raised an alert, for the dimmer's "Undim on alerts"; 0 for none. */
+	private long lastAlertAt;
 	private boolean readInterfaceNextTick;
 	private int lastSailingXp = -1;
 	private volatile WorldResult worldResult;
@@ -1200,8 +1204,17 @@ public class AfkSalvagingPlugin extends Plugin
 	/** Whether the dimmer darkens the game now: never while loading, off the own boat or over an open window (2.5). */
 	public boolean dimmed()
 	{
-		return client.getGameState() == GameState.LOGGED_IN && isOwnBoat() && !mainInterfaceOpen()
-			&& Dimmer.dims(config, session.view(), session.monitor());
+		if (client.getGameState() != GameState.LOGGED_IN || !isOwnBoat() || mainInterfaceOpen())
+		{
+			return false;
+		}
+		long now = clock();
+		if (config.dimUndimOnAlerts() && (bannerLevel(now) != CargoHoldMonitor.Level.OK || reminderBanner(now) != null
+			|| (lastAlertAt > 0 && now - lastAlertAt < DIMMER_ALERT_MILLIS)))
+		{
+			return false;
+		}
+		return Dimmer.dims(config, session.view(), session.monitor());
 	}
 
 	/** Whether the local player is currently aboard a boat rather than on land. */
@@ -2633,6 +2646,11 @@ public class AfkSalvagingPlugin extends Plugin
 
 	private void give(AfkSession.Notice notice, long now)
 	{
+		if (notice != AfkSession.Notice.WAITING_FOR_WRECK && notice != AfkSession.Notice.WORLD_TIP)
+		{
+			// Waiting is what "While no wreck is up" dims for, and the world tip is only a chat line.
+			lastAlertAt = now;
+		}
 		switch (notice)
 		{
 			case HOLD_FULL:

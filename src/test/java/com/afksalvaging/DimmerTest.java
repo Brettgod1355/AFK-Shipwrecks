@@ -21,6 +21,7 @@ public class DimmerTest
 	private static final class Settings implements AfkSalvagingConfig
 	{
 		boolean crew, noWreck, salvaging, sorting;
+		boolean undimInventoryFull = true;
 		int undimAt = 100;
 		int early;
 
@@ -59,6 +60,12 @@ public class DimmerTest
 		{
 			return early;
 		}
+
+		@Override
+		public boolean dimUndimInventoryFull()
+		{
+			return undimInventoryFull;
+		}
 	}
 
 	private final Settings settings = new Settings();
@@ -89,6 +96,7 @@ public class DimmerTest
 		assertFalse(defaults.dimWhileCrewSalvage() || defaults.dimWhileNoWreck() || defaults.dimWhileSalvaging()
 			|| defaults.dimWhileSorting());
 		assertEquals(DimmerCovers.GAME_VIEW, defaults.dimmerCovers());
+		assertTrue("the safety switches start on", defaults.dimUndimOnAlerts() && defaults.dimUndimInventoryFull());
 		for (PlayerActivity activity : PlayerActivity.values())
 		{
 			view.activity = activity;
@@ -184,6 +192,22 @@ public class DimmerTest
 
 		view.activity = PlayerActivity.AT_HOOK_IDLE;
 		assertFalse("stopped at a hook with a wreck up needs you", dims());
+	}
+
+	@Test
+	public void aFullInventoryClearsItUnlessYouAreSorting()
+	{
+		settings.crew = settings.salvaging = settings.sorting = true;
+		view.inventoryFull = true;
+		assertFalse("idle with the crew still salvaging", dims());
+		view.activity = PlayerActivity.SALVAGING;
+		assertFalse("stopped at the hook, its loop still playing", dims());
+		view.activity = PlayerActivity.SORTING;
+		assertTrue("sorting starts from a full inventory", dims());
+
+		settings.undimInventoryFull = false;
+		view.activity = PlayerActivity.IDLE;
+		assertTrue(dims());
 	}
 
 	@Test
