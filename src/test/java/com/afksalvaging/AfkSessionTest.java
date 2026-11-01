@@ -159,6 +159,29 @@ public class AfkSessionTest
 	}
 
 	@Test
+	public void crewSalvagingFollowsTheCrewTheWreckAndTheHold()
+	{
+		// What the dimmer's "While the crew salvage" reads (2.5; first written by trippy22, AFK-Shipwrecks#20).
+		assertFalse(tick().crewSalvaging);
+		twoCrewOnHooks();
+		assertTrue(tick().crewSalvaging);
+		session.roster().setPosition(0, CrewAssignment.NONE);
+		session.roster().setPosition(1, CrewAssignment.NONE);
+		assertFalse("nobody on a hook", tick().crewSalvaging);
+		twoCrewOnHooks();
+		assertTrue(tick().crewSalvaging);
+		session.wreckGone(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK, now);
+		assertFalse("no wreck in reach", tick().crewSalvaging);
+		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK, now);
+		assertTrue(tick().crewSalvaging);
+		session.holdCount(240, tick);
+		assertFalse("the hold is full", tick().crewSalvaging);
+		session.holdCount(200, tick);
+		ownBoat = false;
+		assertFalse("not on your own boat", tick().crewSalvaging);
+	}
+
+	@Test
 	public void twoCrewGiveACountdownFromTheFirstTick()
 	{
 		twoCrewOnHooks();

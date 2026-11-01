@@ -202,6 +202,8 @@ public final class AfkSession
 		public PlayerActivity activity = PlayerActivity.IDLE;
 		public int hookCount;
 		public List<Crewmate> crewOnHooks = Collections.emptyList();
+		/** The crew can salvage a wreck now and have not stalled (the dimmer, 2.5). */
+		public boolean crewSalvaging;
 		public boolean playerAtHook;
 		public int emptyHooks;
 		public int spareCrew;
@@ -1491,6 +1493,7 @@ public final class AfkSession
 		view.activity = current;
 		view.hookCount = boat.hookCount();
 		view.crewOnHooks = roster.onHooks(tick);
+		view.crewSalvaging = crewRolling && !crewStalled && !hazardous;
 		view.playerAtHook = playerAtHook;
 		view.emptyHooks = HookWatch.emptyHooks(boat.hookCount(), hookSlots.size(), playerAtHook);
 		view.spareCrew = spare;

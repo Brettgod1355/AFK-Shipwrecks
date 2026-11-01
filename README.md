@@ -29,6 +29,7 @@ and setting.
   station, the hold or a hook.
 - A sidebar with every salvaging spot, the nearest docks, and routes through Shortest Path.
 - A nudge toward the salvaging worlds when you've waited too long for a wreck.
+- An optional dimmer that darkens the game while your crew salvage or you wait for a wreck.
 
 It never clicks anything for you and sends nothing anywhere.
 

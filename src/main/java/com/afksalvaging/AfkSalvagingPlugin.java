@@ -292,6 +292,9 @@ public class AfkSalvagingPlugin extends Plugin
 	@Inject
 	private HoldCountOverlay holdCountOverlay;
 
+	@Inject
+	private DimmerOverlay dimmerOverlay;
+
 	/** The item ids in the current boat's hold when it was last read, to tell a new stack from an added-to one. */
 	private final Set<Integer> holdItemIds = new HashSet<>();
 	/** How many salvage the current boat's hold holds, for the hold-or-hook choice of the salvage highlight. */
@@ -423,6 +426,8 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.add(wreckTimerOverlay);
 		overlayManager.add(dangerOverlay);
 		overlayManager.add(holdCountOverlay);
+		dimmerOverlay.useLayer();
+		overlayManager.add(dimmerOverlay);
 		overlayManager.add(sceneEdgeOverlay);
 		overlayManager.add(sortOverlay);
 		markStore = new MarkStore(configManager);
@@ -459,6 +464,7 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.remove(wreckTimerOverlay);
 		overlayManager.remove(dangerOverlay);
 		overlayManager.remove(holdCountOverlay);
+		overlayManager.remove(dimmerOverlay);
 		overlayManager.remove(sceneEdgeOverlay);
 		overlayManager.remove(sortOverlay);
 		removeInfoBox();
@@ -493,6 +499,14 @@ public class AfkSalvagingPlugin extends Plugin
 
 	private void configChanged(ConfigChanged event)
 	{
+		if (AfkSalvagingConfig.GROUP.equals(event.getGroup()) && "dimmerCovers".equals(event.getKey()))
+		{
+			// Under or over the game's windows: re-added, since RuneLite files an overlay under its layer.
+			overlayManager.remove(dimmerOverlay);
+			dimmerOverlay.useLayer();
+			overlayManager.add(dimmerOverlay);
+			return;
+		}
 		if ("runelite".equals(event.getGroup()) && "infoBoxSize".equals(event.getKey()))
 		{
 			// The label is drawn at the box's size: redraw it at the new one.
@@ -1181,6 +1195,13 @@ public class AfkSalvagingPlugin extends Plugin
 	public AfkSession getSession()
 	{
 		return session;
+	}
+
+	/** Whether the dimmer darkens the game now: never while loading, off the own boat or over an open window (2.5). */
+	public boolean dimmed()
+	{
+		return client.getGameState() == GameState.LOGGED_IN && isOwnBoat() && !mainInterfaceOpen()
+			&& Dimmer.dims(config, session.view(), session.monitor());
 	}
 
 	/** Whether the local player is currently aboard a boat rather than on land. */

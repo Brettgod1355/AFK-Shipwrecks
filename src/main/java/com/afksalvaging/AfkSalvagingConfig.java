@@ -1152,10 +1152,21 @@ public interface AfkSalvagingConfig extends Config
 
 	// The plugin's own chat lines (owner, 2026-10-25: "add a setting category called chat messages? Move the Say when
 	// updated into that as well"). Keys unchanged, so saved choices carry over.
+	// Darkens the game while nothing needs the player, every case off until turned on (2.5; the idea is trippy22's,
+	// AFK-Shipwrecks#20, rebuilt in the plugin's style on the owner's word, 2026-11-01).
+	@ConfigSection(
+		name = "Dimmer",
+		description = "Darkens the game while nothing needs you, so it is easy to<br>"
+			+ "look away. Everything here is off until you turn it on",
+		position = 11,
+		closedByDefault = true
+	)
+	String DIMMER = "dimmer";
+
 	@ConfigSection(
 		name = "Chat messages",
 		description = "The plugin's own lines in the chat box",
-		position = 11,
+		position = 12,
 		closedByDefault = true
 	)
 	String CHAT = "chat";
@@ -1354,6 +1365,117 @@ public interface AfkSalvagingConfig extends Config
 	default String holdRefusedIds()
 	{
 		return "";
+	}
+
+	// ---- Dimmer ----
+
+	@ConfigItem(
+		keyName = "dimWhileCrewSalvage",
+		name = "While the crew salvage",
+		description = "Darken the game while you stand idle and your crew salvage a<br>"
+			+ "wreck. It clears when they stop, or when the hold reaches<br>"
+			+ "\"Crew: undim at\".",
+		section = DIMMER,
+		position = 0
+	)
+	default boolean dimWhileCrewSalvage()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "dimCrewUndimAt",
+		name = "Crew: undim at",
+		description = "With \"While the crew salvage\", the dimming clears once the<br>"
+			+ "hold is this full.",
+		section = DIMMER,
+		position = 1
+	)
+	@Range(min = 1, max = 100)
+	@Units(Units.PERCENT)
+	default int dimCrewUndimAt()
+	{
+		return 100;
+	}
+
+	@ConfigItem(
+		keyName = "dimWhileNoWreck",
+		name = "While no wreck is up",
+		description = "Darken the game while you wait at a salvaging spot with no<br>"
+			+ "wreck up, idle or at a hook. It clears when a wreck rises.",
+		section = DIMMER,
+		position = 2
+	)
+	default boolean dimWhileNoWreck()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "dimWhileSalvaging",
+		name = "While you salvage",
+		description = "Darken the game while you work a hook yourself.",
+		section = DIMMER,
+		position = 3
+	)
+	default boolean dimWhileSalvaging()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "dimWhileSorting",
+		name = "While you sort",
+		description = "Darken the game while you sort salvage at the station.",
+		section = DIMMER,
+		position = 4
+	)
+	default boolean dimWhileSorting()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "dimSortingUndimEarly",
+		name = "Sorting: undim early",
+		description = "With \"While you sort\", the dimming clears this many seconds<br>"
+			+ "before sorting is estimated to end. 0 waits for the end.",
+		section = DIMMER,
+		position = 5
+	)
+	@Range(min = 0, max = 60)
+	@Units(Units.SECONDS)
+	default int dimSortingUndimEarly()
+	{
+		return 0;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "dimmerColor",
+		name = "Dimmer color",
+		description = "The dimmer's color and how see-through it is: half see-through<br>"
+			+ "black by default.",
+		section = DIMMER,
+		position = 6
+	)
+	default Color dimmerColor()
+	{
+		return Palette.DIMMER;
+	}
+
+	@ConfigItem(
+		keyName = "dimmerCovers",
+		name = "Dimmer covers",
+		description = "Game view darkens the game world only; the chat box, sidebar<br>"
+			+ "and open windows stay bright. All but chat darkens those too,<br>"
+			+ "except the chat box. Everything darkens the whole game.",
+		section = DIMMER,
+		position = 7
+	)
+	default DimmerCovers dimmerCovers()
+	{
+		return DimmerCovers.GAME_VIEW;
 	}
 
 	@ConfigItem(
