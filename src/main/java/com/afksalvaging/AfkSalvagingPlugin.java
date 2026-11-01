@@ -559,7 +559,6 @@ public class AfkSalvagingPlugin extends Plugin
 		{
 			case LOGIN_SCREEN:
 				clearState();
-				dimmedNow = false;
 				break;
 			case HOPPING:
 				session.worldHopped();
@@ -568,6 +567,8 @@ public class AfkSalvagingPlugin extends Plugin
 				break;
 			case CONNECTION_LOST:
 				loginPending = true;
+				// No tick runs while disconnected: a player looking away has to see the "Connection lost" box.
+				dimmedNow = false;
 				break;
 			case LOADING:
 				// The scene is being replaced: the wreck objects we hold are about to be stale.
@@ -2614,6 +2615,7 @@ public class AfkSalvagingPlugin extends Plugin
 
 	private void clearState()
 	{
+		dimmedNow = false;
 		session.reset();
 		cargoHoldByWorldView.clear();
 		cargoHoldObjects.clear();

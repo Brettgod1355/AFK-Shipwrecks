@@ -13,6 +13,7 @@ import java.awt.geom.Area;
 import java.util.Objects;
 import javax.inject.Inject;
 import net.runelite.api.Client;
+import net.runelite.api.GameState;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.ui.overlay.Overlay;
@@ -71,8 +72,9 @@ public class DimmerOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		// The cargo hold or another window opening clears it at once, not at the next tick.
-		if (!on || !plugin.dimmed() || plugin.mainInterfaceOpen())
+		// The cargo hold or another window opening clears it at once, not at the next tick, and so does anything but
+		// being logged in (a dropped connection runs no ticks).
+		if (!on || !plugin.dimmed() || plugin.mainInterfaceOpen() || client.getGameState() != GameState.LOGGED_IN)
 		{
 			return null;
 		}
