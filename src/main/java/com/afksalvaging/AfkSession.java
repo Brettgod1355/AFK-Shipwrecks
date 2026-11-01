@@ -206,6 +206,8 @@ public final class AfkSession
 		public boolean crewSalvaging;
 		/** No free inventory slot. */
 		public boolean inventoryFull;
+		/** Aboard, and the boat has stood still for {@link #PARKED_TICKS}. */
+		public boolean parked;
 		public boolean playerAtHook;
 		public int emptyHooks;
 		public int spareCrew;
@@ -1497,6 +1499,7 @@ public final class AfkSession
 		view.crewOnHooks = roster.onHooks(tick);
 		view.crewSalvaging = crewRolling && !crewStalled && !hazardous;
 		view.inventoryFull = inventoryFull;
+		view.parked = aboard && parked;
 		view.playerAtHook = playerAtHook;
 		view.emptyHooks = HookWatch.emptyHooks(boat.hookCount(), hookSlots.size(), playerAtHook);
 		view.spareCrew = spare;

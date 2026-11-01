@@ -22,8 +22,9 @@ final class Dimmer
 	/** Whether the game is dimmed now; the plugin also clears it ashore, off the own boat and over an open window. */
 	static boolean dims(AfkSalvagingConfig config, AfkSession.View view, CargoHoldMonitor hold)
 	{
-		if (view.danger != null || view.hazardous)
+		if (view.danger != null || view.hazardous || !view.parked)
 		{
+			// Never while the boat is moving (owner, 2026-11-01); it dims again once it has stood still a few ticks.
 			return false;
 		}
 		if (config.dimUndimInventoryFull() && view.inventoryFull && view.activity != PlayerActivity.SORTING)

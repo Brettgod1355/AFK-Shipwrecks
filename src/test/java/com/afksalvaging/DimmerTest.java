@@ -75,6 +75,7 @@ public class DimmerTest
 	@Before
 	public void crewAtWork()
 	{
+		view.parked = true;
 		view.atSpot = true;
 		view.wrecksUp = 1;
 		view.crewSalvaging = true;
@@ -210,6 +211,21 @@ public class DimmerTest
 		settings.undimInventoryFull = false;
 		view.activity = PlayerActivity.IDLE;
 		assertTrue(dims());
+	}
+
+	@Test
+	public void aMovingBoatIsNeverDimmed()
+	{
+		settings.crew = settings.noWreck = settings.salvaging = settings.sorting = true;
+		view.wrecksUp = 0;
+		for (PlayerActivity activity : PlayerActivity.values())
+		{
+			view.activity = activity;
+			view.parked = true;
+			assertTrue(activity.name(), dims());
+			view.parked = false;
+			assertFalse(activity.name(), dims());
+		}
 	}
 
 	@Test
