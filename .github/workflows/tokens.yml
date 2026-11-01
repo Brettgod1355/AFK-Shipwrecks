@@ -1,0 +1,29 @@
+# The owner-only /tokens command (Helper-Bot): counts the plugin's tokens against the Plugin Hub review bot's
+# 200,000 limit. Comment "/tokens" on an issue or PR here, or press Actions > Tokens > Run workflow (the report
+# goes to that run's summary).
+name: Tokens
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: owner/repo or owner/repo@ref to count (empty = this repository, the branch chosen above)
+        type: string
+        default: ""
+
+jobs:
+  tokens:
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.actor == 'Brettgod1355') ||
+      (startsWith(github.event.comment.body, '/tokens') && github.event.comment.user.login == 'Brettgod1355')
+    uses: Brettgod1355/Helper-Bot/.github/workflows/tokens.yml@main
+    with:
+      owner: Brettgod1355
+      dry_run: false   # reply on the issue or PR (public repo: anyone can read the reply); a button press never posts
+      target: ${{ inputs.target || '' }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
