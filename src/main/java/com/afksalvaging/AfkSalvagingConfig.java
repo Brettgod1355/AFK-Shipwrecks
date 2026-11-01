@@ -108,6 +108,158 @@ public interface AfkSalvagingConfig extends Config
 	)
 	String SIDEBAR = "sidebar";
 
+	@ConfigSection(
+		name = "Distraction dimmer",
+		description = "Dim the game while salvaging, sorting or waiting for wrecks",
+		position = 11,
+		closedByDefault = true
+	)
+	String DIMMER = "dimmer";
+
+	@ConfigItem(
+		keyName = "dimWhenCrewSalvaging",
+		name = "Dim when crew salvaging",
+		description = "Dim while you are idle and your crew salvage into the hold.<br>"
+			+ "Stops when they stop or the hold reaches Cargo hold undim %.",
+		section = DIMMER,
+		position = 0
+	)
+	default boolean dimWhenCrewSalvaging()
+	{
+		return false;
+	}
+
+	@Range(min = 1, max = 100)
+	@Units(Units.PERCENT)
+	@ConfigItem(
+		keyName = "cargoHoldUndimPercent",
+		name = "Cargo hold undim %",
+		description = "Stop crew dimming at this percentage of occupied hold slots.<br>"
+			+ "Uses the running count; open the hold to check it. This does<br>"
+			+ "not affect sorting, player salvaging or waiting for wrecks.",
+		section = DIMMER,
+		position = 1
+	)
+	default int cargoHoldUndimPercent()
+	{
+		return 100;
+	}
+
+	@ConfigItem(
+		keyName = "dimWhenNoWrecks",
+		name = "Dim when no wrecks",
+		description = "Dim while idle at a wreck site with no wrecks up in reach,<br>"
+			+ "including while waiting at a hook. Undim when a wreck rises.<br>"
+			+ "Open water never triggers this.",
+		section = DIMMER,
+		position = 2
+	)
+	default boolean dimWhenNoWrecks()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "dimWhenSalvaging",
+		name = "Dim when salvaging",
+		description = "Dim while you actively salvage at a hook on your own boat.",
+		section = DIMMER,
+		position = 3
+	)
+	default boolean dimWhenSalvaging()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "dimWhenSorting",
+		name = "Dim when sorting",
+		description = "Dim while you sort salvage at a station on your own boat.",
+		section = DIMMER,
+		position = 4
+	)
+	default boolean dimWhenSorting()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "undimSoonerWhenSorting",
+		name = "Undim sooner when sorting",
+		description = "Undim before sorting ends, using Sorting undim seconds.",
+		section = DIMMER,
+		position = 5
+	)
+	default boolean undimSoonerWhenSorting()
+	{
+		return false;
+	}
+
+	@Range(min = 0, max = 60)
+	@Units(Units.SECONDS)
+	@ConfigItem(
+		keyName = "sortingUndimSeconds",
+		name = "Sorting undim seconds",
+		description = "Seconds left on the sorting estimate at which to undim.",
+		section = DIMMER,
+		position = 6
+	)
+	default int sortingUndimSeconds()
+	{
+		return 3;
+	}
+
+	@ConfigItem(
+		keyName = "dimmerColor",
+		name = "Dimmer colour",
+		description = "The colour drawn over the game while dimmed.",
+		section = DIMMER,
+		position = 7
+	)
+	default Color dimmerColor()
+	{
+		return Color.BLACK;
+	}
+
+	@Range(min = 0, max = 100)
+	@Units(Units.PERCENT)
+	@ConfigItem(
+		keyName = "dimmerOpacity",
+		name = "Dimmer opacity",
+		description = "How opaque the dimmer is: 0 is clear, 100 is solid.",
+		section = DIMMER,
+		position = 8
+	)
+	default int dimmerOpacity()
+	{
+		return 50;
+	}
+
+	@ConfigItem(
+		keyName = "unhideChat",
+		name = "Unhide chat",
+		description = "Leave the chatbox visible while dimming the full game.<br>"
+			+ "Unhide interfaces already leaves the chatbox visible.",
+		section = DIMMER,
+		position = 9
+	)
+	default boolean unhideChat()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "unhideInterfaces",
+		name = "Unhide interfaces",
+		description = "Dim only the game view, leaving chat and interfaces visible.",
+		section = DIMMER,
+		position = 10
+	)
+	default boolean unhideInterfaces()
+	{
+		return true;
+	}
+
 	// ---- Overlay: the timer (its own section until 2.1) ----
 
 	@ConfigItem(
@@ -1155,7 +1307,7 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigSection(
 		name = "Chat messages",
 		description = "The plugin's own lines in the chat box",
-		position = 11,
+		position = 12,
 		closedByDefault = true
 	)
 	String CHAT = "chat";

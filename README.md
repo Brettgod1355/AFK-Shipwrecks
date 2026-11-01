@@ -27,8 +27,28 @@ and setting.
   station, the hold or a hook.
 - A sidebar with every salvaging spot, the nearest docks, and routes through Shortest Path.
 - A nudge toward the salvaging worlds when you've waited too long for a wreck.
+- An optional distraction dimmer for crew salvaging, sorting, working a hook, or waiting for wrecks.
 
 It never clicks anything for you and sends nothing anywhere.
+
+## Distraction dimmer
+
+Open **AFK Shipwrecks settings > Distraction dimmer**. Each dimming mode starts off; enable the
+ones you want:
+
+- **Dim when crew salvaging** dims while you are idle and your crew can salvage a wreck in reach.
+  **Cargo hold undim %** clears this dimming at the chosen fill percentage (100% by default).
+  It uses the existing hold count, including estimates between opening the hold.
+- **Dim when no wrecks** dims while idle at a known wreck site, including waiting at a hook,
+  and clears when a wreck rises in reach. Open water does not trigger it. This is independent
+  of the cargo threshold, so it can still dim while waiting with a full hold.
+- **Dim when salvaging** and **Dim when sorting** cover your own activity. Sorting can undim
+  early using the existing sorting estimate and **Sorting undim seconds**.
+
+Choose the colour and opacity (black at 50% by default). **Unhide interfaces** leaves the game
+interfaces visible; turn it off to dim the whole game, optionally leaving **Unhide chat** on.
+The dimmer clears while a main interface such as the cargo hold is open, during danger, when
+leaving your own boat, and during loading. Existing timers and alerts keep working.
 
 ## See it in action
 

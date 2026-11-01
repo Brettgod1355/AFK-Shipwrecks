@@ -182,6 +182,42 @@ public class AfkSessionTest
 	}
 
 	@Test
+	public void dimmerFollowsCrewAssignmentsWrecksAndCargo()
+	{
+		AfkSalvagingConfig config = new AfkSalvagingConfig()
+		{
+			@Override public boolean dimWhenCrewSalvaging() { return true; }
+			@Override public int cargoHoldUndimPercent() { return 90; }
+		};
+		assertFalse(tick().crewSalvaging);
+		twoCrewOnHooks();
+		assertTrue(tick().crewSalvaging);
+		assertTrue(SalvagingDimmer.shouldDim(config, session.view(), session.monitor()));
+		session.holdCount(216, tick);
+		tick();
+		assertFalse(SalvagingDimmer.shouldDim(config, session.view(), session.monitor()));
+		session.holdCount(200, tick);
+		tick();
+		assertTrue(SalvagingDimmer.shouldDim(config, session.view(), session.monitor()));
+		session.roster().setPosition(0, CrewAssignment.NONE);
+		session.roster().setPosition(1, CrewAssignment.NONE);
+		assertFalse(tick().crewSalvaging);
+		twoCrewOnHooks();
+		assertTrue(tick().crewSalvaging);
+		session.wreckGone(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK, now);
+		assertFalse(tick().crewSalvaging);
+		session.wreckSeen(WRECK, ObjectID.SAILING_MERCHANT_SHIPWRECK, now);
+		assertTrue(tick().crewSalvaging);
+		session.holdCount(240, tick);
+		assertFalse(tick().crewSalvaging);
+		session.holdCount(200, tick);
+		ownBoat = false;
+		assertFalse(tick().crewSalvaging);
+		sailing = false;
+		assertFalse(tick().crewSalvaging);
+	}
+
+	@Test
 	public void crewLinesFillTheHoldAndTeachTheRate()
 	{
 		twoCrewOnHooks();
@@ -1494,6 +1530,7 @@ public class AfkSessionTest
 		ticks(320);
 		assertEquals(State.STALLED, session.view().estimate.getState());
 		long held = session.view().countdownMillis;
+		assertFalse("stalled crew must clear the dimmer", session.view().crewSalvaging);
 		assertTrue(held > shown);
 		ticks(20);
 		assertEquals(State.STALLED, session.view().estimate.getState());
@@ -1502,6 +1539,7 @@ public class AfkSessionTest
 		session.crewLine("Jolly Jim", tick);
 		ticks(3);
 		assertEquals(State.COUNTING_DOWN, session.view().estimate.getState());
+		assertTrue(session.view().crewSalvaging);
 	}
 
 	@Test

@@ -290,6 +290,9 @@ public class AfkSalvagingPlugin extends Plugin
 	private DangerOverlay dangerOverlay;
 
 	@Inject
+	private SalvagingDimmerOverlay dimmerOverlay;
+
+	@Inject
 	private HoldCountOverlay holdCountOverlay;
 
 	/** The item ids in the current boat's hold when it was last read, to tell a new stack from an added-to one. */
@@ -422,6 +425,8 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.add(wreckOutlineOverlay);
 		overlayManager.add(wreckTimerOverlay);
 		overlayManager.add(dangerOverlay);
+		dimmerOverlay.updateLayer();
+		overlayManager.add(dimmerOverlay);
 		overlayManager.add(holdCountOverlay);
 		overlayManager.add(sceneEdgeOverlay);
 		overlayManager.add(sortOverlay);
@@ -458,6 +463,7 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.remove(wreckOutlineOverlay);
 		overlayManager.remove(wreckTimerOverlay);
 		overlayManager.remove(dangerOverlay);
+		overlayManager.remove(dimmerOverlay);
 		overlayManager.remove(holdCountOverlay);
 		overlayManager.remove(sceneEdgeOverlay);
 		overlayManager.remove(sortOverlay);
@@ -493,6 +499,13 @@ public class AfkSalvagingPlugin extends Plugin
 
 	private void configChanged(ConfigChanged event)
 	{
+		if (AfkSalvagingConfig.GROUP.equals(event.getGroup()) && "unhideInterfaces".equals(event.getKey()))
+		{
+			// OverlayManager caches overlays by layer, so re-register after changing it.
+			overlayManager.remove(dimmerOverlay);
+			dimmerOverlay.updateLayer();
+			overlayManager.add(dimmerOverlay);
+		}
 		if ("runelite".equals(event.getGroup()) && "infoBoxSize".equals(event.getKey()))
 		{
 			// The label is drawn at the box's size: redraw it at the new one.
@@ -1181,6 +1194,13 @@ public class AfkSalvagingPlugin extends Plugin
 	public AfkSession getSession()
 	{
 		return session;
+	}
+
+	/** Keep the dimmer off during loading, ashore, on other boats and over an open interface. */
+	public boolean shouldShowDimmer()
+	{
+		return client.getGameState() == GameState.LOGGED_IN && isOwnBoat()
+			&& !mainInterfaceOpen() && SalvagingDimmer.shouldDim(config, session.view(), session.monitor());
 	}
 
 	/** Whether the local player is currently aboard a boat rather than on land. */
