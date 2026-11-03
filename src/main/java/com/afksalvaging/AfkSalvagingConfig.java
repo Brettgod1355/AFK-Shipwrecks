@@ -1494,7 +1494,8 @@ public interface AfkSalvagingConfig extends Config
 		keyName = "dimUndimOnAlerts",
 		name = "Undim on alerts",
 		description = "Clear the dimming while one of this plugin's banners is up,<br>"
-			+ "and for 10 seconds after any of its alerts.",
+			+ "and for 10 seconds after any of its alerts, except waiting for<br>"
+			+ "a wreck: that is what \"While no wreck is up\" dims for.",
 		section = DIMMER,
 		position = 6
 	)

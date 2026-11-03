@@ -22,7 +22,9 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 
 /**
  * Darkens the game while {@link Dimmer} says nothing needs the player (2.5). Drawn under the game's windows for
- * "Game view", over them otherwise; the plugin's own banners and boxes are drawn after it, so they stay bright.
+ * "Game view", over them otherwise. The plugin's banners, info box and inventory boxes are drawn after it and stay
+ * bright; its drawings on the deck (wreck boxes and timers, the hold count, the next-step outlines) are drawn with the
+ * game world, before it, so they dim with the game.
  * With every "While" switch off it does nothing at all, and the area it darkens is kept until the canvas, the game
  * view, the chat box or "Dimmer covers" changes (the PR audit on AFK-Shipwrecks#22, 2026-11-01).
  */

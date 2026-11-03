@@ -250,6 +250,9 @@ public class DimmerTest
 			view.hazardous = true;
 			assertFalse(activity.name(), dims());
 			view.hazardous = false;
+			view.idleWarning = true;
+			assertFalse("the idle-logout warning is up", dims());
+			view.idleWarning = false;
 		}
 	}
 
