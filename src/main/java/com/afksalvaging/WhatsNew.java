@@ -24,8 +24,8 @@ public final class WhatsNew
 	 * One line on what this version brings, no links; a full stop is added when it is said. Leave
 	 * it empty for a release not worth a line (a fix, a wording change) and nothing is said.
 	 */
-	public static final String NOTE = "a new, optional dimmer darkens the game while your crew salvage or you wait for a "
-		+ "wreck (Dimmer settings)";
+	public static final String NOTE = "an optional dimmer darkens the game while your crew salvage or you wait for a wreck, "
+		+ "and the last copy of each alch item can get its own box (Dimmer and Inventory sorting settings)";
 
 	/**
 	 * What the rename to AFK Shipwrecks brought, said to a Cargo Hold Alert 1.0 player whatever version
