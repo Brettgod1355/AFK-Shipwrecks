@@ -182,6 +182,27 @@ public class AfkSessionTest
 	}
 
 	@Test
+	public void onlyYourOwnHookFillingTheInventoryCountsForTheDimmer()
+	{
+		// Owner, 2026-11-03: "only ... if you were just on the hook yourself, not pulling out salvage from the hold".
+		twoCrewOnHooks();
+		tick();
+		session.inventoryChanged(28, 20, Collections.singleton(ShipwreckType.MERCHANT), tick);
+		assertFalse("filled from the hold, away from the hooks", tick().inventoryFullFromHook);
+
+		session.inventoryChanged(20, 12, Collections.singleton(ShipwreckType.MERCHANT), tick);
+		animation = SALVAGING;
+		tick();
+		session.inventoryChanged(28, 20, Collections.singleton(ShipwreckType.MERCHANT), tick);
+		assertTrue("filled at your own hook", tick().inventoryFullFromHook);
+		animation = -1;
+		ticks(10);
+		assertTrue("still full after stepping away to sort", session.view().inventoryFullFromHook);
+		session.inventoryChanged(27, 19, Collections.singleton(ShipwreckType.MERCHANT), tick);
+		assertFalse("a slot freed up", tick().inventoryFullFromHook);
+	}
+
+	@Test
 	public void twoCrewGiveACountdownFromTheFirstTick()
 	{
 		twoCrewOnHooks();

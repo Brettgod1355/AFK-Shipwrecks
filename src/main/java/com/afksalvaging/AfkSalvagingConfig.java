@@ -1504,9 +1504,10 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "dimUndimInventoryFull",
 		name = "Undim when inventory full",
-		description = "Clear the dimming while your inventory is full, so you see it<br>"
-			+ "is time to sort, even with the crew still salvaging. Sorting<br>"
-			+ "from a full inventory stays dimmed with \"While you sort\".",
+		description = "Clear the dimming when your own hook fills your inventory, so<br>"
+			+ "you see it is time to sort, even with the crew still<br>"
+			+ "salvaging. Salvage taken out of the cargo hold does not count,<br>"
+			+ "and sorting stays dimmed with \"While you sort\".",
 		section = DIMMER,
 		position = 7
 	)

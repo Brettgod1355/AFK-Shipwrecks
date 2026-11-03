@@ -209,7 +209,7 @@ public class DimmerTest
 	{
 		settings.crew = settings.salvaging = settings.sorting = true;
 		settings.undimInventoryFull = true;
-		view.inventoryFull = true;
+		view.inventoryFullFromHook = true;
 		assertFalse("idle with the crew still salvaging", dims());
 		view.activity = PlayerActivity.SALVAGING;
 		assertFalse("stopped at the hook, its loop still playing", dims());

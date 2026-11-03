@@ -27,9 +27,10 @@ final class Dimmer
 			// Never while the boat is moving (owner, 2026-11-01); it dims again once it has stood still a few ticks.
 			return false;
 		}
-		if (config.dimUndimInventoryFull() && view.inventoryFull && view.activity != PlayerActivity.SORTING)
+		if (config.dimUndimInventoryFull() && view.inventoryFullFromHook && view.activity != PlayerActivity.SORTING)
 		{
-			// Time to sort, even if the crew carry on or the hook's animation still loops.
+			// Your own hook filled it: time to sort, even if the crew carry on or the hook's animation still loops.
+			// Salvage taken out of the cargo hold fills it on purpose, so that does not count (owner, 2026-11-03).
 			return false;
 		}
 		switch (view.activity)

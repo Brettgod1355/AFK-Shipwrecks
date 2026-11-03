@@ -204,8 +204,11 @@ public final class AfkSession
 		public List<Crewmate> crewOnHooks = Collections.emptyList();
 		/** The crew can salvage a wreck now and have not stalled (the dimmer, 2.5). */
 		public boolean crewSalvaging;
-		/** No free inventory slot. */
-		public boolean inventoryFull;
+		/**
+		 * No free inventory slot, and it filled while the player was at a hook: their own salvaging, not salvage taken
+		 * out of the cargo hold to sort (the dimmer's "Undim when inventory full", owner 2026-11-03).
+		 */
+		public boolean inventoryFullFromHook;
 		/** Aboard, and the boat has stood still for {@link #PARKED_TICKS}. */
 		public boolean parked;
 		public boolean playerAtHook;
@@ -297,6 +300,8 @@ public final class AfkSession
 	private boolean inventoryKnown;
 	private int inventorySalvage;
 	private int freeInventorySlots = INVENTORY_SLOTS;
+	/** The inventory is full and filled while the player was at a hook; cleared once a slot frees up. */
+	private boolean inventoryFilledAtHook;
 	/**
 	 * Inventory slots whose items would take hold space if deposited: tools take none, and a stack the
 	 * hold already has adds to it (research, 2026-10-08: the Sailing plugin counted both, its #226).
@@ -950,6 +955,7 @@ public final class AfkSession
 	/** Everything the boat knows is stale, for example after logging out. Learned rates are kept in memory. */
 	public void reset()
 	{
+		inventoryFilledAtHook = false;
 		clearDanger();
 		flushMemory();
 		view = new View();
@@ -1140,6 +1146,14 @@ public final class AfkSession
 			}
 		}
 		boolean inventoryFull = freeInventorySlots <= 0;
+		if (!inventoryFull)
+		{
+			inventoryFilledAtHook = false;
+		}
+		else if (current.isAtHook())
+		{
+			inventoryFilledAtHook = true;
+		}
 		boolean playerRolling = aboard && current == PlayerActivity.SALVAGING && wreckInReach && !inventoryFull;
 		// Standing at a hook with a wreck up and not rolling is not manning it: the player will not restart.
 		boolean playerAtHook = aboard && (current == PlayerActivity.SALVAGING
@@ -1498,7 +1512,7 @@ public final class AfkSession
 		view.hookCount = boat.hookCount();
 		view.crewOnHooks = roster.onHooks(tick);
 		view.crewSalvaging = crewRolling && !crewStalled && !hazardous;
-		view.inventoryFull = inventoryFull;
+		view.inventoryFullFromHook = inventoryFilledAtHook;
 		view.parked = aboard && parked;
 		view.playerAtHook = playerAtHook;
 		view.emptyHooks = HookWatch.emptyHooks(boat.hookCount(), hookSlots.size(), playerAtHook);
