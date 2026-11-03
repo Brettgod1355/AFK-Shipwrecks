@@ -378,6 +378,11 @@ public class AfkSalvagingPlugin extends Plugin
 	/** The one-off world list read on the executor, kept so shutDown can cancel it. */
 	private Future<?> worldRequest;
 	private volatile boolean worldDirty = true;
+	/**
+	 * Between startUp and shutDown. Settings changes are handled later on the client thread, and a profile switch can stop
+	 * the plugin before they run; they must not add the sidebar, info box or overlays back (local deep scan, 2026-11-03).
+	 */
+	private volatile boolean running;
 	private int worldChecked = -1;
 	private boolean salvagingWorld;
 	private long lastMemoryFlushAt;
@@ -408,6 +413,7 @@ public class AfkSalvagingPlugin extends Plugin
 	@Override
 	protected void startUp()
 	{
+		running = true;
 		clearState();
 		noteVersion();
 		carryWreckMarking();
@@ -459,6 +465,7 @@ public class AfkSalvagingPlugin extends Plugin
 	@Override
 	protected void shutDown()
 	{
+		running = false;
 		overlayManager.remove(overlay);
 		overlayManager.remove(boxOverlay);
 		overlayManager.remove(holdOverlay);
@@ -508,6 +515,10 @@ public class AfkSalvagingPlugin extends Plugin
 
 	private void configChanged(ConfigChanged event)
 	{
+		if (!running)
+		{
+			return;
+		}
 		if (AfkSalvagingConfig.GROUP.equals(event.getGroup()) && InventorySortOverlay.LAST_ALCH_KEYS.contains(event.getKey()))
 		{
 			sortOverlay.configure();

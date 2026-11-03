@@ -9,6 +9,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.geom.Area;
 import java.util.Objects;
 import javax.inject.Inject;
@@ -22,9 +23,10 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 
 /**
  * Darkens the game while {@link Dimmer} says nothing needs the player (2.5). Drawn under the game's windows for
- * "Game view", over them otherwise. The plugin's banners, info box and inventory boxes are drawn after it and stay
- * bright; its drawings on the deck (wreck boxes and timers, the hold count, the next-step outlines) are drawn with the
- * game world, before it, so they dim with the game.
+ * "Game view", over them otherwise. The plugin's banners and info box are drawn after it in every mode and stay
+ * bright; its inventory boxes stay bright in Game view and dim with the rest under "All but chat" and "Everything";
+ * its drawings on the deck (wreck boxes and timers, the hold count, the next-step outlines) are drawn with the game
+ * world, before it, so they dim with the game.
  * With every "While" switch off it does nothing at all, and the area it darkens is kept until the canvas, the game
  * view, the chat box or "Dimmer covers" changes (the PR audit on AFK-Shipwrecks#22, 2026-11-01).
  */
@@ -87,10 +89,17 @@ public class DimmerOverlay extends Overlay
 		{
 			return null;
 		}
+		// Straight edges only: without antialiasing, Java2D fills the screen-sized area as plain spans.
 		Color before = graphics.getColor();
+		Object smoothing = graphics.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 		graphics.setColor(color);
 		graphics.fill(dark);
 		graphics.setColor(before);
+		if (smoothing != null)
+		{
+			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, smoothing);
+		}
 		return null;
 	}
 
