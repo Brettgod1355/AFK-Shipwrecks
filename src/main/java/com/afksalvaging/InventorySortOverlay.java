@@ -10,6 +10,10 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Stroke;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import javax.inject.Inject;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
@@ -25,8 +29,15 @@ public class InventorySortOverlay extends WidgetItemOverlay
 {
 	private static final Stroke OUTLINE = new BasicStroke(2);
 
+	/** The settings read in {@link #configure()}; the rest are read as drawn, as before 2.5. */
+	static final Set<String> LAST_ALCH_KEYS = Collections.unmodifiableSet(
+		new HashSet<>(Arrays.asList("boxLastAlch", "onlyLastAlch", "lastAlchColor")));
+
 	private final AfkSalvagingPlugin plugin;
 	private final AfkSalvagingConfig config;
+	private boolean boxLastAlch;
+	private boolean onlyLastAlch;
+	private Color lastAlchColor;
 
 	@Inject
 	InventorySortOverlay(AfkSalvagingPlugin plugin, AfkSalvagingConfig config)
@@ -61,13 +72,13 @@ public class InventorySortOverlay extends WidgetItemOverlay
 			return;
 		}
 		Color color = color(rule);
-		if (rule == SortRule.ALCH && (config.boxLastAlch() || config.onlyLastAlch()))
+		if (rule == SortRule.ALCH && (boxLastAlch || onlyLastAlch))
 		{
 			if (lastOfKind(itemId, item))
 			{
-				color = config.lastAlchColor();
+				color = lastAlchColor;
 			}
-			else if (config.onlyLastAlch())
+			else if (onlyLastAlch)
 			{
 				return;
 			}
@@ -83,6 +94,14 @@ public class InventorySortOverlay extends WidgetItemOverlay
 		graphics.setColor(color);
 		graphics.draw(bounds);
 		graphics.setStroke(old);
+	}
+
+	/** Reads the last-alch settings, once at start and whenever one changes, not per item per frame. */
+	void configure()
+	{
+		boxLastAlch = config.boxLastAlch();
+		onlyLastAlch = config.onlyLastAlch();
+		lastAlchColor = config.lastAlchColor();
 	}
 
 	/**

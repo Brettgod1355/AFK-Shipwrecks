@@ -41,6 +41,7 @@ public class DimmerOverlay extends Overlay
 	/** Whether any "While" switch is on, and what the dimmer covers: read when a Dimmer setting changes. */
 	private boolean on;
 	private DimmerCovers covers = DimmerCovers.GAME_VIEW;
+	private Color color = Palette.DIMMER;
 
 	/** The area last worked out, and what it was worked out from. */
 	private Area area;
@@ -68,6 +69,7 @@ public class DimmerOverlay extends Overlay
 	{
 		on = Dimmer.anyOn(config);
 		covers = config.dimmerCovers();
+		color = config.dimmerColor();
 		setLayer(covers == DimmerCovers.GAME_VIEW ? OverlayLayer.UNDER_WIDGETS : OverlayLayer.ABOVE_WIDGETS);
 	}
 
@@ -86,7 +88,7 @@ public class DimmerOverlay extends Overlay
 			return null;
 		}
 		Color before = graphics.getColor();
-		graphics.setColor(config.dimmerColor());
+		graphics.setColor(color);
 		graphics.fill(dark);
 		graphics.setColor(before);
 		return null;

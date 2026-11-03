@@ -434,6 +434,7 @@ public class AfkSalvagingPlugin extends Plugin
 		overlayManager.add(wreckTimerOverlay);
 		overlayManager.add(dangerOverlay);
 		overlayManager.add(holdCountOverlay);
+		sortOverlay.configure();
 		dimmerOverlay.configure();
 		overlayManager.add(dimmerOverlay);
 		overlayManager.add(sceneEdgeOverlay);
@@ -507,6 +508,11 @@ public class AfkSalvagingPlugin extends Plugin
 
 	private void configChanged(ConfigChanged event)
 	{
+		if (AfkSalvagingConfig.GROUP.equals(event.getGroup()) && InventorySortOverlay.LAST_ALCH_KEYS.contains(event.getKey()))
+		{
+			sortOverlay.configure();
+			return;
+		}
 		if (AfkSalvagingConfig.GROUP.equals(event.getGroup()) && event.getKey().startsWith("dim"))
 		{
 			if ("dimmerCovers".equals(event.getKey()))
@@ -566,9 +572,11 @@ public class AfkSalvagingPlugin extends Plugin
 				session.worldHopped();
 				forgetBoat();
 				loginPending = true;
+				resetBoarding();
 				break;
 			case CONNECTION_LOST:
 				loginPending = true;
+				resetBoarding();
 				// No tick runs while disconnected: a player looking away has to see the "Connection lost" box.
 				dimmedNow = false;
 				break;
@@ -2621,6 +2629,17 @@ public class AfkSalvagingPlugin extends Plugin
 		return client.getWidget(InterfaceID.Worldmap.MAP_CONTAINER) != null;
 	}
 
+	/**
+	 * Back to "just logged in" for the boarding check, so the boat's world loading a few ticks after a hop or a reconnect
+	 * is not taken as boarding and does not start Auto route (the PR audit on #22, 2026-11-03).
+	 */
+	private void resetBoarding()
+	{
+		lastSailing = false;
+		lastOwnBoat = false;
+		ticksSinceLogin = 0;
+	}
+
 	private void clearState()
 	{
 		dimmedNow = false;
@@ -2645,9 +2664,7 @@ public class AfkSalvagingPlugin extends Plugin
 		worldChecked = -1;
 		worldDirty = true;
 		loginPending = true;
-		lastSailing = false;
-		lastOwnBoat = false;
-		ticksSinceLogin = 0;
+		resetBoarding();
 		sailingOverlapChecked = false;
 		sortActive = false;
 	}
