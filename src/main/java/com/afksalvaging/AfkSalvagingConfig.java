@@ -1316,8 +1316,22 @@ public interface AfkSalvagingConfig extends Config
 		return false;
 	}
 
+	@ConfigItem(
+		keyName = "onlyLastAlch",
+		name = "Only the last alch",
+		description = "Box only the last one of each alch item, in the Last alch<br>"
+			+ "color, and leave the earlier copies with no box, so one box<br>"
+			+ "shows per item. Works with Box the last alch on or off.",
+		section = SORTING,
+		position = 11
+	)
+	default boolean onlyLastAlch()
+	{
+		return false;
+	}
+
 	@Alpha
-	@ConfigItem(keyName = "lastAlchColor", name = "Last alch color", description = "", section = SORTING, position = 11)
+	@ConfigItem(keyName = "lastAlchColor", name = "Last alch color", description = "", section = SORTING, position = 12)
 	default Color lastAlchColor()
 	{
 		return new Color(255, 60, 220, 220);
@@ -1330,7 +1344,7 @@ public interface AfkSalvagingConfig extends Config
 			+ "it is easy to see and click among the cannonballs and kits.<br>"
 			+ "Nothing else in the hold is boxed.",
 		section = SORTING,
-		position = 12
+		position = 13
 	)
 	default boolean boxHoldSalvage()
 	{

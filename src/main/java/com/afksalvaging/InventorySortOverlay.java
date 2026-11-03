@@ -60,8 +60,18 @@ public class InventorySortOverlay extends WidgetItemOverlay
 		{
 			return;
 		}
-		Color color = rule == SortRule.ALCH && config.boxLastAlch() && lastOfKind(itemId, item)
-			? config.lastAlchColor() : color(rule);
+		Color color = color(rule);
+		if (rule == SortRule.ALCH && (config.boxLastAlch() || config.onlyLastAlch()))
+		{
+			if (lastOfKind(itemId, item))
+			{
+				color = config.lastAlchColor();
+			}
+			else if (config.onlyLastAlch())
+			{
+				return;
+			}
+		}
 		if (rule != SortRule.KEEP)
 		{
 			// Keep is an outline only (owner, 2026-10-03): what stays should not be tinted like what goes.
