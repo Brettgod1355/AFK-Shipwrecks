@@ -31,8 +31,6 @@ final class Palette
 	static final Color HOLD_EMPTY = new Color(0, 255, 0);
 	static final Color HOLD_NEARLY_FULL = new Color(255, 255, 0);
 	static final Color HOLD_FULL = new Color(255, 0, 0);
-	/** The last of each alch item in the inventory, when "Box the last alch" is on: pink, so it stands out from green. */
-	static final Color ALCH_LAST = new Color(255, 60, 220, 220);
 	/** The dimmer: black, half see-through (2.5). */
 	static final Color DIMMER = new Color(0, 0, 0, 128);
 	/** The outline round a wreck that is up and salvageable: the game's own hover cyan, a little softer. */

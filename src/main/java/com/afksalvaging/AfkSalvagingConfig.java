@@ -1304,16 +1304,23 @@ public interface AfkSalvagingConfig extends Config
 	@ConfigItem(
 		keyName = "boxLastAlch",
 		name = "Box the last alch",
-		description = "Box the last one of each alch item in pink instead of the<br>"
-			+ "alch color: the copy furthest along your inventory, reading<br>"
-			+ "left to right and top to bottom. An item you carry only one<br>"
-			+ "of is its own last one.",
+		description = "Box the last one of each alch item in the Last alch color<br>"
+			+ "(pink) instead of the Alch color: the copy furthest along<br>"
+			+ "your inventory, reading left to right and top to bottom. An<br>"
+			+ "item you carry only one of is its own last one.",
 		section = SORTING,
 		position = 10
 	)
 	default boolean boxLastAlch()
 	{
 		return false;
+	}
+
+	@Alpha
+	@ConfigItem(keyName = "lastAlchColor", name = "Last alch color", description = "", section = SORTING, position = 11)
+	default Color lastAlchColor()
+	{
+		return new Color(255, 60, 220, 220);
 	}
 
 	@ConfigItem(
