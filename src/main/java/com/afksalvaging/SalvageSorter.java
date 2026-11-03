@@ -204,6 +204,24 @@ public final class SalvageSorter
 	}
 
 	/**
+	 * Whether the item in this slot is the last of its kind in the inventory: no later slot, reading left to right and
+	 * top to bottom, holds the same item. An item carried once is its own last one.
+	 *
+	 * @param inventory the item id in each inventory slot, -1 for an empty one
+	 */
+	public static boolean lastOfKind(int[] inventory, int slot, int itemId)
+	{
+		for (int i = slot + 1; i < inventory.length; i++)
+		{
+			if (inventory[i] == itemId)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
 	 * The box for an item, or null for none: an unmarked item that is not a cannonball and is not
 	 * worth alching, or is untradeable, or is something else the hold takes.
 	 *

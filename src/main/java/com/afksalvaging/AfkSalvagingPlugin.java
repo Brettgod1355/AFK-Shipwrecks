@@ -303,6 +303,8 @@ public class AfkSalvagingPlugin extends Plugin
 	private final HoldSalvageCount holdSalvage = new HoldSalvageCount();
 	/** The salvage in the inventory at its last change, or -1 before the first. */
 	private int lastInventorySalvage = -1;
+	/** The item id in each inventory slot, -1 for an empty one, as of the last inventory change. */
+	private int[] inventorySlots = new int[0];
 	/** What was last written for the hold's salvage, key and value, so it is only written when it changes. */
 	private String lastSavedHoldSalvage;
 	/** The inventory's items at the last change, id to quantity, to see which types a deposit took. */
@@ -1695,6 +1697,12 @@ public class AfkSalvagingPlugin extends Plugin
 		return position == CrewAssignment.HOOK_SKIFF && hookCount == 1;
 	}
 
+	/** Whether the item in this inventory slot is the last of its kind there ({@link SalvageSorter#lastOfKind}). */
+	public boolean lastOfKind(int slot, int itemId)
+	{
+		return SalvageSorter.lastOfKind(inventorySlots, slot, itemId);
+	}
+
 	/** The box for an item, or null for one the boxes never apply to. Client thread. */
 	public SortRule sortRule(int itemId)
 	{
@@ -2885,14 +2893,18 @@ public class AfkSalvagingPlugin extends Plugin
 		int salvage = 0;
 		Map<Integer, Integer> counts = new HashMap<>();
 		Set<ShipwreckType> types = EnumSet.noneOf(ShipwreckType.class);
+		int[] slots = new int[items == null ? 0 : items.length];
+		Arrays.fill(slots, -1);
 		if (items != null)
 		{
-			for (Item item : items)
+			for (int i = 0; i < items.length; i++)
 			{
+				Item item = items[i];
 				if (item == null || item.getId() <= -1 || item.getQuantity() <= 0)
 				{
 					continue;
 				}
+				slots[i] = item.getId();
 				occupied++;
 				counts.merge(item.getId(), item.getQuantity(), Integer::sum);
 				if (takesHoldSpace(item.getId()))
@@ -2907,6 +2919,7 @@ public class AfkSalvagingPlugin extends Plugin
 				}
 			}
 		}
+		inventorySlots = slots;
 		session.inventoryChanged(occupied, holdSpace, salvage, types, client.getTickCount());
 		if (lastInventorySalvage >= 0)
 		{

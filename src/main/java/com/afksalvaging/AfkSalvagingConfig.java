@@ -1302,6 +1302,21 @@ public interface AfkSalvagingConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "boxLastAlch",
+		name = "Box the last alch",
+		description = "Box the last one of each alch item in pink instead of the<br>"
+			+ "alch color: the copy furthest along your inventory, reading<br>"
+			+ "left to right and top to bottom. An item you carry only one<br>"
+			+ "of is its own last one.",
+		section = SORTING,
+		position = 10
+	)
+	default boolean boxLastAlch()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "boxHoldSalvage",
 		name = "Box salvage in the hold",
 		description = "While the cargo hold is open, box the salvage inside it so<br>"

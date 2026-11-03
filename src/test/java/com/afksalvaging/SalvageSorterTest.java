@@ -10,6 +10,7 @@ import net.runelite.api.gameval.ItemID;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -165,5 +166,19 @@ public class SalvageSorterTest
 		assertEquals("<col=00ff00>Alch</col>", AfkSalvagingPlugin.markOption(SortRule.ALCH, java.awt.Color.GREEN));
 		// A color with transparency still reads as its solid color in the menu.
 		assertEquals("<col=9aa37a>Keep</col>", AfkSalvagingPlugin.markOption(SortRule.KEEP, new java.awt.Color(0x9A, 0xA3, 0x7A, 0x60)));
+	}
+
+	@Test
+	public void lastOfKindIsTheFurthestCopyAlongTheInventory()
+	{
+		// Two of item 10 (slots 0 and 5), one of item 20 (slot 2), an empty slot and three of item 30 (slots 3, 4, 7).
+		int[] inventory = {10, -1, 20, 30, 30, 10, -1, 30};
+		assertFalse("an earlier copy of 10", SalvageSorter.lastOfKind(inventory, 0, 10));
+		assertTrue("the last copy of 10", SalvageSorter.lastOfKind(inventory, 5, 10));
+		assertTrue("an item carried once is its own last one", SalvageSorter.lastOfKind(inventory, 2, 20));
+		assertFalse(SalvageSorter.lastOfKind(inventory, 3, 30));
+		assertFalse(SalvageSorter.lastOfKind(inventory, 4, 30));
+		assertTrue("the last slot", SalvageSorter.lastOfKind(inventory, 7, 30));
+		assertTrue("an inventory not read yet boxes nothing differently", SalvageSorter.lastOfKind(new int[0], 3, 30));
 	}
 }
