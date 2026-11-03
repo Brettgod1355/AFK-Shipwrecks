@@ -205,12 +205,17 @@ public final class SalvageSorter
 
 	/**
 	 * Whether the item in this slot is the last of its kind in the inventory: no later slot, reading left to right and
-	 * top to bottom, holds the same item. An item carried once is its own last one.
+	 * top to bottom, holds the same item. An item carried once is its own last one. False when the slot does not hold
+	 * that item, as for a grid that is not the inventory or an inventory not read yet.
 	 *
 	 * @param inventory the item id in each inventory slot, -1 for an empty one
 	 */
 	public static boolean lastOfKind(int[] inventory, int slot, int itemId)
 	{
+		if (slot < 0 || slot >= inventory.length || inventory[slot] != itemId)
+		{
+			return false;
+		}
 		for (int i = slot + 1; i < inventory.length; i++)
 		{
 			if (inventory[i] == itemId)

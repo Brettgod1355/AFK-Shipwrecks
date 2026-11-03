@@ -12,7 +12,9 @@ import java.awt.Rectangle;
 import java.awt.Stroke;
 import javax.inject.Inject;
 import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetItem;
+import net.runelite.api.widgets.WidgetUtil;
 import net.runelite.client.ui.overlay.WidgetItemOverlay;
 
 /**
@@ -58,7 +60,7 @@ public class InventorySortOverlay extends WidgetItemOverlay
 		{
 			return;
 		}
-		Color color = rule == SortRule.ALCH && config.boxLastAlch() && plugin.lastOfKind(item.getWidget().getIndex(), itemId)
+		Color color = rule == SortRule.ALCH && config.boxLastAlch() && lastOfKind(itemId, item)
 			? config.lastAlchColor() : color(rule);
 		if (rule != SortRule.KEEP)
 		{
@@ -71,6 +73,17 @@ public class InventorySortOverlay extends WidgetItemOverlay
 		graphics.setColor(color);
 		graphics.draw(bounds);
 		graphics.setStroke(old);
+	}
+
+	/**
+	 * Whether this is the last copy of the item in the inventory. The slot is the item widget's index, as in the
+	 * inventory and the screens that show it beside them; the trade screen's grids number the offers instead.
+	 */
+	private boolean lastOfKind(int itemId, WidgetItem item)
+	{
+		Widget widget = item.getWidget();
+		return WidgetUtil.componentToInterface(widget.getId()) != InterfaceID.TRADEMAIN
+			&& plugin.lastOfKind(widget.getIndex(), itemId);
 	}
 
 	private Color color(SortRule rule)

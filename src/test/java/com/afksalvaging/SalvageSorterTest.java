@@ -179,6 +179,10 @@ public class SalvageSorterTest
 		assertFalse(SalvageSorter.lastOfKind(inventory, 3, 30));
 		assertFalse(SalvageSorter.lastOfKind(inventory, 4, 30));
 		assertTrue("the last slot", SalvageSorter.lastOfKind(inventory, 7, 30));
-		assertTrue("an inventory not read yet boxes nothing differently", SalvageSorter.lastOfKind(new int[0], 3, 30));
+		assertFalse("an inventory not read yet: no slot is the last", SalvageSorter.lastOfKind(new int[0], 3, 30));
+		assertFalse("a slot that holds another item, as in a grid that is not the inventory", SalvageSorter.lastOfKind(inventory, 2, 10));
+		assertFalse("an empty slot", SalvageSorter.lastOfKind(inventory, 1, 10));
+		assertFalse("no slot", SalvageSorter.lastOfKind(inventory, -1, 30));
+		assertFalse("past the end", SalvageSorter.lastOfKind(inventory, 8, 30));
 	}
 }
