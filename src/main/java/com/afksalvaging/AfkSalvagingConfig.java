@@ -1305,7 +1305,7 @@ public interface AfkSalvagingConfig extends Config
 		keyName = "boxLastAlch",
 		name = "Box the last alch",
 		description = "Box the last one of each alch item in the Last alch color<br>"
-			+ "(pink) instead of the Alch color: the copy furthest along<br>"
+			+ "(yellow) instead of the Alch color: the copy furthest along<br>"
 			+ "your inventory, reading left to right and top to bottom. An<br>"
 			+ "item you carry only one of is its own last one.",
 		section = SORTING,
@@ -1330,11 +1330,13 @@ public interface AfkSalvagingConfig extends Config
 		return false;
 	}
 
+	// Yellow, not the first pink: red-green colorblind players saw the pink as the cyan of Deposit (owner, 2026-11-03,
+	// "255,255,0?"); the same yellow as the hold count's nearly-full stop.
 	@Alpha
 	@ConfigItem(keyName = "lastAlchColor", name = "Last alch color", description = "", section = SORTING, position = 12)
 	default Color lastAlchColor()
 	{
-		return new Color(255, 60, 220, 220);
+		return new Color(255, 255, 0, 220);
 	}
 
 	@ConfigItem(
