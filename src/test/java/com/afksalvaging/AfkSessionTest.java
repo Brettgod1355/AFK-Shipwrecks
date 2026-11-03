@@ -211,6 +211,16 @@ public class AfkSessionTest
 		assertFalse("withdrawn with the hold open", tick().inventoryFullFromHook);
 		interfaceOpen = false;
 		assertFalse("and it stays the hold's once the window closes", tick().inventoryFullFromHook);
+
+		// The same with the window already closed: Withdraw on the hold itself, or Withdraw-All and Esc in one tick.
+		session.inventoryChanged(20, 12, Collections.singleton(ShipwreckType.MERCHANT), tick);
+		tick();
+		animation = SALVAGING;
+		tick();
+		animation = -1;
+		session.holdActionClicked(true);
+		session.inventoryChanged(28, 20, Collections.singleton(ShipwreckType.MERCHANT), tick);
+		assertFalse("withdrawn with the window closed", tick().inventoryFullFromHook);
 	}
 
 	@Test
