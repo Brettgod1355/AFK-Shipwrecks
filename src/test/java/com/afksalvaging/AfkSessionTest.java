@@ -200,6 +200,17 @@ public class AfkSessionTest
 		assertTrue("still full after stepping away to sort", session.view().inventoryFullFromHook);
 		session.inventoryChanged(27, 19, Collections.singleton(ShipwreckType.MERCHANT), tick);
 		assertFalse("a slot freed up", tick().inventoryFullFromHook);
+
+		// Straight from the hook to the hold: the activity still reads the hook for a few ticks, but a Withdraw-All
+		// there is the hold's (the PR audit on #22).
+		animation = SALVAGING;
+		tick();
+		animation = -1;
+		interfaceOpen = true;
+		session.inventoryChanged(28, 20, Collections.singleton(ShipwreckType.MERCHANT), tick);
+		assertFalse("withdrawn with the hold open", tick().inventoryFullFromHook);
+		interfaceOpen = false;
+		assertFalse("and it stays the hold's once the window closes", tick().inventoryFullFromHook);
 	}
 
 	@Test

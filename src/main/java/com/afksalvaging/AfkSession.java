@@ -302,6 +302,8 @@ public final class AfkSession
 	private int freeInventorySlots = INVENTORY_SLOTS;
 	/** The inventory is full and filled while the player was at a hook; cleared once a slot frees up. */
 	private boolean inventoryFilledAtHook;
+	/** Whether the inventory was full last tick, so only the tick it fills decides where it filled. */
+	private boolean inventoryWasFull;
 	/**
 	 * Inventory slots whose items would take hold space if deposited: tools take none, and a stack the
 	 * hold already has adds to it (research, 2026-10-08: the Sailing plugin counted both, its #226).
@@ -956,6 +958,7 @@ public final class AfkSession
 	public void reset()
 	{
 		inventoryFilledAtHook = false;
+		inventoryWasFull = false;
 		clearDanger();
 		flushMemory();
 		view = new View();
@@ -1150,10 +1153,13 @@ public final class AfkSession
 		{
 			inventoryFilledAtHook = false;
 		}
-		else if (current.isAtHook())
+		else if (!inventoryWasFull && current.isAtHook() && !in.cargoInterfaceOpen && !holdWithdrawPending())
 		{
+			// Only the tick it fills, and never from the hold: the activity is held a few ticks after the player leaves
+			// the hook, so a Withdraw-All just after would look like the hook (the PR audit on #22, 2026-11-03).
 			inventoryFilledAtHook = true;
 		}
+		inventoryWasFull = inventoryFull;
 		boolean playerRolling = aboard && current == PlayerActivity.SALVAGING && wreckInReach && !inventoryFull;
 		// Standing at a hook with a wreck up and not rolling is not manning it: the player will not restart.
 		boolean playerAtHook = aboard && (current == PlayerActivity.SALVAGING
