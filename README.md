@@ -1,6 +1,6 @@
 # AFK Shipwrecks
 
-[![Plugin Hub installs](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fbrettgod1355.github.io%2Fhub-installs%2Fdata%2Flatest.json&query=%24.counts%5B%27cargo-hold-alert%27%5D&label=installs&color=dc8a00)](https://brettgod1355.github.io/hub-installs/)
+[![Plugin Hub installs](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fbrettgod1355.github.io%2Fhub-installs%2Fdata%2Fbadges.json&query=%24.counts%5B%27cargo-hold-alert%27%5D&label=installs&color=dc8a00)](https://brettgod1355.github.io/hub-installs/)
 
 An all-in-one plugin for salvaging, whether you're fully AFK or working the hooks yourself. Park at
 a shipwreck, put your crew on the hooks, and it tells you how long until the cargo hold is full,
